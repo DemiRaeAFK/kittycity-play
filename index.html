@@ -3421,6 +3421,44 @@ function dineSet(g, d, x, z, n, top, col, a0 = Math.PI / 4, bare) {
   for (let i = 0; i < n; i++) { const a = a0 + i * Math.PI * 2 / n, cx = x + Math.sin(a) * 1.02, cz = z + Math.cos(a) * 1.02; chair(g, d, cx, cz, a + Math.PI, col, { x, z }); }
   d.obst.push([x, z, .72]);
 }
+
+// little helpers for detailed rooms
+function parcel(x, y, z, w, h, dp, col, rib = '#e86a8a') {
+  const g = new T.Group(); g.position.set(x, y, z);
+  g.add(box(col, 0, 0, 0, w, h, dp), box(rib, 0, 0, 0, w + .01, h + .01, .06), box(rib, 0, 0, 0, .06, h + .01, dp + .01));
+  [-1, 1].forEach(s => { const b = lsph(.08, rib, s * .07, h + .04, 0, 1, .6, .7); g.add(b); });
+  return g;
+}
+function plantPot(x, y, z, s = 1) {
+  const out = [cyl('#c8714a', x, y, z, .2 * s, .38 * s, .26 * s), lcyl('#b05f3c', x, y + .36 * s, z, .27 * s, .05 * s)];
+  for (let i = 0; i < 7; i++) { const a = i * 2.4, r = i ? .17 * s : 0; out.push(lsph((.17 + (i % 3) * .03) * s, GREENS[i % 5], x + Math.sin(a) * r, y + (.55 + (i % 3) * .14 + (i ? 0 : .2)) * s, z + Math.cos(a) * r)); }
+  return out;
+}
+// a big postage stamp in a frame: perforated edge, a colour, and one of our drawings
+function stampFrame(x, y, z, ry, e, col) {
+  const g = new T.Group(); g.position.set(x, y, z); g.rotation.y = ry;
+  const c = document.createElement('canvas'); c.width = 256; c.height = 320; const k = c.getContext('2d'), t = new T.CanvasTexture(c);
+  const draw = () => {
+    k.clearRect(0, 0, 256, 320); k.fillStyle = '#fffaf0'; k.fillRect(0, 0, 256, 320);
+    k.globalCompositeOperation = 'destination-out'; for (let i = 0; i <= 10; i++) { k.beginPath(); k.arc(i * 25.6, 0, 9, 0, 7); k.arc(i * 25.6, 320, 9, 0, 7); k.fill(); } for (let i = 0; i <= 12; i++) { k.beginPath(); k.arc(0, i * 26.7, 9, 0, 7); k.arc(256, i * 26.7, 9, 0, 7); k.fill(); }
+    k.globalCompositeOperation = 'source-over'; k.fillStyle = col; k.fillRect(26, 26, 204, 268); k.fillStyle = '#ffffff33'; k.fillRect(26, 26, 204, 60);
+    if (drawArt(k, e, 48, 70, 160, draw)) t.needsUpdate = true;
+    k.fillStyle = '#fffaf0'; k.beginPath(); k.arc(206, 268, 16, 0, 7); k.fill(); k.fillStyle = col; k.font = '800 20px sans-serif'; k.textAlign = 'center'; k.textBaseline = 'middle'; k.fillText('5', 206, 269);
+    t.needsUpdate = true;
+  };
+  draw();
+  g.add(box(M.wood('#8a5a3c'), 0, -.62, 0, .95, 1.24, .06), box('#fffaf0', 0, -.56, .02, .83, 1.12, .02));
+  const p = new T.Mesh(new T.PlaneGeometry(.66, .82), new T.MeshBasicMaterial({ map: t, transparent: true, alphaTest: .5 })); p.position.set(0, 0, .045); g.add(p);
+  return g;
+}
+// brass lanterns hanging from the ceiling
+function postLamps(g) {
+  // brass wall lanterns, so nothing hangs between the camera and the counter
+  [-1, 1].forEach(sx => [-3.6, 3.2].forEach(z => { if (sx < 0 && z > 0) return; const x = sx * (RW - .2);
+    g.add(box('#d9a441', x, 2.55, z, .06, .3, .2), box('#d9a441', x - sx * .12, 2.68, z, .25, .04, .05));
+    const l = lsph(.14, null, x - sx * .26, 2.62, z, 1, 1.25, 1); l.material = glow('#fff1c8'); g.add(l);
+    g.add(mesh(new T.CylinderGeometry(.03, .16, .1, 6), '#d9a441', x - sx * .26, 2.84, z), mesh(new T.CylinderGeometry(.15, .1, .05, 6), '#d9a441', x - sx * .26, 2.44, z)); }));
+}
 const THEMES = {
   salon: { floor: M.checker('#ffffff', '#f2c6d2'), wall: M.plaster('#f6dfe4'), wains: '#e9b8c6', props(g, d) {
     [-3, 0].forEach(x => { g.add(box('#ffffff', x, 0, -2.5, 1.6, .8, .8), box('#e9b8c6', x, .8, -2.5, 1.7, .06, .9)); g.add(box('#d98aa0', x, 0, -1.3, .7, .5, .7), box('#d98aa0', x, .5, -1.0, .7, .7, .12)); d.obst.push([x, -2.5, 1]); d.seats.push({ seat: { x, z: -1.3 }, rot: Math.PI, table: null }); });
@@ -3534,13 +3572,68 @@ const THEMES = {
     for (let r = 0; r < 2; r++) for (let c = 0; c < 3; c++) { const x = -3 + c * 3, z = .2 + r * 2; g.add(box(M.wood('#c49a6a'), x, .7, z, 1.4, .07, .8), box('#7a8f6a', x - .6, 0, z, .06, .7, .7), box('#7a8f6a', x + .6, 0, z, .06, .7, .7), box('#c2453a', x, 0, z + .75, .6, .45, .5), lsph(.12, '#c2453a', x + .3, .86, z)); d.obst.push([x, z, .9]); }
     g.add(box(M.wood('#8a5a3c'), 3.5, 0, -3.2, 2, .9, .9), lsph(.15, '#c2453a', 3.2, 1.05, -3.2), lcyl('#4f6fa8', 4, .9, -3.2, .05, .25), lsph(.25, '#6fa8d0', 4, 1.35, -3.2)); d.obst.push([3.5, -3.2, 1.2]);
   }, station: [-4.4, -3, '🍎'], clerk: [3.5, -4.2, 0, { hat: 'grad', neck: 'bowtie', face: 'round' }] },
-  post: { floor: M.checker('#ece6d8', '#c9bfa8'), wall: M.plaster('#e8e4da'), wains: '#2f4a7a', props(g, d) {
-    counter(g, 0, -2.6, 7, '#2f4a7a', M.wood('#b07a4a'));
-    for (let r = 0; r < 4; r++) for (let c = 0; c < 10; c++) g.add(box('#d9a441', -4.5 + c, 1.4 + r * .55, -4.87, .9, .48, .05));
-    [[4.2, 2], [4.6, .6], [-4.4, 1.5]].forEach(([x, z], i) => { g.add(box(M.wood('#c49a6a'), x, 0, z, .8 + i * .1, .6, .6), box('#c2453a', x, .3, z + .31, .82, .06, .02)); d.obst.push([x, z, .7]); });
-    g.add(lcyl('#d9a441', -5, 0, -1, .35, 1.3), mesh(HALF, '#d9a441', -5, 1.3, -1, .35, .3, .35)); d.obst.push([-5, -1, .6]);
-    [2.6, 3.5].forEach(z => chair(g, d, -5.2, z, Math.PI / 2, '#2f4a7a'));
-  }, station: [0, -1.5, '✉️'], clerk: [0, -3.6, 0, { hat: 'beanie', neck: 'collar' }], block: [[-3.5, 3.5, -3.05, -2.15]] },
+  post: { floor: M.checker('#f6efe2', '#cfdcea'), wall: M.stripes('#dcebf6', '#cfe2f1'), wains: '#f2c7d3', trim: '#fffaf0', lamps: postLamps, props(g, d) {
+    const W = -RD + .12, NAVY = '#3d5a8a', BRASS = '#d9a441', CREAM = '#fffaf0', wood = M.wood('#b07a4a');
+    // chair rail and crown on every wall
+    g.add(box(CREAM, 0, 1.05, W + .02, RW * 2, .1, .1), box(CREAM, -RW + .14, 1.05, 0, .1, .1, RD * 2), box(CREAM, RW - .14, 1.05, 0, .1, .1, RD * 2));
+    // the counter: soft blue panels, a wood top with a rounded nose, cream feet
+    g.add(box('#8fb4d9', 0, .08, -2.6, 7, .97, .8), box(CREAM, 0, 0, -2.6, 7.1, .1, .86), box(wood, 0, 1.05, -2.62, 7.2, .08, .95));
+    const nose = mesh(new T.CylinderGeometry(.06, .06, 7.2, 12), wood, 0, 1.09, -2.15); nose.rotation.z = Math.PI / 2; g.add(nose);
+    for (let i = 0; i < 6; i++) { const x = -2.9 + i * 1.16; g.add(box(CREAM, x, .25, -2.19, .92, .66, .04), box('#a9c6e4', x, .31, -2.165, .74, .54, .03)); }
+    // on the counter: a brass bell, a scale with a parcel, stamps and a pad, a pink posy, a tray of letters
+    g.add(lsph(.13, BRASS, .9, 1.13, -2.45, 1, .75, 1), lcyl(BRASS, .9, 1.13, -2.45, .16, .03), lsph(.035, BRASS, .9, 1.25, -2.45));
+    g.add(box(BRASS, 2.5, 1.13, -2.6, .55, .08, .45), lcyl('#3a2e2a', 2.5, 1.21, -2.6, .03, .25), box(BRASS, 2.5, 1.46, -2.6, .7, .04, .5), parcel(2.5, 1.5, -2.6, .42, .3, .34, '#e9a3b8'));
+    g.add(box('#3a2e2a', -1.3, 1.13, -2.5, .45, .05, .3), box('#c2453a', -1.3, 1.18, -2.5, .38, .02, .24));
+    [[-.95, '#e86a8a'], [-.8, '#5f8a8a'], [-.65, '#d9a441']].forEach(([x, c]) => g.add(lcyl('#7a4a2d', x, 1.13, -2.55, .035, .18), lsph(.06, c, x, 1.33, -2.55)));
+    g.add(lcyl('#f4efe4', -2.8, 1.13, -2.55, .09, .22)); [0, 1, 2, 3, 4].forEach(i => g.add(lsph(.07, ['#f3a6c0', '#ffffff', '#e86a8a', '#f7d36a', '#f3a6c0'][i], -2.8 + Math.sin(i * 1.3) * .09, 1.42 + (i % 2) * .05, -2.55 + Math.cos(i * 1.3) * .09)));
+    g.add(box(wood, 1.8, 1.13, -2.75, .6, .08, .42)); ['#fffaf0', '#f2c7d3', '#cfe2f1'].forEach((c, i) => g.add(box(c, 1.8, 1.2 + i * .025, -2.75, .5, .02, .32)));
+    // a little brass arch over the clerk's window, with a hanging envelope sign
+    const arch = mesh(new T.TorusGeometry(.95, .045, 8, 28, Math.PI), BRASS, 0, 2.05, -2.55); g.add(arch);
+    [-.95, .95].forEach(x => g.add(lcyl(BRASS, x, 1.13, -2.55, .045, .92)));
+    const env = new T.Mesh(new T.PlaneGeometry(.55, .55), new T.MeshBasicMaterial({ map: emojiTex('✉️'), transparent: true, alphaTest: .4 })); env.position.set(0, 3.25, -2.55); g.add(env);
+    // back wall: wooden cubbies full of pastel letters and tiny parcels
+    const cx0 = -3, cols = 8, rows = 4, cw = .75, ch = .5, y0 = 1.35;
+    g.add(box(wood, 0, y0 - .08, W + .2, cols * cw + .24, rows * ch + .2, .42));
+    for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+      const x = cx0 + cw / 2 + c * cw, y = y0 + r * ch, k = (r * 7 + c * 3) % 5;
+      g.add(box('#8a5a3c', x, y + .03, W + .3, cw - .08, ch - .08, .3));
+      if (k < 3) [0, 1].forEach(j => { const l = box(['#fffaf0', '#f2c7d3', '#cfe2f1', '#f7e3a8'][(r + c + j) % 4], x - .1 + j * .14, y + .06, W + .47 - j * .03, .5, .34 - j * .06, .02); l.rotation.z = (j ? -.12 : .1); g.add(l); });
+      else if (k === 3) g.add(parcel(x, y + .05, W + .35, .32, .22, .2, ['#c99a6a', '#e9a3b8'][c % 2]));
+    }
+    // sign above the cubbies and a garland of little envelopes
+    const sign = new T.Mesh(new T.PlaneGeometry(4.2, .75), new T.MeshBasicMaterial({ map: textTex('✉️ Post Office 💌', 768, 136, NAVY, CREAM, BRASS, SIGN_FONTS['Post Office']) })); sign.position.set(0, 3.55, W + .45); g.add(sign);
+    for (let i = 0; i <= 14; i++) { const t = i / 14, x = -5.6 + t * 11.2, y = 3.7 - Math.sin(t * Math.PI) * .35 * (1 + (i % 2 ? 0 : 0)); if (Math.abs(x) < 2.3) continue; g.add(box(['#f2c7d3', '#cfe2f1', '#f7e3a8', '#fffaf0'][i % 4], x, y - .3, W + .1, .42, .28, .02), box('#c8a46a', x, y - .04, W + .11, .42, .02, .02)); }
+    // big framed stamps (our own drawings) on the walls
+    [[-4.6, 2.2, '🐱', '#e86a8a'], [4.6, 2.2, '🌸', '#5f8a8a']].forEach(([x, y, e, c]) => g.add(stampFrame(x, y, W + .06, 0, e, c)));
+    [[-1, '🐟', '#4f6fa8'], [1, '💌', '#c86a8a']].forEach(([s, e, c]) => g.add(stampFrame(s * (RW - .16), 2.3, -.25, -s * Math.PI / 2, e, c)));
+    // a round clock on the left wall
+    const clk = new T.Group(); clk.position.set(-RW + .2, 2.5, 3.2); clk.rotation.y = Math.PI / 2; g.add(clk);
+    const face = mesh(new T.CylinderGeometry(.42, .42, .06, 28), CREAM); face.rotation.x = Math.PI / 2; clk.add(face);
+    const rim = mesh(new T.TorusGeometry(.43, .05, 8, 28), BRASS); clk.add(rim);
+    for (let i = 0; i < 12; i++) clk.add(box('#3a2e2a', Math.sin(i * Math.PI / 6) * .33, Math.cos(i * Math.PI / 6) * .33 - .025, .04, .04, .05, .01));
+    const hh = box('#3a2e2a', 0, 0, .05, .04, .2, .01), mh = box('#3a2e2a', 0, 0, .055, .03, .3, .01); hh.rotation.z = -2.1; mh.rotation.z = .4; clk.add(hh, mh);
+    // the mailbox: rounded top, slot, a heart
+    g.add(box(NAVY, -5, 0, -1, .7, 1.1, .6), mesh(new T.CylinderGeometry(.35, .35, .6, 18, 1, false, 0, Math.PI), NAVY, -5, 1.1, -1, 1, 1, 1));
+    g.children[g.children.length - 1].rotation.set(0, 0, 0); g.children[g.children.length - 1].rotation.z = Math.PI / 2; g.children[g.children.length - 1].rotation.y = Math.PI / 2;
+    g.add(box('#2a3a5a', -4.64, .85, -1, .02, .06, .38), box(BRASS, -4.64, .1, -1, .02, .12, .5), box('#2a3a5a', -5, -.02, -1, .78, .08, .68));
+    const heart = new T.Mesh(new T.PlaneGeometry(.36, .36), new T.MeshBasicMaterial({ map: emojiTex('❤️', false), transparent: true, alphaTest: .4 })); heart.position.set(-4.64, .5, -1); heart.rotation.y = Math.PI / 2; g.add(heart);
+    d.obst.push([-5, -1, .6]);
+    // parcels tied with ribbon, and a mail cart with lumpy sacks
+    [[4.2, 2, .8, .6, '#c99a6a', '#e86a8a'], [4.3, 2, .55, .4, '#e9d3b0', '#4f6fa8', .6], [4.6, .6, .75, .55, '#c99a6a', '#5f8a8a'], [-4.4, 1.5, .7, .5, '#e9d3b0', '#e86a8a']].forEach(([x, z, w, h, c, rb, y]) => { g.add(parcel(x, y || 0, z, w, h, w * .8, c, rb)); if (!y) d.obst.push([x, z, .65]); });
+    g.add(box(wood, 4.75, .25, -3.7, 1.3, .12, .8)); [[-1, -1], [-1, 1], [1, -1], [1, 1]].forEach(([a, b]) => { const wh = mesh(new T.CylinderGeometry(.13, .13, .05, 14), '#3a2e2a', 4.75 + a * .5, .13, -3.7 + b * .42); wh.rotation.x = Math.PI / 2; g.add(wh); });
+    [[4.5, -3.75], [5, -3.6]].forEach(([x, z], i) => { g.add(lsph(.36, '#d8c9a8', x, .66, z, 1, 1.15, .9), lsph(.12, '#c8b48a', x, 1.06, z)); g.add(box(['#fffaf0', '#f2c7d3'][i], x, .95, z + .1, .28, .2, .02)); });
+    d.obst.push([4.75, -3.7, .85]);
+    // waiting corner: pink chairs, a round side table with a plant
+    [2.6, 3.5].forEach(z => chair(g, d, -5.2, z, Math.PI / 2, '#e9a3b8'));
+    g.add(lcyl(wood, -5.2, .55, 4.35, .32, .05), lcyl('#3a2e2a', -5.2, 0, 4.35, .05, .55)); g.add(...plantPot(-5.2, .6, 4.35, .55)); d.obst.push([-5.2, 4.35, .45]);
+    // potted plants by the counter ends and front corners
+    [[-4.1, -3.4, 1], [5.2, 4.2, 1.1]].forEach(([x, z, s]) => { g.add(...plantPot(x, 0, z, s)); d.obst.push([x, z, .45]); });
+    // an oval rug in front of the window, and pink valances on the windows
+    const rug1 = new T.Mesh(new T.CircleGeometry(1, 40), mat('#f2c7d3')); rug1.rotation.x = -Math.PI / 2; rug1.scale.set(2.3, 1.3, 1); rug1.position.set(0, .005, .2); g.add(rug1);
+    const rug2 = new T.Mesh(new T.CircleGeometry(1, 40), mat('#fffaf0')); rug2.rotation.x = -Math.PI / 2; rug2.scale.set(2.05, 1.1, 1); rug2.position.set(0, .008, .2); g.add(rug2);
+    const rug3 = new T.Mesh(new T.CircleGeometry(1, 40), mat('#cfe2f1')); rug3.rotation.x = -Math.PI / 2; rug3.scale.set(1.85, .95, 1); rug3.position.set(0, .011, .2); g.add(rug3);
+    [-1, 1].forEach(s => [-2, 1.5].forEach(z => { g.add(box('#e9a3b8', s * (RW - .22), 3.05, z, .12, .32, 1.55)); [-1, 1].forEach(e => g.add(box('#f2c7d3', s * (RW - .2), 1.2, z + e * .68, .08, 1.85, .22))); }));
+  }, station: [0, -1.5, '✉️'], clerk: [0, -3.6, 0, { hat: 'beanie', neck: 'collar' }], block: [[-3.6, 3.6, -3.05, -2.1]] },
   police: { floor: M.checker('#cfd6e0', '#b8c2d0'), wall: M.plaster('#e3e6ea'), wains: '#2f4a7a', props(g, d) {
     g.add(box(M.wood('#7a5a3c'), -2.5, 0, -2.6, 3, .95, 1.1), box('#2f4a7a', -2.5, .95, -2.6, 3.1, .06, 1.2), box('#3a2e2a', -3.4, 1.01, -2.6, .5, .4, .05), lsph(.12, '#c2453a', -1.8, 1.1, -2.6)); d.obst.push([-2.5, -2.6, 1.5]);
     g.add(mesh(new T.PlaneGeometry(2.5, .7), new T.MeshBasicMaterial({ map: textTex('★ POLICE ★', 512, 140, '#2f4a7a', '#f2c94c') }), -2.5, 3, -4.85));
@@ -3685,7 +3778,7 @@ function buildRoom(id) {
   g.add(box(th.wains, 0, 0, -RD + .12, RW * 2, 1.05, .06), box(th.wains, -RW + .12, 0, 0, .06, 1.05, RD * 2), box(th.wains, RW - .12, 0, 0, .06, 1.05, RD * 2));
   g.add(box('#f6f1e6', 0, 3.85, -RD + .14, RW * 2, .15, .1));
   // windows in the side walls
-  if (!th.dark) [-1, 1].forEach(s => { [-2, 1.5].forEach(z => g.add(box('#f6f1e6', s * (RW - .1), 1.4, z, .1, 1.8, 1.3), box('#bfe0ee', s * (RW - .13), 1.5, z, .06, 1.55, 1.05))); });
+  if (!th.dark) [-1, 1].forEach(s => { [-2, 1.5].forEach(z => g.add(box(th.trim || '#f6f1e6', s * (RW - .1), 1.4, z, .1, 1.8, 1.3), box('#bfe0ee', s * (RW - .13), 1.5, z, .06, 1.55, 1.05))); });
   // front: low walls and the door you came in by
   if (th.noDoor) g.add(box(th.wall, 0, 0, RD, RW * 2 + .4, .9, .2));
   else g.add(box(th.wall, -3.7, 0, RD, 4.6, .9, .2), box(th.wall, 3.7, 0, RD, 4.6, .9, .2));
@@ -3697,7 +3790,7 @@ function buildRoom(id) {
   const ex2 = ex.clone(); ex2.rotation.y = 0; ex2.position.set(0, 1.2, RD - .05); ex2.scale.setScalar(.85); roomDyn.add(ex2);
   }
   // ceiling lamps
-  [-3, 3].forEach(x => { g.add(lcyl('#3a2e2a', x, 3.3, -1, .02, .9)); const l = lsph(.28, null, x, 3.2, -1); l.material = glow(th.dark ? '#ff8ac6' : '#fff1c8'); g.add(l); });
+  if (th.lamps) th.lamps(g); else [-3, 3].forEach(x => { g.add(lcyl('#3a2e2a', x, 3.3, -1, .02, .9)); const l = lsph(.28, null, x, 3.2, -1); l.material = glow(th.dark ? '#ff8ac6' : '#fff1c8'); g.add(l); });
   th.props(g, d);
   bake(g);
   d.dyn.forEach(o => roomDyn.add(o));
