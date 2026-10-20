@@ -2356,7 +2356,7 @@ SEASON.G = {
   },
 };
 /* ================= Halloween (the season file for season.js) =================
-   Every computer kitty wears a costume, and the town is decorated: cobwebs, ghosts, bats, witch hats, pumpkins.
+   Every computer kitty wears a costume, and the town is decorated: cobwebs, spiders, bats, witch hats, pumpkins.
    Needs season.js before it in build.sh (both before b7.js). To swap it for Christmas, replace this one file; to switch the season off, remove both lines.
    Nothing here is for sale, and no saved kitty ever uses a piece from this file (the pieces are found by id, they are not in the boutique lists). */
 (function () {
@@ -2595,27 +2595,6 @@ SEASON.G = {
       mesh.instanceMatrix.needsUpdate = true; lg.attributes.position.needsUpdate = true; });
   }
 
-  /* ---------- ghosts: round, white, big dark eyes; they float and turn to look at you ---------- */
-  const GHOST = (() => {
-    const R = .36, rp = y => y > .62 ? R * Math.sqrt(Math.max(0, 1 - Math.pow((y - .62) / .38, 2))) : R * (1 + .22 * (.62 - y) / .62);
-    const body = G.surf(16, 30, (u, v) => { const a = v * Math.PI * 2, yb = .05 + .09 * (.5 + .5 * Math.cos(a * 5)), y = 1 - u * (1 - yb), r = rp(y); return [Math.cos(a) * r, y, Math.sin(a) * r]; }, (u, v, p) => mix(W, C('#d9e4ff'), (1 - p[1]) * .55));
-    const parts = [body], dark = '#241c3a', onBody = (x, y, k) => [x, y, Math.sqrt(Math.max(0, Math.pow(rp(y), 2) - x * x)) * k];
-    [-1, 1].forEach(sd => { parts.push(G.xf(G.paint(new T.SphereGeometry(1, 10, 8), dark), onBody(sd * .125, .7, 1), [0, 0, 0], [.065, .1, .03]), G.xf(G.paint(new T.SphereGeometry(1, 6, 5), '#ffffff'), [sd * .125 + .022, .735, onBody(sd * .125, .7, 1)[2] + .016], [0, 0, 0], [.022, .028, .01]),
-      G.xf(G.paint(new T.SphereGeometry(1, 8, 6), '#ffb3c8'), onBody(sd * .225, .57, 1), [0, 0, 0], [.05, .03, .02]),
-      G.xf(G.paint(new T.SphereGeometry(1, 10, 8), '#ffffff'), [sd * (R + .035), .4, .07], [0, 0, sd * -.35], [.075, .11, .085])); });
-    parts.push(G.xf(G.paint(new T.SphereGeometry(1, 10, 8), dark), onBody(0, .52, 1), [0, 0, 0], [.05, .07, .03]));
-    return G.merge(parts);
-  })();
-  const GHOSTS = [];
-  function ghostFlock(root) {
-    const n = GHOSTS.length, mat = new T.MeshLambertMaterial({ vertexColors: true, emissive: 0x8aa0e0 }), mesh = new T.InstancedMesh(GHOST, mat, n); mesh.frustumCulled = false; mesh.userData.dyn = 1; root.add(mesh);
-    const m4 = new T.Matrix4(), q = new T.Quaternion(), e = new T.Euler(), v = new T.Vector3(), sc = new T.Vector3();
-    MATS.push(t => { mat.emissiveIntensity = .5 + .45 * NIGHT.v;
-      GHOSTS.forEach((g, i) => { const th = g.sp * t + g.ph, x = g.x + Math.cos(th) * g.rx, z = g.z + Math.sin(th * 1.0) * g.rz, y = g.y + Math.sin(t * 1.1 + g.ph * 2) * .22;
-        const yaw = Math.atan2(me.x - x, me.z - z), near = Math.hypot(me.x - x, me.z - z) < 22; e.set(Math.sin(t * 1.3 + g.ph) * .1, near ? yaw : Math.atan2(-Math.sin(th) * g.rx, Math.cos(th) * g.rz), Math.cos(t * .9 + g.ph) * .09, 'YXZ'); q.setFromEuler(e); v.set(x, y, z);
-        const k = g.s * (1 + Math.sin(t * 2 + g.ph) * .03); sc.set(k, k * (1 + Math.sin(t * 2.2 + g.ph) * .04), k); m4.compose(v, q, sc); mesh.setMatrixAt(i, m4); });
-      mesh.instanceMatrix.needsUpdate = true; });
-  }
   /* ---------- bats: little purple-black bats with round ears flapping slowly round the lamps and roofs ---------- */
   const BAT_BODY = (() => { const d = '#2d2040', parts = [G.xf(G.paint(new T.SphereGeometry(.1, 10, 8), d), [0, 0, 0], [0, 0, 0], [1, .95, 1.15]), G.xf(G.paint(new T.SphereGeometry(.075, 10, 8), d), [0, .07, .1])];
     [-1, 1].forEach(sd => parts.push(G.xf(G.paint(new T.ConeGeometry(.032, .09, 6), d), [sd * .042, .15, .1], [0, 0, -sd * .25]), G.xf(G.paint(new T.SphereGeometry(.022, 6, 5), '#ffffff'), [sd * .033, .085, .165]), G.xf(G.paint(new T.SphereGeometry(.011, 5, 4), '#161020'), [sd * .033, .085, .183]))); return G.merge(parts); })();
@@ -2733,12 +2712,10 @@ SEASON.G = {
     });
     chunked(root, cw, CORNERMAT, 'corner-webs'); chunked(root, dw, DOMEMAT, 'dome-webs'); spiderThreads(root);
 
-    // ghosts and bats: where they roam (x, z, height, how far they drift)
-    [[-42, 1, 3.7, 2.8, 1.2], [-30, -1, 4.1, 3, 1.4], [-17, 1.5, 3.6, 2.6, 1.2], [-1, -1, 4.2, 3.2, 1.3], [12, 1, 3.8, 2.8, 1.2], [26, -1, 4.1, 3, 1.3], [40, 1, 3.7, 2.6, 1.2], [-4, -14, 3.8, 1.2, 2.8], [-4, -27, 4, 1.2, 2.6], [-11, 15.5, 4.8, 3.4, 3.4], [3, 15.5, 4.8, 3.2, 3.2], [-42, 11, 3.3, 3, 2.5]]
-      .forEach(([x, z, y, rx, rz], i) => GHOSTS.push({ x, z, y, rx, rz, sp: (.16 + R() * .08) * (i % 2 ? 1 : -1), ph: R() * 6.28, s: .85 + R() * .25 }));
+    // bats: where they roam (x, z, height, how far they drift)
     [[-40, 0, 7.2, 4], [-26, 0, 7, 5], [-10, -6, 7.6, 4], [-4, 14, 8, 6], [10, 0, 7.4, 5], [24, 0, 7.2, 5], [40, 0, 7, 4], [-4, -24, 7, 4], [-44, 12, 6.5, 4], [4, 18, 7.5, 3]]
       .forEach(([x, z, y, r], i) => { for (let k = 0; k < (i < 5 ? 2 : 1); k++) BATS.push({ x, z, y: y + k * .8, r: r * (1 + k * .35), sq: .55, sp: (.45 + R() * .25) * (k ? -1 : 1), ph: R() * 6.28, s: 1.35, night: BATS.length > 4 }); });
-    ghostFlock(root); batFlock(root);
+    batFlock(root);
     // bunting across Main Street wherever there are fronts on both sides
     { const have = (row, x) => A.buildings.some(b => b.row === row && Math.abs(A.local(b, 0, 0, 0)[0] - x) < b.w / 2 - .3), rope = [], flags = [], icons = [];
       for (let x = -50, k = 0; x < 40; x += 1) { if (!(have('n', x) && have('s', x))) continue; if (k % 1 === 0 && (rope.length === 0 || x - rope.last >= 9.5)) { const bt = bunting([x, 5.9, -5.25], [x, 5.9, 5.25], .8, 11 + k * 7); rope.push(bt.rope); flags.push(bt.flags); icons.push(bt.icons); rope.last = x; k++; } }
@@ -19864,23 +19841,27 @@ function serveTick(t, dt) {
     o.add(ext(stoneD, arch(w + .22, h + .1, .38), .08, 0, 0, 0, 0), ext(sky, arch(w, h, .34), .02, 0, 0, .05, 0), box(stoneD, 0, 0, .05, .05, h + .2, .05), box(stoneD, 0, h * .5, .05, w, .04, .05), box(stoneD, 0, 0, .0, w + .3, .1, .14));
   }
   function decorate(g) {
-    const L = -HS + .14;
-    // left wall: three tall windows between stone pillars and a stone ledge along the top
-    [-2.9, 0, 2.9].forEach(z => archWindow(g, L, z, Math.PI / 2));
-    [-4.4, -1.45, 1.45, 4.4].forEach(z => pillar(g, L + .18, z));
-    g.add(box(stone, L + .06, 2.2, 0, .12, .2, HS * 2 - .5), box(stoneD, L + .08, 0, 0, .1, .12, HS * 2 - .5));
-    // right wall: ledge and pillars too (its windows come from the starter windows)
-    const R = HS - .14;
-    [-4.4, -1.45, 1.45, 4.4].forEach(z => pillar(g, R - .18, z));
-    g.add(box(stone, R - .06, 2.2, 0, .12, .2, HS * 2 - .5), box(stoneD, R - .08, 0, 0, .1, .12, HS * 2 - .5));
-    // gilded panel frames between the pillars, a gold cornice with beads and a gold baseboard
-    const gold = '#d9b23a', goldD = '#b88a24';
-    [[L + .09, 1], [R - .09, -1]].forEach(([x, dir]) => {
-      [-3.0, 0, 3.0].forEach(z => { const pw = 2.2, ph = 1.35, y0 = .35; [[0, y0 + ph / 2, pw, .06], [0, y0 - ph / 2 + .0, pw, .06]].forEach(([dz, y, len, th]) => g.add(box(gold, x, y - th / 2 + .0, z, .05, th, len)));
-        [-1, 1].forEach(s => g.add(box(gold, x, y0 - .03, z + s * pw / 2, .05, ph + .06, .06)));
-        g.add(sph(.07, gold, x, y0 + ph / 2 + .12, z, .6, 1, 1)); });
-      g.add(box(gold, x, 2.12, 0, .08, .1, HS * 2 - .5), box(goldD, x, 2.03, 0, .06, .08, HS * 2 - .5), box(gold, x, 0, 0, .08, .16, HS * 2 - .5));
-      for (let i = 0; i < 24; i++) g.add(sph(.035, '#fff3c8', x, 2.0, -4.6 + i * .4));
+    const L = -HS + .14, R = HS - .14, gold = '#d9b23a', goldD = '#b88a24';
+    // the doors to the other rooms (rooms.js) and the starter fireplace on the left wall decide where the wall furniture can go
+    const DR = (typeof KC_ROOM_DOORS !== 'undefined' && KC_ROOM_DOORS.living) || [{ wall: 'L', z: -3.9 }, { wall: 'R', z: -2.6 }];
+    const doorZ = w => { const d = DR.find(q => q.wall === w); return d ? d.z : null; };
+    // run a wall strip along z from -4.75 to 4.75 but leave a gap of .85 either side of the door
+    const strip = (w, fn) => { const dz = doorZ(w); if (dz === null) return fn(0, 9.5); const a = dz - .85, b = dz + .85; fn((-4.75 + a) / 2, a + 4.75); fn((b + 4.75) / 2, 4.75 - b); };
+    // the starter window (curtains and shutters) sits at z 2.3 on both side walls: cover it with a stone bulkhead and hang one arched window on that
+    const wall = gildedWall(wallIdx());
+    [[L, 1], [R, -1]].forEach(([x, dir]) => {
+      g.add(box(wall, x + dir * .3, 0, 2.3, .6, 2.5, 2.8), box(stoneD, x + dir * .62, 0, 2.3, .06, .12, 2.9), box(stone, x + dir * .62, 2.5, 2.3, .06, .1, 2.9));
+      archWindow(g, x + dir * .64, 2.3, dir > 0 ? Math.PI / 2 : -Math.PI / 2);
+    });
+    // stone pillars where nothing else stands (the fireplace is on the left wall from z -2.75 to -.25)
+    [.5, 4.2].forEach(z => pillar(g, L + .18, z)); [-.9, .5, 4.2].forEach(z => pillar(g, R - .18, z));
+    // stone ledge, gold cornice with beads and gold baseboard, broken at the door
+    [[L, 'L', 1], [R, 'R', -1]].forEach(([x, w, dir]) => {
+      strip(w, (zc, len) => {
+        g.add(box(stone, x + dir * .06, 2.2, zc, .12, .2, len), box(stoneD, x + dir * .08, 0, zc, .1, .12, len));
+        const gx = x + dir * .09 * 1; g.add(box(gold, gx, 2.12, zc, .08, .1, len), box(goldD, gx, 2.03, zc, .06, .08, len), box(gold, gx, 0, zc, .08, .16, len));
+        for (let z = zc - len / 2 + .2; z < zc + len / 2 - .1; z += .4) g.add(sph(.035, '#fff3c8', gx, 2.0, z));
+      });
     });
     // a snowy ring of tiny stars on the floor edge
     for (let i = 0; i < 14; i++) g.add(lsph(.05, '#ffffff', -4.6 + i * .7, .01, 4.7, 1, .3, 1));
@@ -20777,7 +20758,7 @@ const KC_ROOMS = [
 ];
 // doors per room: wall 'L' or 'R' (side walls, door at z), arriving in the next room just inside the matching door
 const KC_ROOM_DOORS = {
-  living: [{ to: 'kitchen', wall: 'L', z: -2.6 }, { to: 'bedroom', wall: 'R', z: -2.6 }],
+  living: [{ to: 'kitchen', wall: 'L', z: -3.9 }, { to: 'bedroom', wall: 'R', z: -2.6 }],
   kitchen: [{ to: 'living', wall: 'R', z: -2.6 }],
   bedroom: [{ to: 'living', wall: 'L', z: -2.6 }, { to: 'bathroom', wall: 'R', z: -2.6 }],
   bathroom: [{ to: 'bedroom', wall: 'L', z: -2.6 }],
@@ -22539,7 +22520,7 @@ function fiPtr(e, down) {
 {
   const st = document.createElement('style'); st.id = 'fire-css';
   st.textContent = `
-#fire-alert{position:absolute;left:50%;top:12%;transform:translateX(-50%);z-index:60;width:min(560px,92vw);text-align:center;border-color:#ffd9d0;animation:fireIn .45s cubic-bezier(.3,1.6,.5,1)}
+#fire-alert{position:absolute;left:50%;top:84px;transform:translateX(-50%);z-index:60;width:min(560px,92vw);text-align:center;border-color:#ffd9d0;animation:fireIn .45s cubic-bezier(.3,1.6,.5,1)}
 #fire-alert .pic{display:flex;justify-content:center;align-items:center;gap:6px;font-size:88px;line-height:1}
 #fire-alert .pic .ic{width:1em;height:1em}
 #fire-alert .t{font:800 34px var(--display);color:var(--bad)}
@@ -22559,6 +22540,8 @@ function fiPtr(e, down) {
 #fire-ret{position:absolute;z-index:26;width:84px;height:84px;margin:-42px 0 0 -42px;border-radius:50%;border:6px solid #fff;background:#4aa8e855;box-shadow:0 0 0 4px #2f86c8,0 6px 0 #0003;pointer-events:none;display:grid;place-items:center;font-size:40px}
 #fire-ret .ic{width:1em;height:1em}
 #fire-pulse{position:absolute;z-index:26;width:120px;height:120px;margin:-60px 0 0 -60px;border-radius:50%;border:8px solid #fff;box-shadow:0 0 0 4px #4aa8e8;pointer-events:none;animation:fireRing 1.1s ease-out infinite}
+@media (max-width:480px){#fire-alert .pic{font-size:64px}#fire-alert .t{font-size:28px}#fire-help{font-size:32px;padding:10px 26px}}
+@media (max-height:520px){#fire-alert .pic{font-size:52px}#fire-alert .t{font-size:26px}#fire-help{font-size:30px;padding:8px 24px}}
 @keyframes fireIn{from{transform:translateX(-50%) scale(.3);opacity:0}}
 @keyframes fireBob{50%{transform:scale(1.07)}}
 @keyframes firePulse{50%{transform:translateX(var(--tx,0)) scale(1.12);box-shadow:0 0 0 10px #e2483d44,0 5px 0 #0002}}
@@ -22579,11 +22562,17 @@ function fiPtr(e, down) {
   pill.onclick = () => { sfx.tap(); fireJoin(); }; done.onclick = () => { fireLeave(); }; suit.onclick = () => { fireSuit(); };
   FIRE.ui = { alert, pill, hud, done, bar, suit, ret, pulse, sig: '' };
 }
+// the alert and the little siren button sit just under the toolbar, wherever it wraps to (phones, iPad upright), so they never cover its buttons
+function fiBelowHud() {
+  const bar = ['#hud-top', '#inside-top'].map($).find(e => !e.hidden); if (!bar || nowT - (FIRE.topT || 0) < .3) return; FIRE.topT = nowT;
+  const y = Math.ceil(bar.getBoundingClientRect().bottom) + 8; if (y !== FIRE.top) { FIRE.top = y; FIRE.ui.alert.style.top = FIRE.ui.pill.style.top = y + 'px'; }
+}
 function fiUI() {
   const U = FIRE.ui, F = FIRE.s, live = F.ev && !F.done, here = mode === 'town' || mode === 'inside';
   const showAlert = !!(live && FIRE.alert && here && !FIRE.cam);
   if (showAlert && !FIRE.alerted) { FIRE.alerted = true; speak('Fire at the town hall! Can you help?'); }
   U.alert.hidden = !showAlert; U.pill.hidden = !(live && !FIRE.alert && here && !FIRE.cam);
+  if (!U.alert.hidden || !U.pill.hidden) fiBelowHud();
   U.hud.hidden = !FIRE.cam; U.suit.hidden = FIRE.st !== 'prep';
   if (FIRE.cam) { $('#hud-bot').hidden = true; $('#joy').hidden = true; $('#hint').hidden = true; }
   const sig = F.wins.map(w => w.out ? 1 : 0).join('') + (FIRE.st === 'prep' ? 'p' : '');
