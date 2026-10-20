@@ -25294,6 +25294,78 @@ renderer.domElement.addEventListener('pointerdown', e => {
   if (Math.hypot(me.x - q[0], me.z - q[1]) < 1.2 || Math.hypot(me.x - p.x, me.z - p.z) < 2.2) { me.ry = Math.atan2(p.x - me.x, p.z - me.z); gcAdd(k, p); return; }
   standUp(); me.tx = q[0]; me.tz = q[1]; me.go = null; GC.go = { tx: q[0], tz: q[1], k, p }; sfx.tap();
 });
+/* ================= door mats at the doors =================
+   A yellow half-moon door mat on the ground in front of every real door (the shops and the neighbors' houses; the boarded storefronts have none).
+   Stand still on it for a moment and you go inside, so little fingers do not have to hit the building. It never pulls you in while you walk
+   across it, and after you come out the mat waits until you have stepped well away and come back. Hooks without touching other files:
+   fountainTick (the frame tick) and enterBuilding / enterHouse (every way in rests all the mats). */
+const DR = { rings: new Map(), t: 0, acc: 0 }, DR_R = 1.5, DR_STAY = .8;
+// one drawn picture for the whole mat (soft glow, sunny yellow, stitched border, a paw print, brown outline like our stickers); the flat side is the top of the picture
+const DR_TEX = (() => {
+  const c = document.createElement('canvas'); c.width = 512; c.height = 256; const x = c.getContext('2d'), half = (r, fill, line, w, dash) => {
+    x.beginPath(); x.arc(256, 0, r, 0, Math.PI); x.closePath(); if (fill) { x.fillStyle = fill; x.fill(); } if (line) { x.strokeStyle = line; x.lineWidth = w; x.setLineDash(dash || []); x.stroke(); x.setLineDash([]); }
+  };
+  const gl = x.createRadialGradient(256, 0, 218, 256, 0, 256); gl.addColorStop(0, 'rgba(255,227,106,.75)'); gl.addColorStop(1, 'rgba(255,227,106,0)'); x.fillStyle = gl; x.beginPath(); x.arc(256, 0, 256, 0, Math.PI); x.fill();
+  half(232, '#ffd728', '#9a6a1c', 9); half(196, '#ffe778'); half(208, null, '#c8922a', 5, [12, 11]);
+  // a little paw print in the middle
+  x.fillStyle = '#9a6a1c'; const toe = (a, b, r) => { x.beginPath(); x.ellipse(a, b, r, r * 1.25, 0, 0, 7); x.fill(); };
+  toe(214, 112, 15); toe(244, 98, 15); toe(276, 98, 15); toe(306, 112, 15);
+  x.beginPath(); x.ellipse(260, 150, 34, 27, 0, 0, 7); x.fill();
+  return new T.CanvasTexture(c);
+})();
+const DR_GEO = { mat: new T.PlaneGeometry(2 * DR_R, DR_R).rotateX(-Math.PI / 2).translate(0, 0, DR_R / 2), fill: new T.CircleGeometry(DR_R * .93, 32, Math.PI, Math.PI).rotateX(-Math.PI / 2) };
+const drMat = (c, map) => new T.MeshBasicMaterial({ color: c, map, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 });
+// the flat edge sits against the wall, just behind the spot where a kitty stands at the door (a step and a bit in), and the round side faces the street (out is the way the door looks, as an angle)
+function drMake(id, door, out, to) {
+  const fx = door.x - Math.sin(out) * .9, fz = door.z - Math.cos(out) * .9;
+  const g = new T.Group(); g.position.set(fx, .07, fz); g.rotation.y = out; g.userData.dyn = 1;
+  const flat = (geo, mat) => { const m = new T.Mesh(geo, mat); m.userData.dyn = 1; g.add(m); return m; };
+  const fill = flat(DR_GEO.fill, drMat('#fff0a0')), ring = flat(DR_GEO.mat, drMat('#ffffff', DR_TEX));
+  fill.position.y = .005; town.add(g);
+  return { id, to, fx, fz, out, x: fx + Math.sin(out) * DR_R * .6, z: fz + Math.cos(out) * DR_R * .6, g, disc: fill, ring, armed: false, dwell: 0 };
+}
+// the mats follow the list of shops and neighbor houses (cottages come and go as friends join and leave)
+function drSync() {
+  const want = new Map();
+  SHOPS.forEach(s => s.door && want.set('s:' + s.id, [s.door, s.out, s]));
+  cottages.forEach(c => want.set('h:' + c.owner + ':' + c.door.x.toFixed(1) + ':' + c.door.z.toFixed(1), [c.door, c.out, c.owner]));
+  for (const [k, r] of DR.rings) if (!want.has(k)) { r.g.parent && r.g.parent.remove(r.g); DR.rings.delete(k); }
+  for (const [k, w] of want) if (!DR.rings.has(k)) DR.rings.set(k, drMake(k, w[0], w[1], w[2]));
+}
+function drRest() { for (const r of DR.rings.values()) { r.armed = false; r.dwell = 0; } }
+function drGo(r) {
+  r.armed = false; r.dwell = 0;
+  if (typeof r.to === 'string') enterHouse(r.to); else enterBuilding(r.to);
+}
+// where I am on a mat: across it, and out from the door
+function drAt(r) { const dx = me.x - r.fx, dz = me.z - r.fz, s = Math.sin(r.out), c = Math.cos(r.out); return [dx * c - dz * s, dx * s + dz * c]; }
+function drTick(t) {
+  const dt = Math.min(.1, t - (DR.t || t)); DR.t = t;
+  if ((DR.acc += dt) > .5 || !DR.rings.size) { DR.acc = 0; drSync(); }
+  const town_ = mode === 'town', pulse = .8 + Math.sin(t * 3) * .12;
+  const free = town_ && me.car == null && !me.truck && !me.sit && !me.act && !me.swing && !me.go && !me.busq;
+  const still = Math.hypot(me.tx - me.x, me.tz - me.z) < .05 && !joyVec;
+  const menus = () => ['#fmenu', '#fpanel', '#settings', '#grown', '#map', '#shop'].some(s => !$(s).hidden);
+  let go = null;
+  for (const r of DR.rings.values()) {
+    r.g.visible = town_ && Math.hypot(me.x - r.fx, me.z - r.fz) < 24;
+    if (!r.g.visible) continue;
+    const [u, v] = drAt(r), len = Math.hypot(u, v), on = v > 0 && len < DR_R - .15, gap = Math.max(len - DR_R, -v); // gap: how far outside the mat I am
+    if (gap > .6) r.armed = true;
+    const near = free && r.armed && on && still && !menus();
+    r.dwell = near ? r.dwell + dt : 0;
+    if (r.dwell > DR_STAY && !go) go = r;
+    // a mat you just came out of rests (soft) until you walk away; the one you are standing on fills up
+    const rest = !r.armed && gap < .6, k = Math.min(1, r.dwell / DR_STAY);
+    r.ring.material.opacity = rest ? .35 : Math.min(1, pulse + k * .2);
+    r.disc.material.opacity = rest ? .08 : .2 + k * .7;
+    r.g.scale.setScalar(1 + k * .12);
+  }
+  if (go) drGo(go);
+}
+{ const _eb = enterBuilding; enterBuilding = function (s, spawn) { drRest(); return _eb(s, spawn); }; }
+{ const _eh = enterHouse; enterHouse = function (o) { drRest(); return _eh(o); }; }
+{ const _ft = fountainTick; fountainTick = function (t) { _ft(t); try { drTick(t); } catch (e) { noteErr(e); } }; }
 /* ================= sitting on top of a seat =================
    Seats only know where they are on the floor, so we look straight down at that spot once and lift the cat onto
    whatever cushion is there (a chair, a bench, a beanbag). Cats, tap boxes and hidden things are skipped. */
