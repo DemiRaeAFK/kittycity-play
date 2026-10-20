@@ -80,6 +80,11 @@ h1 small{display:block;font-size:.32em;color:var(--lav);text-shadow:none;letter-
 #start .go{background:#e86a8a}#start .go2{background:#8a7ad0}
 #start .lbl{color:#b0789a}
 #start .dot{border-color:#fff}#start .dot[aria-pressed="true"]{outline-color:#e86a8a}
+#fpanel{top:calc(84px + env(safe-area-inset-top,0px));bottom:auto;left:auto;right:max(12px,env(safe-area-inset-right,0px));transform:none;width:min(360px,calc(100% - 24px));max-height:calc(100% - 120px);overflow-y:auto}
+#fpanel>button{width:100%}
+#busq{z-index:12}#freq{z-index:13}
+#phrases{left:auto;right:max(12px,env(safe-area-inset-right,0px));transform:none;width:min(320px,calc(100% - 200px));max-height:calc(100% - 200px);overflow-y:auto}
+#phrases .placerow{width:100%;display:grid;grid-template-columns:repeat(auto-fill,minmax(56px,1fr));gap:8px}#phrases .place{font-size:30px;padding:6px 0}
 #phrases .emorow{width:100%;display:flex;gap:12px;justify-content:center}
 #hud-top #open-friends[hidden],#hud-top #leave-town[hidden]{display:none}
 /* picture code */
@@ -104,10 +109,10 @@ h1 small{display:block;font-size:.32em;color:var(--lav);text-shadow:none;letter-
 .fchip{display:flex;align-items:center;gap:6px;padding:4px 14px 4px 6px;font-size:18px}
 .fchip i{width:30px;height:30px;border-radius:50%;display:block;border:3px solid #fff;box-shadow:0 0 0 2px #0001}
 #map{position:absolute;inset:0;background:#0007;display:flex;align-items:center;justify-content:center;z-index:30}
-#map-box{position:relative;width:min(900px,calc(100% - 24px));aspect-ratio:2.05;max-height:calc(100% - 90px);background:#a3bf72;border-radius:24px;border:6px solid #fff;box-shadow:0 8px 0 #0003;overflow:hidden}
+#map-box{position:relative;width:min(1400px,calc(100% - 24px),calc((100vh - 40px) * 2.05));aspect-ratio:2.05;background:#a3bf72;border-radius:24px;border:6px solid #fff;box-shadow:0 8px 0 #0003;overflow:hidden}
 #map-box .r{position:absolute;background:#d9c2c8;border-radius:6px}
-#map-box .m{position:absolute;transform:translate(-50%,-50%);width:clamp(30px,4.6%,44px);aspect-ratio:1;border-radius:50%;border:3px solid #fff;background:#fdf8ee;font-size:clamp(16px,2.8vw,24px);display:flex;align-items:center;justify-content:center;padding:0;box-shadow:0 3px 0 #0003}
-#map-box .m.big{width:clamp(34px,5.2%,50px);font-size:clamp(18px,3.2vw,28px)}
+#map-box .m{position:absolute;transform:translate(-50%,-50%);width:clamp(40px,5%,56px);aspect-ratio:1;border-radius:50%;border:3px solid #fff;background:#fdf8ee;font-size:clamp(20px,3vw,30px);display:flex;align-items:center;justify-content:center;padding:0;box-shadow:0 3px 0 #0003}
+#map-box .m.big{width:clamp(44px,5.6%,62px);font-size:clamp(22px,3.4vw,32px)}
 #map-box .m i{position:absolute;bottom:-2px;right:-2px;width:14px;height:14px;border-radius:50%;border:2px solid #fff}
 .ic{display:inline-block;position:relative;width:1.2em;height:1.2em;vertical-align:-.22em;line-height:0}.ic svg{width:100%;height:100%;display:block;overflow:visible}.ic i{position:absolute;left:0;top:0;width:1px;height:1px;overflow:hidden;opacity:0;font-size:1px;pointer-events:none}#map-box .friend{position:absolute;transform:translate(-50%,-50%);font-size:26px;line-height:1;pointer-events:none;text-align:center;filter:drop-shadow(0 2px 2px #0005)}#map-box .friend b{display:block;font:800 11px/1.1 system-ui,sans-serif;background:#fff;color:#3a2e2a;border-radius:8px;padding:2px 5px;margin-top:1px;white-space:nowrap}#map-box .you{position:absolute;transform:translate(-50%,-50%);width:22px;height:22px;border-radius:50%;background:#e8453a;border:4px solid #fff;animation:pulse 1s infinite;pointer-events:none}
 #map-close{position:absolute;top:calc(14px + env(safe-area-inset-top,0px));right:14px}
@@ -128,7 +133,7 @@ h1 small{display:block;font-size:.32em;color:var(--lav);text-shadow:none;letter-
 #bus-timer{position:absolute;left:50%;top:calc(84px + env(safe-area-inset-top,0px));transform:translateX(-50%);font:800 26px var(--display);background:var(--ochre);color:#fff;border-radius:999px;padding:6px 22px;box-shadow:0 4px 0 #0002;pointer-events:none}
 
 #ticker{position:absolute;left:50%;top:calc(132px + env(safe-area-inset-top,0px));transform:translateX(-50%);font:800 24px var(--display);background:#2f4a7a;color:#fff;border-radius:999px;padding:6px 20px;box-shadow:0 4px 0 #0002;pointer-events:none;white-space:nowrap}
-#toast{position:absolute;left:50%;top:calc(80px + env(safe-area-inset-top,0px));transform:translateX(-50%);background:var(--paper);border-radius:22px;padding:10px 20px;box-shadow:0 6px 0 #0002;font:800 24px var(--display);display:flex;gap:10px;align-items:center;border:3px solid var(--good);z-index:5;max-width:min(640px,calc(100% - 32px));box-sizing:border-box}
+#toast{pointer-events:none;position:absolute;left:50%;top:calc(80px + env(safe-area-inset-top,0px));transform:translateX(-50%);background:var(--paper);border-radius:22px;padding:10px 20px;box-shadow:0 6px 0 #0002;font:800 24px var(--display);display:flex;gap:10px;align-items:center;border:3px solid var(--good);z-index:5;max-width:min(640px,calc(100% - 32px));box-sizing:border-box}
 .face{width:40px;height:40px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 2px #0002;display:inline-grid;place-items:center;font-size:22px;position:relative;flex:none}
 .face.off{filter:grayscale(1);opacity:.6}
 .face b{position:absolute;right:-6px;bottom:-6px;font-size:16px}
@@ -248,7 +253,7 @@ h1 small{display:block;font-size:.32em;color:var(--lav);text-shadow:none;letter-
     <div id="friends"></div>
     <span class="sp"></span>
     <button class="round" id="open-map" type="button" aria-label="Map">🗺️</button>
-    <button class="round" id="open-friends" type="button" aria-label="Friends" hidden>💞</button>
+    <button class="round" id="open-friends" type="button" aria-label="Friends">💞</button>
     <button class="round" id="go-home" type="button" aria-label="My house">🏠</button>
     <button class="round" id="open-settings" type="button" aria-label="Settings">⚙️</button>
     <button class="round" id="leave-town" type="button" aria-label="Leave town" hidden>👋</button>
@@ -266,6 +271,7 @@ h1 small{display:block;font-size:.32em;color:var(--lav);text-shadow:none;letter-
   <div id="settings" class="panel" hidden></div>
   <div id="map" hidden><div id="map-box"></div><button class="round" id="map-close" type="button" aria-label="Close map">✖️</button></div>
   <div id="busq" class="panel" hidden></div>
+  <div id="freq" class="panel" hidden></div>
   <div id="deed" class="panel" hidden></div>
   <div id="music" class="panel" hidden></div>
   <div id="bus-timer" hidden></div>
@@ -498,6 +504,11 @@ const $ = s => document.querySelector(s);
 const rand = n => Math.floor(Math.random() * n);
 const pick = a => a[rand(a.length)];
 const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = rand(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+// errors are kept on this iPad (last 6) so a grown-up can show us what went wrong, from the grown-ups panel
+function noteErr(e) {
+  try { console.error(e); const a = JSON.parse(localStorage.getItem('kc-errs') || '[]'); a.push([new Date().toISOString().slice(5, 16), String(e && e.message || e).slice(0, 140), String(e && e.stack || '').split('\n')[1] || '']); localStorage.setItem('kc-errs', JSON.stringify(a.slice(-6))); } catch (x) {}
+}
+addEventListener('error', e => noteErr(e.error || e.message)); addEventListener('unhandledrejection', e => noteErr(e.reason));
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const h = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
 const btn = (cls, html, label) => { const b = h('button', cls, html); b.type = 'button'; if (label) b.setAttribute('aria-label', label); return b; };
@@ -510,11 +521,13 @@ const T = THREE;
 const PETS = [{ id: 'butterfly', name: 'Butterfly', icon: '🦋', price: 6 }, { id: 'bee', name: 'Bee', icon: '🐝', price: 6 }, { id: 'bird', name: 'Bird', icon: '🐦', price: 8 }, { id: 'frog', name: 'Frog', icon: '🐸', price: 8 }, { id: 'turtle', name: 'Turtle', icon: '🐢', price: 10 }, { id: 'hamster', name: 'Hamster', icon: '🐹', price: 10 }, { id: 'mouse', name: 'Mouse', icon: '🐭', price: 8 }];
 const PET_BY_ID = Object.fromEntries(PETS.map(p => [p.id, p]));
 const save = {
-  name: '', look: { fur: 1, eye: 0, pat: 3, ear: 0, tail: 0, hat: 'bow', neck: 'collar', face: '', back: '', body: '' },
-  coins: 15, owned: ['bow', 'collar'], furn: { rug: 1, catbed: 1, plant: 1 }, house: [],
+  name: '', look: { fur: 1, eye: 0, pat: 3, ear: 0, tail: 0, hat: '', neck: 'collar', face: '', back: '', body: '' },
+  coins: 500, owned: ['bow', 'collar'], furn: { rug: 1, catbed: 1, plant: 1 }, house: [],
   code: '', opts: { joy: false, sound: true, voice: true, music: true, vname: '' }, lv: { math: 1, abc: 1, shapes: 1 }, boxDay: '',
 };
-try { const s = JSON.parse(localStorage.getItem('kittycity3d') || '{}'); Object.assign(save, s); save.look = Object.assign({ fur: 1, eye: 0, pat: 3, ear: 0, tail: 0, hat: 'bow', neck: 'collar', face: '', back: '' }, s.look || {}); save.opts = Object.assign({ joy: false, sound: true, voice: true }, s.opts || {}); save.lv = Object.assign({ math: 1, abc: 1, shapes: 1 }, s.lv || {}); } catch (e) {}
+try { const s = JSON.parse(localStorage.getItem('kittycity3d') || '{}'); Object.assign(save, s); save.look = Object.assign({ fur: 1, eye: 0, pat: 3, ear: 0, tail: 0, hat: '', neck: 'collar', face: '', back: '' }, s.look || {}); save.opts = Object.assign({ joy: false, sound: true, voice: true }, s.opts || {}); save.lv = Object.assign({ math: 1, abc: 1, shapes: 1 }, s.lv || {}); } catch (e) {}
+// every kitty starts with 500 coins; older saves get topped up once
+if (!save.c500) { save.c500 = 1; if (save.coins < 500) save.coins = 500; }
 if (!save.name || !/^[A-Za-z ]{1,12}$/.test(save.name)) save.name = 'Mittens';
 if (!Array.isArray(save.pets)) save.pets = []; save.pets = save.pets.filter(p => PET_BY_ID[p]); if (!PET_BY_ID[save.pet]) save.pet = '';
 const persist = () => { try { localStorage.setItem('kittycity3d', JSON.stringify(save)); } catch (e) {} };
@@ -4960,7 +4973,7 @@ function schoolProps(g, d) {
     const cz = z + .75;
     [[-.2, -.18], [.2, -.18], [-.2, .18], [.2, .18]].forEach(([a, b]) => g.add(lcyl(col, x + a, 0, cz + b, .03, .42)));
     g.add(box(M.wood('#e2b783'), x, .42, cz, .5, .06, .46), lcyl(col, x - .21, .42, cz + .2, .03, .5), lcyl(col, x + .21, .42, cz + .2, .03, .5), box(col, x, .66, cz + .21, .5, .26, .05));
-    d.obst.push([x, z, .9]); }
+    d.obst.push([x, z, .6]); d.seats.push({ seat: { x, z: cz }, rot: Math.PI, table: null }); }
   // the teacher's desk: drawers, a globe, an apple, books, a pot of pencils and a bell
   { const tx = 3.5, tz = -3.2;
     g.add(box(wood, tx - .75, 0, tz, .5, .86, .86), box(wood, tx + .75, 0, tz, .5, .86, .86), box(wood, tx, .3, tz - .1, 1.0, .56, .04), box(M.wood('#a8723f'), tx, .86, tz, 2.1, .08, .95));
@@ -5649,7 +5662,7 @@ function updateBand(t) {
 
 /* ================= wandering kitties (no name tags: they're not real players) ================= */
 const npcs = [];
-for (let i = 0; i < 10; i++) {
+for (let i = 0; i < 7; i++) {
   const look = randomLook(); const cat = buildCat(Object.assign({}, look, { lod: 0 })); const p = randomSpot();
   const n = { cat, x: p[0], z: p[1], tx: p[0], tz: p[1], ry: 0, wait: Math.random() * 4, sp: 1.6 + Math.random() * .8, npc: true, day: i < 7 || true, night: i % 2 === 0 };
   cat.position.set(n.x, 0, n.z); town.add(cat); npcs.push(n);
@@ -6045,9 +6058,13 @@ function showNetWhy() {
   const msg = { 'no-room': "Can't play together here. Open Kitty City while signed in to Claude, on the account the game belongs to.", 'no-claude': "Can't play together here. Open Kitty City from its Claude link.", starting: 'Still connecting...' }[netWhy] || ("Can't connect right now (" + netWhy + ').');
   const t = $('#toast'); t.textContent = '📡 ' + msg; t.hidden = false; clearTimeout(t._t); t._t = setTimeout(() => t.hidden = true, 9000);
 }
+let socialKey = '';
 function refreshSocial() {
-  const f = $('#friends'); f.textContent = '';
-  const list = [...others.values()];
+  const f = $('#friends'), list = [...others.values()];
+  const key = [!!troom, mode, ...list.map(o => o.peer + o.name + o.loc + o.look.fur)].join('|');
+  if (key === socialKey && f.childElementCount) return;
+  if (f.matches(':active') || f.querySelector(':active')) return;
+  socialKey = key; f.textContent = '';
   if (!troom) { const jm = btn('pill', '🐱 Just me'); jm.onclick = showNetWhy; f.append(jm); }
   else if (!list.length) f.append(h('span', 'pill', '⏳ Waiting for friends'));
   list.forEach(o => {
@@ -6080,7 +6097,7 @@ function friendMenu(o) {
   m.append(visit, go);
   const fr = o.k && save.friends[o.k];
   if (o.k && !fr) { const ask = btn('', '💞 Be friends'); ask.onclick = () => { m.hidden = true; askFriend(o); }; m.append(ask); }
-  else if (fr) m.append(h('span', 'pill', fr.me && fr.them ? '💞 Friends' : '⏳ Waiting for grown-ups'));
+  else if (fr) m.append(h('span', 'pill', isFriend(fr) ? '💞 Friends' : '⏳'));
   if (fr && isFriend(fr)) { const pc = btn('', '✉️ Postcard'); pc.onclick = () => { m.hidden = true; openCardPicker(o.k); }; m.append(pc); }
   const close = btn('', '✖️'); close.onclick = () => { m.hidden = true; };
   m.append(close);
@@ -6095,7 +6112,7 @@ async function connectRoom(code) {
   connectLobby();
   try { troom = await room.join('town-' + code); } catch (e) { troom = null; netWhy = 'join ' + (e && (e.code || e.message)); refreshSocial(); return; }
   netWhy = 'ok';
-  troom.onPeers(onPeers, e => { troom = null; netWhy = 'peers ' + (e && (e.code || e.message)); refreshSocial(); });
+  troom.onPeers(ch => { try { onPeers(ch); } catch (e) { noteErr(e); } }, e => { troom = null; netWhy = 'peers ' + (e && (e.code || e.message)); refreshSocial(); });
   pushPresence(true); refreshSocial();
 }
 
@@ -6129,9 +6146,14 @@ function rebuildNeighborhood() {
 
 /* ================= talking ================= */
 const PHRASES = [['👋', 'Hi!'], ['🎲', "Let's play!"], ['🐾', 'Follow me!'], ['🏠', 'Come to my house!'], ['🚌', "Let's ride the bus!"], ['👗', 'Nice outfit!'], ['⭐', 'Good job!'], ['🍕', "I'm hungry!"], ['💤', 'Bye bye!']];
-PHRASES.forEach(([e, t], i) => { const b = btn('', e + ' ' + t); b.onclick = () => { $('#phrases').hidden = true; say(meLab(), e + ' ' + t); speak(t); pushPresence(false, { p: i, pt: Date.now() }); }; $('#phrases').append(b); });
+// one "meet me at..." for every shop: these sit after the plain phrases so their numbers stay the same for older versions
+const PLACE_NAME = { school: 'the school', salon: 'the nail salon', pizza: 'the pizza shop', coffee: 'the coffee shop', post: 'the post office', hospital: 'the hospital', police: 'the police station', bank: 'the bank', pets: 'the pet store', hotel: 'the hotel', grocery: 'the grocery store', icecream: 'the ice cream shop', boutique: 'the boutique', furniture: 'the home store', club: 'the Kitty Club', arcade: 'the arcade' };
+const N_PLAIN = PHRASES.length;
+SHOPS.forEach(s => PHRASES.push([s.icon, 'Meet me at ' + (PLACE_NAME[s.id] || 'the ' + s.name) + '!']));
+PHRASES.forEach(([e, t], i) => { const b = i < N_PLAIN ? btn('', e + ' ' + t) : btn('place', e, t); b.onclick = () => { say(meLab(), e + ' ' + t); speak(t); pushPresence(false, { p: i, pt: Date.now() }); }; $('#phrases').append(b); });
+{ const r = h('div', 'placerow'); [...$('#phrases').querySelectorAll('.place')].forEach(b => r.append(b)); $('#phrases').append(r); }
 $('#open-phrases').onclick = () => { sfx.tap(); $('#phrases').hidden = !$('#phrases').hidden; $('#fmenu').hidden = true; $('#settings').hidden = true; };
-document.querySelectorAll('.emo').forEach(b => b.onclick = () => { $('#phrases').hidden = true; const e = b.dataset.e; say(meLab(), e, true); e === '😸' ? sfx.meow() : sfx.good(); pushPresence(false, { e, et: Date.now() }); });
+document.querySelectorAll('.emo').forEach(b => b.onclick = () => { const e = b.dataset.e; say(meLab(), e, true); e === '😸' ? sfx.meow() : sfx.good(); pushPresence(false, { e, et: Date.now() }); });
 const meObj = { name: '', me: true };
 const meLab = () => meObj;
 function getLabel(o) {
@@ -6183,12 +6205,16 @@ function joyMove(e) {
   const r = joy.getBoundingClientRect(); let dx = e.clientX - r.left - r.width / 2, dy = e.clientY - r.top - r.height / 2;
   const d = Math.hypot(dx, dy), m = r.width / 2 - 20; if (d > m) { dx *= m / d; dy *= m / d; }
   knob.style.transform = `translate(${dx}px,${dy}px)`;
-  joyVec = d > 8 ? { x: dx / m, y: dy / m } : null; me.go = null; standUp();
+  // a wide dead zone so a resting thumb doesn't wiggle the kitty; past it the push grows smoothly from zero
+  const dz = 22, k = d > dz ? (Math.min(d, m) - dz) / (m - dz) / d : 0;
+  joyVec = d > dz ? { x: dx * k, y: dy * k } : null; me.go = null; standUp();
 }
 
 /* ================= friends (both families' grown-ups approve) ================= */
 let lobbyOnline = new Map(), lastLobby = 0, lobbyKey = '';
 const isFriend = f => f && f.me && f.them;
+// friends no longer wait for grown-ups (Demi): every saved friend counts as approved on this side
+Object.values(save.friends).forEach(f => { f.me = true; });
 async function connectLobby() {
   if (!room || connectLobby.done) return; connectLobby.done = true;
   try { room.onPeers(ch => {
@@ -6201,7 +6227,7 @@ async function connectLobby() {
       if (on && isFriend(f) && !lobbyOnline.has(k)) friendOnline(f);
     }
     if (changed) persist();
-    lobbyOnline = now; if (!$('#fpanel').hidden) drawFriends();
+    lobbyOnline = now; if (!$('#fpanel').hidden && $('#fpanel').dataset.v === 'list') drawFriends();
     for (const [k, on] of now) if (on.pc.length) mailCheck(k, on);
   }); } catch (e) {}
   pushLobby(true);
@@ -6220,7 +6246,7 @@ function friendOnline(f) {
   $('#open-friends').classList.add('pulse'); $('#open-settings').classList.add('pulse'); sfx.good(); speak(f.n + ' is here!');
 }
 function askFriend(o) {
-  save.friends[o.k] = { n: o.name, a: lookArr(o.look), sent: true, me: false, them: false }; persist();
+  save.friends[o.k] = { n: o.name, a: lookArr(o.look), sent: true, me: true, them: false }; persist(); pushLobby(true);
   pushPresence(false, { fq: [o.k, Date.now()] }); sfx.good(); speak('You asked ' + o.name + ' to be friends!'); say(meLab(), '💞', true);
 }
 const answered = new Set();
@@ -6228,35 +6254,52 @@ function friendSignals(o, pr) {
   if (!o.k) return;
   if (Array.isArray(pr.fq) && pr.fq[0] === save.kid && !answered.has(o.k + pr.fq[1]) && !save.friends[o.k]) {
     answered.add(o.k + pr.fq[1]);
-    const p = $('#busq'); p.textContent = ''; p.hidden = false;
+    const p = $('#freq'); p.textContent = ''; p.hidden = false;
     p.append(h('div', 'ttl', '')); p.firstChild.textContent = '💞 ' + o.name + ' wants to be friends!';
     const y = btn('', '👍 Yes'), n = btn('', '👎 No');
-    y.onclick = () => { p.hidden = true; save.friends[o.k] = { n: o.name, a: lookArr(o.look), me: false, them: false }; persist(); pushPresence(false, { fa: [o.k, Date.now()] }); sfx.yay(); speak('Yay! A grown-up needs to say okay too.'); };
+    y.onclick = () => { p.hidden = true; save.friends[o.k] = { n: o.name, a: lookArr(o.look), me: true, them: true }; persist(); pushLobby(true); pushPresence(false, { fa: [o.k, Date.now()] }); sfx.yay(); speak('Yay! You and ' + o.name + ' are friends!'); };
     n.onclick = () => { p.hidden = true; sfx.tap(); };
     p.append(y, n); speak(o.name + ' wants to be friends!');
   }
-  if (Array.isArray(pr.fa) && pr.fa[0] === save.kid && save.friends[o.k] && save.friends[o.k].sent) { save.friends[o.k].sent = false; persist(); sfx.yay(); say(o, '💞', true); speak(o.name + ' said yes! A grown-up needs to say okay too.'); }
+  if (Array.isArray(pr.fa) && pr.fa[0] === save.kid && save.friends[o.k] && save.friends[o.k].sent) { save.friends[o.k].sent = false; save.friends[o.k].them = true; persist(); sfx.yay(); say(o, '💞', true); speak(o.name + ' said yes! You are friends!'); }
 }
 function drawFriends() {
-  const p = $('#fpanel'); p.textContent = ''; p.append(h('div', 'ttl', '💞 My friends'));
-  const list = Object.entries(save.friends).filter(([, f]) => !f.sent);
-  if (!list.length) p.append(h('span', 'pill', '👆 Tap a kitty, then 💞'));
+  const p = $('#fpanel'); p.textContent = ''; p.dataset.v = 'list'; p.append(h('div', 'ttl', '💞 My friends'));
+  const list = Object.entries(save.friends);
+  if (!list.length) p.append(h('span', 'pill', '👆 🐱 💞'));
   list.forEach(([k, f]) => {
-    const on = lobbyOnline.get(k), ok = isFriend(f);
+    const on = lobbyOnline.get(k) || ([...others.values()].some(o => o.k === k) && { l: '' }), ok = isFriend(f);
     const b = btn('fbtn', '', f.n); const face = h('span', 'face' + (ok && on ? '' : ' off'), '🐱'); face.style.background = FUR[(f.a && f.a[0]) | 0][0];
     face.append(h('b', '', !ok ? '⏳' : on ? '🟢' : '💤'));
     const nm = h('span'); nm.textContent = f.n + (ok && on ? ' ' + (locIcon(on.l) || '🏙️') : ''); b.append(face, nm);
-    b.onclick = () => {
-      if (!ok) { speak('Waiting for a grown-up to say okay.'); return; }
-      if (!on) { speak(f.n + ' is sleeping. Zzz.'); return; }
-      p.hidden = true;
-      if (on.c && on.c !== townCode) { speak("Let's go to " + f.n + "'s town!"); enterTown(on.c); return; }
-      const o = [...others.values()].find(o => o.k === k); if (o) goToOther(o);
-    };
-    if (ok && on) { const row = h('div', 'fbtn'); const pc = btn('', '✉️', 'Send ' + f.n + ' a postcard'); pc.onclick = () => openCardPicker(k); row.append(b, pc); p.append(row); } else p.append(b);
+    b.onclick = () => { sfx.tap(); if (!ok) { speak('Waiting for ' + f.n + ' to say yes.'); return; } drawFriendActs(k, f); };
+    p.append(b);
   });
   const mb = btn('', '💌 My postcards' + (save.mail.length ? ' (' + save.mail.length + ')' : '')); mb.onclick = () => drawMail(); p.append(mb);
   const x = btn('', '✖️'); x.onclick = () => p.hidden = true; p.append(x);
+}
+// a friend's three choices: jump to them, visit their house, or send a postcard
+function drawFriendActs(k, f) {
+  const p = $('#fpanel'), on = lobbyOnline.get(k); p.textContent = ''; p.dataset.v = 'acts';
+  const t = h('div', 'ttl', ''); t.textContent = f.n; p.append(t);
+  const here = () => [...others.values()].find(o => o.k === k);
+  const asleep = () => { speak(f.n + ' is sleeping. Zzz.'); };
+  const go = btn('', '🐾 Go to ' + f.n), house = btn('', '🏠 ' + f.n + "'s house"), card = btn('', '✉️ Postcard');
+  // a friend in this town is reached directly; one in another town takes you to their town first
+  const reach = fn => { const o = here(); if (o) { p.hidden = true; return fn(o); } if (on && on.c && on.c !== townCode) { p.hidden = true; speak("Let's go to " + f.n + "'s town!"); return enterTown(on.c); } asleep(); };
+  go.onclick = () => reach(jumpToOther);
+  house.onclick = () => reach(o => enterHouse(o.peer));
+  card.onclick = () => { p.hidden = true; openCardPicker(k); };
+  const back = btn('', '⬅️'); back.onclick = () => { sfx.tap(); drawFriends(); };
+  p.append(go, house, card, back); speak(f.n);
+}
+// jump straight to where a friend is: next to them in town, into their shop, or into their house
+function jumpToOther(o) {
+  if (o.loc.startsWith('h:')) return enterHouse(o.loc.slice(2));
+  const s = o.loc.startsWith('s:') && SHOPS.find(s => s.id === o.loc.slice(2));
+  if (s) { if (mode === 'inside' && me.building && me.building.id === s.id) return; if (mode !== 'town') backToStreet(s.door.x, s.door.z, s.out + Math.PI); return enterBuilding(s); }
+  const put = () => { me.x = me.tx = o.tx + 1.2; me.z = me.tz = o.tz + 1.2; me.ry = Math.atan2(o.tx - me.x, o.tz - me.z); camYaw = me.ry; pushPresence(true); };
+  if (mode === 'town') fade(put); else backToStreet(o.tx + 1.2, o.tz + 1.2, 0);
 }
 $('#open-friends').onclick = () => { sfx.tap(); $('#open-friends').classList.remove('pulse'); const p = $('#fpanel'); if (p.hidden) { drawFriends(); p.hidden = false; } else p.hidden = true; ['#phrases', '#settings', '#fmenu'].forEach(s => $(s).hidden = true); };
 function openGrownups() {
@@ -6282,11 +6325,12 @@ function drawGrown() {
     row.append(acts); p.append(row);
   });
   p.append(h('div', 'lbl', 'Friendships start once both families approve, each on their own iPad.'));
+  try { const er = JSON.parse(localStorage.getItem('kc-errs') || '[]'); if (er.length) { const l = h('div', 'lbl'); l.style.cssText = 'font-size:12px;opacity:.7;user-select:text'; l.textContent = 'Problems seen: ' + er.map(x => x.join(' ')).join(' / '); p.append(l); } } catch (e) {}
   const x = btn('', '✖️ Done'); x.onclick = () => p.hidden = true; p.append(x);
 }
 
 /* ================= entering / leaving ================= */
-function fade(fn) { const f = $('#fade'); f.classList.add('on'); setTimeout(() => { fn(); setTimeout(() => f.classList.remove('on'), 60); }, 230); }
+function fade(fn) { const f = $('#fade'); f.classList.add('on'); setTimeout(() => { try { fn(); } catch (e) { noteErr(e); } setTimeout(() => f.classList.remove('on'), 60); }, 230); }
 function enterTown(code) {
   if (troom && troom.name !== 'town-' + code) { try { troom.leave(); } catch (e) {} troom = null; }
   townCode = code; save.code = code; persist();
@@ -6795,7 +6839,7 @@ if (typeof window !== 'undefined') window.KCG = KCG;
 @keyframes kcgHint{50%{scale:1.14;filter:drop-shadow(0 0 10px #ffe36a) brightness(1.1)}}
 .kcg-bob{animation:kcgBob 1.6s ease-in-out infinite}
 @keyframes kcgBob{50%{translate:0 -6px}}
-.kcg-job{width:230px;height:250px;border-radius:30px;background:#fff;box-shadow:0 8px 0 #0003;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:10px}
+.kcg-job{width:200px;height:216px;border-radius:30px;background:#fff;box-shadow:0 8px 0 #0003;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:10px}
 .kcg-job:active{transform:translateY(5px);box-shadow:0 3px 0 #0003}
 .kcg-job .t{font:800 24px var(--display);color:var(--ink)}
 .kcg-job .stars{display:flex;gap:2px;min-height:26px}
@@ -8423,7 +8467,7 @@ if (typeof window !== 'undefined') window.KCG = KCG;
     ];
     const row = h('div', 'row'); row.style.cssText = 'justify-content:center;gap:22px;flex:none;width:100%;max-width:940px;margin-top:14px';
     jobs.forEach(j => {
-      const b = btn('kcg-job', `${j.art}<div class="t">${j.name}</div>`, j.name); b.style.flex = '0 0 auto'; b.style.width = '270px'; b.style.height = '280px'; b.querySelector('.t').style.textAlign = 'center';
+      const b = btn('kcg-job', `${j.art}<div class="t">${j.name}</div>`, j.name); b.style.flex = '0 0 auto'; b.style.width = '220px'; b.style.height = '230px'; b.querySelector('.t').style.textAlign = 'center';
       b.onclick = () => { sfx.tap(); speak(j.name); root.textContent = ''; j.go(); }; row.append(b);
     });
     root.append(row); root.insertAdjacentHTML('beforeend', boardArt());
@@ -9700,7 +9744,7 @@ if (typeof window !== 'undefined') window.KCG = KCG;
     ];
     const row = h('div', 'row'); row.style.cssText = 'justify-content:center;gap:22px;flex:none;width:100%;max-width:940px;margin-top:14px';
     jobs.forEach(j => {
-      const b = btn('kcg-job', `${j.art}<div class="t">${j.name}</div>`, j.name); b.style.flex = '0 0 auto'; b.style.width = '270px'; b.style.height = '280px'; b.querySelector('.t').style.textAlign = 'center';
+      const b = btn('kcg-job', `${j.art}<div class="t">${j.name}</div>`, j.name); b.style.flex = '0 0 auto'; b.style.width = '220px'; b.style.height = '230px'; b.querySelector('.t').style.textAlign = 'center';
       b.onclick = () => { sfx.tap(); speak(j.name); root.textContent = ''; j.go(); }; row.append(b);
     });
     root.append(row);
@@ -10194,7 +10238,7 @@ if (typeof window !== 'undefined') window.KCG = KCG;
 })();
 /* ================= Grocery store: three action jobs (replaces nothing, adds GAMES.grocery) =================
    GAMES.grocery opens a job board with three big picture cards:
-     1. Checkout        - groceries ride a belt to a scanner beam; tap each one in the beam, then tap the coin pile to pay for the order
+     1. Checkout        - groceries ride a belt and wait before the scanner: drag each through the red beam, drag it into the bag, drag coins into the tray to pay, then drag the bag to the customer (every drag also works as a tap)
      2. Catch the groceries - slide the shopping cart under what the stock cat tosses down, to fill the shopping list
      3. Stock the shelves   - crates ride a belt; drag each food to the shelf with its picture sign
    No fail states, always at least 2 stars, every drag also works as tap-then-tap.
@@ -10284,7 +10328,7 @@ if (typeof window !== 'undefined') window.KCG = KCG;
 
   function checkout(root, done) {
     const L = KCG.life(root), fin = (st, m, b) => { logBest('checkout', st); done(st, m, b); };
-    const ban = KCG.banner(root, 'Tap the groceries under the red light!', KCG.cat({ hat: 'cap', capc: '#4f9a46', fur: '#f0a04b', px: 68 }));
+    const ban = KCG.banner(root, 'Drag each grocery across the red light!', KCG.cat({ hat: 'cap', capc: '#4f9a46', fur: '#f0a04b', px: 68 }));
     const S0 = KCG.stage(root, L, W, H), st = S0.el;
     st.insertAdjacentHTML('afterbegin', checkoutScene());
     const belt = h('div', 'kcg-abs'); belt.style.cssText = `left:${BELT0}px;top:${BELT_Y}px;width:${BELT1 - BELT0}px;height:${BELT_H}px;background:repeating-linear-gradient(90deg,#4d525c 0 22px,#42464f 22px 28px);border-radius:8px;box-shadow:inset 0 8px 12px #0006,inset 0 -6px 10px #0004;z-index:3`;
@@ -10293,113 +10337,164 @@ if (typeof window !== 'undefined') window.KCG = KCG;
     const beam = h('div', 'kcg-abs'); beam.style.cssText = `left:${BX - 70}px;top:${236}px;width:140px;height:${BELT_Y + BELT_H - 236 - 6}px;background:linear-gradient(180deg,rgba(255,90,74,.55),rgba(255,90,74,.18));clip-path:polygon(24% 0,76% 0,100% 100%,0 100%);z-index:11;pointer-events:none;opacity:.8`;
     st.append(beam); beam.animate([{ opacity: .55 }, { opacity: .95 }], { duration: 700, iterations: Infinity, direction: 'alternate' });
     const beamFlash = () => beam.animate([{ opacity: 1, filter: 'brightness(2)' }, { opacity: .8, filter: 'none' }], { duration: 320 });
+    // a little arrow on the belt pointing the way through the beam
+    const arrow = h('div', 'kcg-abs'); arrow.style.cssText = `left:${BX - 52}px;top:${BELT_Y + 18}px;z-index:12;pointer-events:none;opacity:0;transition:opacity .3s`; arrow.innerHTML = `<svg width="104" height="48" viewBox="0 0 104 48"><path d="M6 24H80M62 6L96 24L62 42" fill="none" stroke="#fff" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" opacity=".9"/><path d="M6 24H80M62 6L96 24L62 42" fill="none" stroke="#ff5a4a" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>`; st.append(arrow);
+    const arrowGo = on => { arrow.style.opacity = on ? 1 : 0; };
 
-    // cashier cat, the bag, the register
-    S0.add(KCG.catBust({ fur: '#f0a04b', hat: 'cap', capc: '#4f9a46', shirt: '#5fa84a', buttons: 0, px: 104, happy: 1 }), 798, 150, { z: 2 });
-    const bag = S0.add(ico('bag', 120), 826, 232, { z: 6 });
+    // cashier cat, the register, the coin tray
+    S0.add(KCG.catBust({ fur: '#f0a04b', hat: 'cap', capc: '#4f9a46', shirt: '#5fa84a', buttons: 0, px: 104, happy: 1 }), 798, 120, { z: 2 });
     const reg = S0.add(registerArt(), 774, 432, { z: 6 });
     const disp = h('div', 'kcg-abs'); disp.style.cssText = 'left:802px;top:442px;width:134px;height:44px;z-index:7;font:800 34px/44px var(--display);color:#1d6b3a;text-align:center;letter-spacing:2px;pointer-events:none'; disp.textContent = '0'; st.append(disp);
     const coinRow = h('div', 'kcg-abs'); coinRow.style.cssText = 'left:786px;top:486px;width:160px;display:flex;flex-wrap:wrap;justify-content:center;gap:0;z-index:7;pointer-events:none'; st.append(coinRow);
-    // payment: tray and coin pile, shown when the scanning is over
     const tray = h('div', 'kcg-abs'); tray.style.cssText = 'left:250px;top:448px;width:440px;height:120px;z-index:6;opacity:0;transition:opacity .4s,transform .4s;transform:scale(.9)';
     tray.innerHTML = `<svg width="440" height="120" viewBox="0 0 440 120"><rect x="4" y="10" width="432" height="104" rx="18" fill="#9aa3b2" ${S(4)}/><rect x="14" y="20" width="412" height="84" rx="12" fill="#5a6270" ${S(3)}/>${hi('M24 28H300', '#fff', .35, 4)}</svg>`; st.append(tray);
     const slotEls = [];
     const owe = h('div', 'kcg-abs'); owe.style.cssText = 'left:122px;top:168px;z-index:8;pointer-events:none;opacity:0;transform:scale(.6);transform-origin:0 100%;transition:opacity .3s,transform .3s';
     st.append(owe);
-    const pile = h('button', 'kcg-btn'); pile.setAttribute('aria-label', 'Coins'); pile.style.cssText = 'left:40px;top:452px;width:180px;height:124px;z-index:7;background:none;box-shadow:none;opacity:0;transition:opacity .4s;pointer-events:none';
-    pile.innerHTML = `<svg width="180" height="124" viewBox="0 0 180 124"><ellipse cx="90" cy="108" rx="78" ry="12" fill="#000" opacity=".2"/>${[[44, 84, 52], [98, 90, 56], [140, 82, 50], [70, 56, 54], [118, 58, 52], [92, 34, 52]].map(([x, y, s]) => KCG.g('coin', x, y, s, (x * 7) % 30 - 15)).join('')}</svg>`; st.append(pile);
+    const pileArt = h('div', 'kcg-abs'); pileArt.style.cssText = 'left:40px;top:452px;width:180px;height:124px;z-index:5;opacity:0;transition:opacity .4s;pointer-events:none';
+    pileArt.innerHTML = `<svg width="180" height="124" viewBox="0 0 180 124"><ellipse cx="90" cy="108" rx="78" ry="12" fill="#000" opacity=".2"/><rect x="10" y="40" width="160" height="70" rx="20" fill="#d9a066" ${S(4)}/></svg>`; st.append(pileArt);
 
     /* --- customers and their groceries --- */
-    const ORDERS = [3, 4]; let cust = 0, misses = 0, paid = 0, total = 0, scanned = 0, phase = 'scan', t0 = 0, lastIdle = 0;
+    const ORDERS = [3, 4], BAGX = 868, BAGY = 318, WAITX = 250, ENDX = 728;
+    let cust = 0, misses = 0, total = 0, phase = 'scan', lastAct = 0, bagged = 0, paid = 0, hinted = 0, saidBag = 0;
     const makeOrder = n => { for (let tries = 0; tries < 50; tries++) { const ks = shuffle(Object.keys(FOODS).filter(k => k !== 'cheese' || Math.random() < .4)).slice(0, n); const sum = ks.reduce((a, k) => a + FOODS[k].price, 0); if (sum <= (n === 3 ? 6 : 8)) return ks; } return shuffle(['apple', 'banana', 'carrot', 'cookie']).slice(0, n); };
-    let queue = [], items = [], custEl = null, basketEl = null, lastSpawn = 0, beltOff = 0;
+    let queue = [], items = [], coins = [], custEl = null, basketEl = null, bag = null, bagPeek = [], scannedN = 0;
     const bust = (i, happy) => KCG.catBust(Object.assign(KCG.guest(i * 3 + 1), { px: 104, shirt: ['#4f8fe0', '#e86f8a', '#f6a623'][i % 3], happy: happy ? 1 : 0 }));
+    const act = () => { lastAct = performance.now() / 1000; };
+    const cy0 = BELT_Y - 2;
+    const place = it => { it.el.style.transform = `translate(${it.x - ITEM / 2}px,${cy0 + it.dy - ITEM / 2}px)`; };
+    const addTotal = n => { total += n; disp.textContent = String(total); coinRow.innerHTML = dots(Math.min(total, 10), 22); };
+    const glide = (el, from, to, ms, lift = 0, sc = 1) => el.animate([{ transform: `translate(${from[0]}px,${from[1]}px) scale(1)` }, { transform: `translate(${(from[0] + to[0]) / 2}px,${Math.min(from[1], to[1]) - lift}px) scale(1.1)`, offset: .5 }, { transform: `translate(${to[0]}px,${to[1]}px) scale(${sc})` }], { duration: ms, easing: 'ease-in-out', fill: 'forwards' });
+
+    const makeBag = () => {
+      bag = h('div', 'kcg-abs'); bag.style.cssText = `left:0;top:0;width:150px;height:150px;z-index:6;transform:translate(${BAGX - 75}px,${BAGY - 75}px)`; bag.innerHTML = ico('bag', 150); st.append(bag); bag.animate([{ opacity: 0, translate: '60px 0' }, { opacity: 1, translate: '0 0' }], { duration: 500, easing: 'ease-out' });
+      bagPeek = []; bag.__x = BAGX; bag.__y = BAGY;
+      KCG.drag(S0, bag, {
+        pos: () => ({ x: bag.__x, y: bag.__y }),
+        start: () => { if (phase !== 'give') return false; act(); KCG.hint(bag, false); return true; },
+        move: (x, y) => { bag.__x = x; bag.__y = y; bag.style.transform = `translate(${x - 75}px,${y - 75}px) scale(1.06)`; bagPeek.forEach(p => { p.el.style.transform = `translate(${x + p.dx - 22}px,${y + p.dy - 22}px)`; }); },
+        tap: () => giveBag(),
+        drop: (p, moved) => { if (moved && bag.__x < 340) giveBag(); else if (moved) bagBack(); },
+      });
+    };
+    const bagBack = () => { const x0 = bag.__x, y0 = bag.__y; bag.__x = BAGX; bag.__y = BAGY; bag.animate([{ transform: `translate(${x0 - 75}px,${y0 - 75}px)` }, { transform: `translate(${BAGX - 75}px,${BAGY - 75}px)` }], { duration: 320 }); bag.style.transform = `translate(${BAGX - 75}px,${BAGY - 75}px)`; bagPeek.forEach(p => { p.el.style.transform = `translate(${BAGX + p.dx - 22}px,${BAGY + p.dy - 22}px)`; }); };
     const startCustomer = () => {
-      phase = 'scan'; total = 0; scanned = 0; paid = 0; queue = makeOrder(ORDERS[cust]); items = [];
-      disp.textContent = '0'; coinRow.innerHTML = ''; tray.style.opacity = 0; pile.style.opacity = 0; pile.style.pointerEvents = 'none'; KCG.hint(pile, false); owe.style.opacity = 0; owe.style.transform = 'scale(.6)';
+      phase = 'scan'; total = 0; scannedN = 0; bagged = 0; paid = 0; saidBag = 0; queue = makeOrder(ORDERS[cust]); items = []; coins = [];
+      disp.textContent = '0'; coinRow.innerHTML = ''; tray.style.opacity = 0; pileArt.style.opacity = 0; owe.style.opacity = 0; owe.style.transform = 'scale(.6)';
       slotEls.splice(0).forEach(e => e.remove());
       custEl = S0.add(bust(cust, false), 24, 146, { z: 2 }); basketEl = S0.add(ico('wicker', 96), 22, 262, { z: 7 });
       [custEl, basketEl].forEach(e => e.animate([{ transform: e.style.transform.replace(/translate\(([-\d.]+)px/, (m, x) => `translate(${+x - 220}px`), opacity: 0 }, { opacity: 1 }], { duration: 600, easing: 'ease-out' }));
-      lastSpawn = performance.now() / 1000 + .6;
-      if (cust) ban.set('Tap the groceries under the red light!'); 
+      makeBag(); act();
+      if (cust) ban.set('Drag each grocery across the red light!');
     };
+
+    /* --- 1. an item rides in, waits in front of the scanner and gets dragged through the beam --- */
     const spawn = () => {
       const k = queue.shift(); if (!k) return;
       const el = h('div', 'kcg-abs'); el.style.cssText = `width:${ITEM}px;height:${ITEM}px;z-index:10;filter:drop-shadow(0 4px 0 rgba(0,0,0,.28))`; el.innerHTML = ico(k, ITEM);
-      const it = { k, el, x: 70, price: FOODS[k].price, loops: 0, fade: 0, state: 'belt' };
-      el.style.transform = `translate(${it.x - ITEM / 2}px,${BELT_Y + 6 - ITEM / 2 - 8}px)`; st.append(el);
-      el.animate([{ transform: `translate(${it.x - ITEM / 2 + 6}px,${BELT_Y - 90}px) scale(.5)`, opacity: 0 }, { transform: `translate(${it.x - ITEM / 2}px,${BELT_Y - 30}px) scale(1.1)`, opacity: 1, offset: .6 }, { transform: `translate(${it.x - ITEM / 2}px,${BELT_Y - 6 - ITEM / 2 + 6}px) scale(1)`, opacity: 1 }], { duration: 460, easing: 'ease-in' });
-      KCG.snd.pop(); items.push(it);
+      const it = { k, el, x: 60, dy: 0, price: FOODS[k].price, state: 'in', scanned: false, prev: 'in' }; place(it); st.append(el);
+      el.animate([{ translate: '0 -90px', scale: '.5', opacity: 0 }, { translate: '0 -30px', scale: '1.1', opacity: 1, offset: .6 }, { translate: '0 0', scale: '1', opacity: 1 }], { duration: 460, easing: 'ease-in' }); KCG.snd.pop(); items.push(it);
+      KCG.drag(S0, el, {
+        pos: () => ({ x: it.x, y: cy0 + it.dy }),
+        start: () => { if (it.state !== 'wait' && it.state !== 'ready') return false; it.prev = it.state; it.state = 'drag'; el.style.zIndex = 60; act(); arrowGo(false); return true; },
+        move: (x, y) => { it.x = clamp(x, 40, W - 30); it.dy = clamp(y - cy0, -170, 110); place(it); if (it.prev === 'wait' && !it.scanned && it.x > BX + 10) doScan(it); },
+        tap: () => { if (it.prev === 'wait') { doScan(it); ride(it); } else bagIt(it); },
+        drop: (p, moved) => {
+          if (!moved) return;
+          if (it.prev === 'wait') { if (it.scanned) ride(it); else { misses++; sfx.oops(); back(it, WAITX, 'wait'); } }
+          else { if (Math.hypot(it.x - BAGX, cy0 + it.dy - BAGY) < 130) bagIt(it); else back(it, it.rx, 'ready'); }
+        },
+      });
     };
-    const place = it => { it.el.style.transform = `translate(${it.x - ITEM / 2}px,${BELT_Y + 6 - ITEM / 2 - 8 - (it.lift || 0)}px)`; };
-    const addTotal = n => { total += n; disp.textContent = String(total); coinRow.innerHTML = dots(Math.min(total, 10), 22); };
-    const scan = it => {
-      it.state = 'scanned'; scanned++; beamFlash(); KCG.snd.beep(); setTimeout(() => KCG.snd.beep(), 90); sfx.good();
-      KCG.rise(S0, it.x, BELT_Y - 70, `<div style="display:flex;background:#fff;border-radius:18px;padding:3px 8px;box-shadow:0 3px 0 #0003;border:3px solid ${K}">${dots(it.price, 26)}</div>`, 1100);
-      addTotal(it.price); disp.animate([{ transform: 'scale(1.3)' }, { transform: 'scale(1)' }], { duration: 260 });
-      const a = it.el.animate([{ transform: it.el.style.transform + ' scale(1)', opacity: 1 }, { transform: `translate(${870 - ITEM / 2}px,${300 - ITEM / 2}px) scale(.4)`, opacity: 1, offset: .8 }, { transform: `translate(${870 - ITEM / 2}px,${300 - ITEM / 2}px) scale(.3)`, opacity: 0 }], { duration: 520, easing: 'ease-in', fill: 'forwards' });
-      a.onfinish = () => { it.el.remove(); bag.animate([{ transform: bag.style.transform + ' scale(1.12)' }, { transform: bag.style.transform }], { duration: 260 }); KCG.snd.pop(); };
-      items.splice(items.indexOf(it), 1);
-      if (scanned === ORDERS[cust]) L.later(900, startPay);
+    const back = (it, x, state) => { it.state = 'fly'; const x0 = it.x, d0 = it.dy; const a = it.el.animate([{ transform: `translate(${x0 - ITEM / 2}px,${cy0 + d0 - ITEM / 2}px)` }, { transform: `translate(${x - ITEM / 2}px,${cy0 - ITEM / 2}px)` }], { duration: 340, easing: 'ease-out' }); L.later(340, () => { a.cancel(); it.x = x; it.dy = 0; it.state = state; it.el.style.zIndex = 10; place(it); if (state === 'wait') arrowGo(true); }); };
+    const doScan = it => {
+      if (it.scanned) return; it.scanned = true; scannedN++; beamFlash(); KCG.snd.beep(); setTimeout(() => KCG.snd.beep(), 90); sfx.good();
+      KCG.rise(S0, BX, BELT_Y - 70, `<div style="display:flex;background:#fff;border-radius:18px;padding:3px 8px;box-shadow:0 3px 0 #0003;border:3px solid ${K}">${dots(it.price, 26)}</div>`, 1100);
+      addTotal(it.price); disp.animate([{ transform: 'scale(1.3)' }, { transform: 'scale(1)' }], { duration: 260 }); KCG.burst(S0, BX, BELT_Y - 30, ['sparkle'], 4, 50, 18);
     };
+    const ride = it => { it.state = 'out'; it.el.style.zIndex = 10; it.dy = 0; place(it); act(); };
+
+    /* --- 2. scanned groceries ride to the end of the belt and are dragged into the bag --- */
+    const bagIt = it => {
+      if (it.state !== 'ready' && it.state !== 'drag') return; it.state = 'fly'; act(); KCG.hint(it.el, false);
+      const from = [it.x - ITEM / 2, cy0 + it.dy - ITEM / 2], to = [BAGX - ITEM * .35, BAGY - 40 - ITEM * .35];
+      const a = glide(it.el, from, to, 520, 120, .7); KCG.snd.whoosh();
+      L.later(520, () => {
+        a.cancel(); it.el.remove(); items.splice(items.indexOf(it), 1); bagged++; KCG.snd.pop(); sfx.coin();
+        const dx = -26 + (bagged % 3) * 26 + rand(8) - 4, dy = -46 - (bagged > 3 ? 8 : 0);
+        const pk = h('div', 'kcg-abs', ico(it.k, 44)); pk.style.cssText += `left:0;top:0;width:44px;height:44px;z-index:5;transform:translate(${bag.__x + dx - 22}px,${bag.__y + dy - 22}px)`; st.append(pk); bagPeek.push({ el: pk, dx, dy });
+        bag.animate([{ scale: '1.12 .92' }, { scale: '1' }], { duration: 280 }); KCG.burst(S0, bag.__x, bag.__y - 40, ['sparkle', 'star'], 4, 50, 18);
+        if (bagged === ORDERS[cust]) L.later(900, startPay);
+      });
+    };
+
+    /* --- 3. paying: drag the coins into the tray --- */
     const startPay = () => {
-      phase = 'pay'; paid = 0; ban.set('Tap the coins to pay!');
+      phase = 'pay'; paid = 0; ban.set('Drag the coins into the tray!'); act();
       const n = total, sp = Math.min(64, 380 / n), x0 = 250 + 220 - (n - 1) * sp / 2;
       for (let i = 0; i < n; i++) { const s = h('div', 'kcg-abs'); s.style.cssText = `z-index:7;pointer-events:none;width:52px;height:52px;border-radius:50%;box-shadow:inset 0 4px 8px #0008, 0 0 0 3px #7d8594;background:#454b58`; s.style.transform = `translate(${x0 + i * sp - 26}px,${508 - 26}px)`; s.dataset.x = x0 + i * sp; st.append(s); slotEls.push(s); }
       owe.innerHTML = `<div style="position:relative;display:flex;flex-wrap:wrap;max-width:196px;justify-content:center;background:#fff;border:3.5px solid ${K};border-radius:22px;padding:6px 10px;box-shadow:0 4px 0 #0003">${dots(n, 28)}<svg width="22" height="18" viewBox="0 0 22 18" style="position:absolute;left:-14px;bottom:10px"><path d="M22 2L2 14L22 15Z" fill="#fff" stroke="${K}" stroke-width="3.5" stroke-linejoin="round"/><path d="M23 4V14" stroke="#fff" stroke-width="6"/></svg></div>`; owe.style.opacity = 1; owe.style.transform = 'none';
-      tray.style.opacity = 1; tray.style.transform = 'none'; pile.style.opacity = 1; pile.style.pointerEvents = 'auto'; L.later(600, () => KCG.hint(pile, true));
-    };
-    pile.onclick = () => {
-      if (phase !== 'pay') return; KCG.hint(pile, false);
-      if (paid >= total) { KCG.wiggle(pile); sfx.oops(); return; }
-      const i = paid++, slot = slotEls[i], tx = +slot.dataset.x, c = h('div', 'kcg-fx', KCG.ico('coin', 52)); c.style.cssText += `left:0;top:0;z-index:30`;
-      st.append(c); const sx = 130, sy = 500;
-      c.animate([{ transform: `translate(${sx - 26}px,${sy - 26}px) scale(1)` }, { transform: `translate(${(sx + tx) / 2 - 26}px,${400}px) scale(1.2) rotate(180deg)`, offset: .5 }, { transform: `translate(${tx - 26}px,${508 - 26}px) scale(1) rotate(360deg)` }], { duration: 420, easing: 'ease-in-out', fill: 'forwards' }).onfinish = () => { c.remove(); slot.style.background = 'none'; slot.style.boxShadow = 'none'; slot.innerHTML = KCG.ico('coin', 52); KCG.snd.thud(); };
-      sfx.coin(); speak(NUMW[paid]);
-      if (paid === total) L.later(900, endCustomer);
-    };
-    const endCustomer = () => {
-      phase = 'done'; ding(); KCG.burst(S0, 480, 480, ['coin', 'star', 'heart', 'sparkle'], 12, 140, 30);
-      custEl.innerHTML = bust(cust, true); owe.style.opacity = 0; disp.textContent = '0'; coinRow.innerHTML = ''; tray.style.opacity = 0; pile.style.opacity = 0; pile.style.pointerEvents = 'none';
-      slotEls.forEach(e => e.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 400, fill: 'forwards' }));
-      L.later(1100, () => { [custEl, basketEl].forEach(e => e.animate([{ opacity: 1 }, { opacity: 0, transform: e.style.transform.replace(/translate\(([-\d.]+)px/, (m, x) => `translate(${+x - 220}px`) }], { duration: 500, fill: 'forwards' }).onfinish = () => e.remove()); });
-      cust++;
-      if (cust >= ORDERS.length) L.later(1700, () => KCG.finish(L, fin, misses <= 3 ? 3 : 2, 'All the groceries are scanned!'));
-      else L.later(1700, startCustomer);
-    };
-    const ding = () => { KCG.snd.ding(); sfx.coin(); };
-
-    /* --- taps on the belt --- */
-    S0.pointer({ down: pt => {
-      if (phase !== 'scan') return;
-      let near = null, nd = 1e9; items.forEach(it => { if (it.state !== 'belt' || it.fade) return; const d = Math.hypot(pt.x - it.x, pt.y - (BELT_Y + 40)); if (d < 80 && d < nd) { near = it; nd = d; } });
-      const inWin = it => Math.abs(it.x - BX) <= WIN;
-      if (near && inWin(near)) return scan(near);
-      // a tap in the beam also scans the item inside it
-      if (Math.abs(pt.x - BX) <= WIN && pt.y > 230 && pt.y < 420) { const inside = items.filter(it => it.state === 'belt' && !it.fade && inWin(it)).sort((a, b) => Math.abs(a.x - BX) - Math.abs(b.x - BX))[0]; if (inside) return scan(inside); }
-      if (near) { misses++; sfx.oops(); near.el.animate([{ rotate: '0deg' }, { rotate: '-8deg' }, { rotate: '8deg' }, { rotate: '0deg' }], { duration: 300 }); beamFlash(); }
-    } });
-
-    /* --- the loop --- */
-    L.loop((dt, t) => {
-      const v = 78;
-      let any = false;
-      if (phase === 'scan') {
-        if (queue.length && performance.now() / 1000 > lastSpawn && !items.some(it => it.x < 70 + 190 && it.state === 'belt')) { spawn(); lastSpawn = performance.now() / 1000 + .4; }
-        items.forEach(it => {
-          if (it.state !== 'belt') return; any = true;
-          if (it.fade === 0) it.x += (it.loops ? v * .75 : v) * dt;
-          if (it.fade === 0 && it.x >= BELT1 - 30) { it.fade = 1; it.loops++; misses++; it.el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 260, fill: 'forwards' }); L.later(900, () => { it.x = 70; place(it); it.el.getAnimations().forEach(a => a.cancel()); it.el.style.opacity = 0; it.el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 300, fill: 'forwards' }); it.fade = 0; }); }
-          place(it);
-          const inside = Math.abs(it.x - BX) <= WIN;
-          it.el.style.filter = inside ? 'drop-shadow(0 0 10px #ffe36a) drop-shadow(0 4px 0 rgba(0,0,0,.28))' : 'drop-shadow(0 4px 0 rgba(0,0,0,.28))';
-          it.lift = inside ? 8 + Math.sin(t * 8) * 3 : 0;
+      tray.style.opacity = 1; tray.style.transform = 'none'; pileArt.style.opacity = 1;
+      for (let i = 0; i < n; i++) {
+        const c = { el: h('div', 'kcg-abs', KCG.ico('coin', 52)), x: 70 + (i % 4) * 36 + (i > 3 ? 18 : 0), y: 500 + Math.floor(i / 4) * 24 - (i % 2) * 6, state: 'pile' };
+        c.el.style.cssText += 'left:0;top:0;width:52px;height:52px;z-index:30;filter:drop-shadow(0 3px 0 #0003)'; const put = () => { c.el.style.transform = `translate(${c.x - 26}px,${c.y - 26}px)`; }; put(); st.append(c.el); coins.push(c);
+        c.el.animate([{ translate: '0 -60px', opacity: 0 }, { translate: '0 0', opacity: 1 }], { duration: 300, delay: i * 80, fill: 'backwards' });
+        KCG.drag(S0, c.el, {
+          pos: () => ({ x: c.x, y: c.y }), start: () => { if (c.state !== 'pile') return false; c.state = 'drag'; act(); KCG.hint(c.el, false); return true; },
+          move: (x, y) => { c.x = x; c.y = y; put(); },
+          tap: () => payCoin(c), drop: (p, moved) => { if (!moved) return; if (c.y > 390 && c.x > 230 && c.x < 720) payCoin(c); else { c.state = 'pile'; c.x = 70 + (coins.indexOf(c) % 4) * 36; c.y = 506; c.el.animate([{ transform: c.el.style.transform }, { transform: `translate(${c.x - 26}px,${c.y - 26}px)` }], { duration: 260 }); put(); } },
         });
       }
-      if (any) beltOff = (beltOff + v * dt) % 28; belt.style.backgroundPosition = `${beltOff}px 0`;
+    };
+    const payCoin = c => {
+      if (paid >= total) return; c.state = 'fly'; act(); const i = paid++, slot = slotEls[i], tx = +slot.dataset.x;
+      const a = c.el.animate([{ transform: c.el.style.transform }, { transform: `translate(${tx - 26}px,${508 - 26}px) rotate(360deg)` }], { duration: 300, easing: 'ease-out', fill: 'forwards' });
+      L.later(300, () => { a.cancel(); c.el.style.transform = `translate(${tx - 26}px,${508 - 26}px)`; c.el.style.zIndex = 8; slot.style.background = 'none'; slot.style.boxShadow = 'none'; KCG.snd.thud(); });
+      sfx.coin(); speak(NUMW[paid]);
+      if (paid === total) L.later(800, startGive);
+    };
+
+    /* --- 4. hand the full bag to the customer --- */
+    const startGive = () => {
+      phase = 'give'; ban.set('Give the bag to the customer!'); act(); KCG.snd.ding(); KCG.hint(bag, true);
+      owe.style.opacity = 0; tray.style.opacity = 0; pileArt.style.opacity = 0; slotEls.forEach(e => e.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 400, fill: 'forwards' })); coins.forEach(c => c.el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 400, fill: 'forwards' }).onfinish = () => c.el.remove());
+    };
+    const giveBag = () => {
+      if (phase !== 'give') return; phase = 'done'; KCG.hint(bag, false); act();
+      const x0 = bag.__x - 75, y0 = bag.__y - 75, tx = 120, ty = 250;
+      bag.animate([{ transform: `translate(${x0}px,${y0}px)` }, { transform: `translate(${(x0 + tx) / 2}px,${y0 - 90}px) scale(1.1)`, offset: .5 }, { transform: `translate(${tx}px,${ty}px) scale(.8)` }], { duration: 700, easing: 'ease-in-out', fill: 'forwards' }); KCG.snd.whoosh();
+      bagPeek.forEach(p => { const px = bag.__x + p.dx - 22, py = bag.__y + p.dy - 22; p.el.animate([{ transform: `translate(${px}px,${py}px)` }, { transform: `translate(${(px + tx + 60) / 2}px,${py - 90}px) scale(.9)`, offset: .5 }, { transform: `translate(${tx + 60 + p.dx * .8}px,${ty + 40 + p.dy * .8}px) scale(.7)` }], { duration: 700, easing: 'ease-in-out', fill: 'forwards' }); });
+      L.later(700, () => {
+        KCG.snd.ding(); sfx.coin(); KCG.burst(S0, 100, 250, ['coin', 'star', 'heart', 'sparkle'], 12, 140, 30);
+        custEl.innerHTML = bust(cust, true); disp.textContent = '0'; coinRow.innerHTML = '';
+        L.later(900, () => { [custEl, basketEl, bag, ...bagPeek.map(p => p.el)].forEach(e => { e.animate([{ opacity: 1 }, { opacity: 0, translate: '-220px 0' }], { duration: 500, fill: 'forwards' }).onfinish = () => e.remove(); }); });
+      });
+      cust++;
+      if (cust >= ORDERS.length) L.later(2500, () => KCG.finish(L, fin, misses <= 3 ? 3 : 2, 'All the groceries are packed!'));
+      else L.later(2600, startCustomer);
+    };
+
+    /* --- the loop --- */
+    let beltOff = 0, lastSpawn = 0;
+    L.loop((dt, t) => {
+      const v = 90; let moving = false;
+      if (phase === 'scan') {
+        if (queue.length && t > lastSpawn && !items.some(it => it.state === 'in' || it.state === 'wait' || (it.state === 'drag' && it.prev === 'wait'))) { spawn(); lastSpawn = t + .5; }
+        const ready = items.filter(i => i.state === 'ready' || i.state === 'out').sort((a, b) => b.x - a.x);
+        items.forEach(it => {
+          if (it.state === 'in') { moving = true; it.x += v * dt; if (it.x >= WAITX) { it.x = WAITX; it.state = 'wait'; arrowGo(true); KCG.snd.pop(); } place(it); }
+          else if (it.state === 'wait') { it.el.style.filter = 'drop-shadow(0 0 10px #ffe36a) drop-shadow(0 4px 0 rgba(0,0,0,.28))'; it.dy = Math.sin(t * 6) * 3; place(it); }
+          else if (it.state === 'out') { const ahead = items.filter(o => (o.state === 'ready' || o.state === 'out') && o !== it && o.x > it.x).length; it.rx = ENDX - ahead * 74; moving = true; it.x += v * 1.3 * dt; if (it.x >= it.rx) { it.x = it.rx; it.state = 'ready'; if (!saidBag) { saidBag = 1; ban.set('Drag the groceries into the bag!'); } } place(it); }
+          else if (it.state === 'ready') { it.el.style.filter = 'drop-shadow(0 0 10px #9fe0ff) drop-shadow(0 4px 0 rgba(0,0,0,.28))'; place(it); }
+        });
+      }
+      if (moving) beltOff = (beltOff + v * dt) % 28; belt.style.backgroundPosition = `${beltOff}px 0`;
+      // a gentle nudge when nothing has happened for a while, and the shop cat does it for you after a long wait
+      const idle = t - lastAct;
+      if (idle > 8 && phase !== 'done') { lastAct = t - 4; const target = phase === 'scan' ? items.find(i => i.state === 'wait' || i.state === 'ready') : phase === 'pay' ? coins.find(c => c.state === 'pile') : phase === 'give' ? { el: bag } : null; if (target) { KCG.hint(target.el, true); L.later(2400, () => KCG.hint(target.el, false)); hinted++; } if (hinted > 3 && target) { hinted = 0; if (phase === 'scan') { if (target.state === 'wait') { misses++; doScan(target); ride(target); } else bagIt(target); } else if (phase === 'pay') payCoin(target); else if (phase === 'give') giveBag(); } }
     });
     startCustomer();
-    root.__gdbg = { get items() { return items; }, get phase() { return phase; }, get total() { return total; }, pile, S0, BX, BELT_Y };
+    root.__gdbg = { get items() { return items; }, get phase() { return phase; }, get total() { return total; }, get coins() { return coins; }, get bag() { return bag; }, S0, BX, BELT_Y, doScan, ride, bagIt, payCoin, giveBag };
   }
 
   /* ================= 2. CATCH THE GROCERIES ================= */
@@ -10652,7 +10747,7 @@ if (typeof window !== 'undefined') window.KCG = KCG;
    The hotel's glowing circle opens a job board with three big picture cards:
      Beds       rub the sheet smooth, drag the pillows and the blanket onto the bed, put the chocolate on the pillow (3 rooms)
      Sweep      sweep the dusty lobby floor with a broom, find 3 lost things under the dust and put them in the lost-and-found basket
-     Suitcases  a looping luggage belt: drag each suitcase to the guest cat whose face is on its tag (3 guests, then 4)
+     Bellhop run  four guests wait with suitcases: drag each suitcase onto the luggage cart, roll the cart to the lift, then in the hallway drag each suitcase to the door with the matching number and colour
    Every drag also works as a tap (tap the piece and it goes where it belongs). Nothing can be lost: always 2 stars, 3 for doing well.
    Plug in: after games.js, kcg-icons.js and kcg-core.js, add hotel.js.  The shop needs  id: 'hotel'  and a glowing game spot (the reception desk bell).
    Own drawings are defined here with the prefix 'hotel-'. No emoji. */
@@ -10711,11 +10806,11 @@ if (typeof window !== 'undefined') window.KCG = KCG;
     const jobs = [
       { name: 'Make the beds', art: KCG.ico('hotel-bed', 136), go: () => beds(root, done) },
       { name: 'Sweep the lobby', art: KCG.ico('hotel-broom', 136), go: () => sweep(root, done) },
-      { name: 'Carry the suitcases', art: KCG.ico('hotel-suitcase', 136), go: () => luggage(root, done) },
+      { name: 'Bellhop run', art: KCG.ico('hotel-suitcase', 136), go: () => bellhop(root, done) },
     ];
     const row = h('div', 'row'); row.style.cssText = 'justify-content:center;gap:22px;flex:none;width:100%;max-width:940px;margin-top:14px';
     jobs.forEach(j => {
-      const b = btn('kcg-job', `${j.art}<div class="t">${j.name}</div>`, j.name); b.style.flex = '0 0 auto'; b.style.width = '270px'; b.style.height = '280px'; b.querySelector('.t').style.textAlign = 'center';
+      const b = btn('kcg-job', `${j.art}<div class="t">${j.name}</div>`, j.name); b.style.flex = '0 0 auto'; b.style.width = '220px'; b.style.height = '230px'; b.querySelector('.t').style.textAlign = 'center';
       b.onclick = () => { sfx.tap(); speak(j.name); root.textContent = ''; j.go(); }; row.append(b);
     });
     root.append(row); root.insertAdjacentHTML('beforeend', boardArt());
@@ -11230,6 +11325,157 @@ if (typeof window !== 'undefined') window.KCG = KCG;
         const g = guests.find(q => !q.done), c = g && cases.find(q => q.owner === g && q.mode === 'belt');
         if (c) { glow(c, true); g.bub.firstElementChild.classList.add('ht-glow'); }
         L.later(2600, () => { hintOn = false; cases.forEach(q => glow(q, false)); guests.forEach(q => q.bub.firstElementChild && q.bub.firstElementChild.classList.remove('ht-glow')); });
+      }
+    });
+  }
+
+  /* ====================================================================== */
+  /* =============================  BELLHOP RUN  ========================== */
+  /* ====================================================================== */
+  const NUM = i => `<div style="position:absolute;right:-2px;top:-8px;width:38px;height:38px;border-radius:50%;background:#fffaf0;border:3.5px solid ${K};box-shadow:0 3px 0 #0003;font:900 24px/32px var(--display);text-align:center;color:${K}">${i + 1}</div>`;
+  const numCase = (g, i) => `<div style="position:relative;width:104px;height:96px">${caseArt(g.color, g.g, 104)}${NUM(i)}</div>`;
+  const cartArt = () => `<svg width="300" height="150" viewBox="0 0 300 150"><ellipse cx="150" cy="140" rx="138" ry="9" fill="#000" opacity=".22"/>
+    <path d="M36 28V112M264 28V112" stroke="${K}" stroke-width="13" stroke-linecap="round"/><path d="M36 28V112M264 28V112" stroke="#f0c040" stroke-width="7" stroke-linecap="round"/>
+    <path d="M26 24H274" stroke="${K}" stroke-width="13" stroke-linecap="round"/><path d="M26 24H274" stroke="#f0c040" stroke-width="7" stroke-linecap="round"/><circle cx="150" cy="24" r="9" fill="#e2483d" ${S(3)}/>
+    <rect x="14" y="106" width="272" height="16" rx="8" fill="#c8923a" ${S(4)}/><path d="M26 110H274" stroke="#fff" stroke-opacity=".5" stroke-width="4" stroke-linecap="round"/>
+    ${[56, 244].map(x => `<circle cx="${x}" cy="132" r="14" fill="#3a3f4c" ${S(4)}/><circle cx="${x}" cy="132" r="5.5" fill="#c8ced8"/>`).join('')}</svg>`;
+  const bhLobbyArt = () => {
+    let wall = '', tiles = '';
+    for (let x = 0; x < W; x += 60) wall += `<path d="M${x + 30} 0V150" stroke="#d7b98a" stroke-width="2" opacity=".5"/><circle cx="${x + 30}" cy="40" r="3" fill="#d7b98a" opacity=".6"/><circle cx="${x + 30}" cy="90" r="3" fill="#d7b98a" opacity=".6"/>`;
+    for (let j = 0; j < 8; j++) for (let i = 0; i < 16; i++) tiles += `<rect x="${i * 60}" y="${240 + j * 60}" width="60" height="60" fill="${(i + j) % 2 ? '#fdf6e6' : '#ecdcc0'}" stroke="#0000000f" stroke-width="2"/>`;
+    return `<svg class="kcg-abs" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" style="left:0;top:0;z-index:0">
+      <rect width="${W}" height="250" fill="#f3e3c4"/>${wall}<rect y="150" width="${W}" height="100" fill="#8b4f3a"/><rect y="150" width="${W}" height="10" fill="#b9724f" ${S(3)}/>
+      ${[0, 1, 2, 3, 4, 5, 6].map(i => `<rect x="${i * 140 + 12}" y="172" width="116" height="62" rx="6" fill="none" stroke="#c98e6a" stroke-width="3"/>`).join('')}
+      <rect y="238" width="${W}" height="10" fill="#d9a066" ${S(3)}/>${tiles}
+      <rect x="150" y="262" width="520" height="338" fill="#c9374a" opacity=".85"/><rect x="164" y="262" width="492" height="338" fill="none" stroke="#f6c93a" stroke-width="4" stroke-dasharray="14 10"/>
+      <path d="M470 0V40" stroke="${K}" stroke-width="3"/><circle cx="470" cy="62" r="26" fill="#fff3b0" ${S(3.5)}/>${[-1, 0, 1].map(i => `<path d="M${470 + i * 30} 62l${i * 24} 24" stroke="${K}" stroke-width="3"/><circle cx="${470 + i * 54}" cy="88" r="10" fill="#ffe27a" ${S(2.6)}/>`).join('')}
+      ${plantSvg(46, 392)}${plantSvg(700, 380)}
+      <rect x="760" y="104" width="176" height="244" rx="10" fill="#b9c3d1" ${S(5)}/><rect x="772" y="118" width="152" height="228" rx="4" fill="#2b2a33"/>
+      <rect x="800" y="68" width="96" height="30" rx="8" fill="#2b2a33" ${S(4)}/>
+      <rect x="772" y="340" width="152" height="12" fill="#8d96a8" ${S(3)}/>
+    </svg>`;
+  };
+  const bhHallArt = (guests) => {
+    let tiles = '', doors = '';
+    for (let j = 0; j < 8; j++) for (let i = 0; i < 16; i++) tiles += `<rect x="${i * 60}" y="${360 + j * 60}" width="60" height="60" fill="${(i + j) % 2 ? '#d9534f' : '#c64743'}" opacity=".0"/>`;
+    guests.forEach((g, i) => { const x = DX[i]; doors += `<rect x="${x - 70}" y="106" width="140" height="244" rx="8" fill="#fffaf0" ${S(4)}/><rect x="${x - 56}" y="130" width="112" height="218" rx="6" fill="#2b2a33"/><circle cx="${x}" cy="94" r="22" fill="#fffaf0" ${S(3.5)}/><text x="${x}" y="103" text-anchor="middle" font-size="26" font-family="'Baloo 2','Fredoka',system-ui,sans-serif" font-weight="900" fill="${K}">${i + 1}</text><ellipse cx="${x}" cy="356" rx="64" ry="11" fill="${g.color}" ${S(3.5)}/><ellipse cx="${x}" cy="356" rx="46" ry="6" fill="${KCG.shade(g.color, .5)}"/>`; });
+    return `<svg class="kcg-abs" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" style="left:0;top:0;z-index:0">
+      <rect width="${W}" height="362" fill="#f6e3c6"/>${Array.from({ length: 16 }, (_, i) => `<path d="M${i * 60 + 30} 0V362" stroke="#d7b98a" stroke-width="2" opacity=".55"/>`).join('')}
+      <rect y="300" width="${W}" height="62" fill="#8b4f3a"/><rect y="296" width="${W}" height="10" fill="#b9724f" ${S(3)}/>
+      <rect y="360" width="${W}" height="240" fill="#a3303f"/><path d="M0 362H${W}" stroke="${K}" stroke-width="4"/>
+      ${Array.from({ length: 14 }, (_, i) => `<path d="M${i * 80 + 20} 380l12 12l-12 12l-12-12Z" fill="#f6c93a" opacity=".55"/><path d="M${i * 80 + 60} 470l12 12l-12 12l-12-12Z" fill="#f6c93a" opacity=".55"/><path d="M${i * 80 + 20} 560l12 12l-12 12l-12-12Z" fill="#f6c93a" opacity=".55"/>`).join('')}
+      ${doors}
+      ${[240, 450, 660].map(x => `<circle cx="${x}" cy="60" r="26" fill="#fff6c0" opacity=".5"/><rect x="${x - 6}" y="44" width="12" height="32" rx="5" fill="#f6c93a" ${S(3)}/><path d="M${x - 15} 44q15-26 30 0Z" fill="#fff3b0" ${S(3)}/>`).join('')}
+    </svg>`;
+  };
+  const DX = [135, 345, 555, 765];
+
+  function bellhop(root, done) {
+    const L = KCG.life(root), N = 4;
+    const bn = KCG.banner(root, 'Put each suitcase on the cart!', KCG.cat({ hat: 'bellhop', px: 68 }));
+    const S0 = KCG.stage(root, L, W, H), st = S0.el;
+    const guests = mix(GUESTS).slice(0, N);
+    let stage = 'lobby', loaded = 0, miss = 0, delivered = 0, idle = 0, hintN = 0, cartX = 360, cartY = 505, cart = null, cases = [], doorEls = [];
+    const say = t => bn.set(t);
+    const CART_SLOTS = [[-96, -64], [-32, -64], [32, -64], [96, -64]];
+    const CART_Z = 14;
+
+    /* ---------- stage 1: the lobby ---------- */
+    const lobby = () => {
+      stage = 'lobby'; st.textContent = ''; st.insertAdjacentHTML('afterbegin', bhLobbyArt()); loaded = 0; cases = [];
+      // the guests, each with a suitcase at their feet
+      const gx = [80, 240, 400, 560].slice(0, N);
+      guests.forEach((g, i) => { S0.add(`<div class="ht-bob" style="animation-delay:${-i * .5}s">${KCG.catBust(Object.assign({}, g.g, { px: 110, shirt: g.color, buttons: 0 }))}</div>`, gx[i] - 55, 120, { z: 3 }); });
+      // the elevator doors (two panels that slide apart)
+      const dl = h('div', 'kcg-abs'); dl.style.cssText = 'left:772px;top:118px;width:76px;height:222px;background:linear-gradient(90deg,#c8ced8,#e4e8ef);border:3.5px solid #1d2230;border-right-width:2px;box-sizing:border-box;z-index:2;transition:transform .8s';
+      const dr = h('div', 'kcg-abs'); dr.style.cssText = 'left:848px;top:118px;width:76px;height:222px;background:linear-gradient(90deg,#e4e8ef,#c8ced8);border:3.5px solid #1d2230;border-left-width:2px;box-sizing:border-box;z-index:2;transition:transform .8s';
+      st.append(dl, dr); st.__doors = [dl, dr];
+      const lamps = h('div', 'kcg-abs'); lamps.style.cssText = 'left:806px;top:74px;width:84px;display:flex;gap:10px;justify-content:center;z-index:3;pointer-events:none'; lamps.innerHTML = [1, 2, 3].map(i => `<div class="el-l" style="width:16px;height:16px;border-radius:50%;background:#554;border:2.5px solid #000"></div>`).join(''); st.append(lamps); st.__lamps = lamps;
+      S0.add(`<svg width="36" height="36" viewBox="0 0 36 36"><circle cx="18" cy="18" r="15" fill="#f0c040" ${S(3)}/><path d="M18 9L26 20H10Z" fill="${K}"/></svg>`, 730, 220, { z: 3 });
+      // the cart
+      cartX = 360; cartY = 505; cart = piece(S0, cartArt(), 300, 150, cartX, cartY, 0, CART_Z); cart.s = 1; put(cart);
+      cart.slots = 0; cart.loaded = []; cart.cy = cartY;
+      // suitcases
+      guests.forEach((g, i) => {
+        const x = gx[i] + 4, y = 330 + (i % 2) * 14;
+        const c = piece(S0, numCase(g, i), 104, 96, x, y, 0, 8); c.owner = g; c.n = i; c.mode = 'floor'; c.home = { x, y, r: 0 }; cases.push(c);
+        c.el.animate([{ opacity: 0, translate: '0 -70px' }, { opacity: 1, translate: '0 0' }], { duration: 420, delay: 250 + i * 160, fill: 'backwards', easing: 'ease-out' });
+        KCG.drag(S0, c.el, {
+          lift: 1, pos: () => ({ x: c.x, y: c.y }), start: () => { if (c.mode !== 'floor' || stage !== 'lobby') return false; idle = 0; c.mode = 'held'; return true; },
+          move: (x, y) => { c.x = x; c.y = y; c.s = 1.1; put(c); glow(c, false); },
+          drop: (p, moved) => { idle = 0; c.el.style.zIndex = 8; if (!moved) return load(c); const nearCart = Math.hypot(c.x - cart.x, c.y - (cart.y - 50)) < 150; if (nearCart) load(c); else { c.mode = 'floor'; c.s = 1; glide(c, c.home.x, c.home.y, 0, 1, 360, () => { c.mode = 'floor'; }); } },
+        });
+      });
+      // the cart can be dragged once it is loaded
+      KCG.drag(S0, cart.el, {
+        lift: 1, pos: () => ({ x: cart.x, y: cart.y }), start: () => { if (loaded < N || stage !== 'lobby') return false; idle = 0; KCG.hint(cart.el, false); return true; },
+        move: (x, y) => { cart.x = clamp(x, 160, 900); cart.y = cartY; put(cart); },
+        tap: () => toLift(), drop: (p, moved) => { if (moved && cart.x > 690) toLift(); },
+      });
+      say('Put each suitcase on the cart!');
+    };
+    const load = c => {
+      if (c.mode === 'loaded' || stage !== 'lobby') return; c.mode = 'loaded'; const k = loaded++; c.slot = CART_SLOTS[k]; c.s = 1; c.el.style.zIndex = CART_Z + 1;
+      const tx = cart.x + c.slot[0], ty = cart.y + c.slot[1]; glide(c, tx, ty, 0, .9, 420, null, 'ease-out'); KCG.snd.pop(); sfx.coin();
+      KCG.burst(S0, tx, ty, ['sparkle', 'star'], 4, 50, 18); cart.el.animate([{ translate: '0 0' }, { translate: '0 5px' }, { translate: '0 0' }], { duration: 260, delay: 300 });
+      if (loaded === N) L.later(700, () => { say('Roll the cart to the lift!'); KCG.hint(cart.el, true); KCG.snd.ding(); });
+    };
+    const toLift = () => {
+      if (stage !== 'lobby' || loaded < N) return; stage = 'lift'; KCG.hint(cart.el, false); const [dl, dr] = st.__doors;
+      dl.style.transform = 'translateX(-70px)'; dr.style.transform = 'translateX(70px)'; KCG.snd.ding();
+      const x0 = cart.x; cart.el.animate([{ transform: cart.el.style.transform }], { duration: 1 });
+      const tx = 848; glide(cart, tx, cart.y - 150, 0, .5, 1100, null, 'ease-in-out');
+      L.later(1100, () => { dl.style.transform = 'none'; dr.style.transform = 'none'; cart.el.style.opacity = 0; cases.forEach(c => { c.el.style.opacity = 0; }); KCG.snd.whoosh(); });
+      // the floor lamps count up
+      L.later(1900, () => [0, 1, 2].forEach(i => L.later(i * 700, () => { const l = st.__lamps.children[i]; l.style.background = '#ffd23f'; l.style.boxShadow = '0 0 10px #ffd23f'; tone(700 + i * 160, .16, 'sine', .08); })));
+      L.later(4200, () => swapFade(S0, hallway));
+    };
+
+    /* ---------- stage 2: the hallway ---------- */
+    const hallway = () => {
+      stage = 'hall'; st.textContent = ''; st.insertAdjacentHTML('afterbegin', bhHallArt(guests)); doorEls = []; delivered = 0; idle = 0;
+      DX.slice(0, N).forEach((x, i) => {
+        const d = h('div', 'kcg-abs'); d.style.cssText = `left:${x - 56}px;top:130px;width:112px;height:218px;overflow:hidden;z-index:2;background:#4a3a2c`;
+        const g = guests[i]; const inside = h('div', 'kcg-abs', KCG.catBust(Object.assign({}, g.g, { px: 100, shirt: g.color, happy: true }))); inside.style.cssText += 'left:6px;top:116px;width:100px;height:100px;transform:translateY(120px);transition:transform .45s cubic-bezier(.3,1.5,.5,1)';
+        const panel = h('div', 'kcg-abs'); panel.style.cssText = `left:0;top:0;width:112px;height:218px;background:${g.color};border:4px solid ${K};box-sizing:border-box;border-radius:6px 6px 0 0;transition:transform .5s;transform-origin:0 50%;box-shadow:inset 0 -14px 0 #0002`;
+        panel.innerHTML = `<div style="position:absolute;left:14px;top:16px;width:84px;height:70px;border-radius:8px;border:3px solid #0005;background:#ffffff30"></div><div style="position:absolute;left:14px;top:106px;width:84px;height:84px;border-radius:8px;border:3px solid #0005;background:#ffffff20"></div><div style="position:absolute;right:10px;top:104px;width:12px;height:12px;border-radius:50%;background:#ffe27a;border:2.5px solid ${K}"></div>`;
+        d.append(inside, panel); st.append(d); doorEls.push({ d, panel, inside, x });
+      });
+      cart = piece(S0, cartArt(), 300, 150, 480, 520, 0, 6); cart.s = 1.35; put(cart);
+      const CS = [[-130, -70], [-44, -70], [44, -70], [130, -70]]; cases = [];
+      mix(guests.map((g, i) => i)).forEach((gi, k) => {
+        const g = guests[gi]; const x = 480 + CS[k][0] * 1.35 * .95, y = 520 + CS[k][1] * 1.2;
+        const c = piece(S0, numCase(g, gi), 104, 96, x, y, 0, 9); c.n = gi; c.owner = g; c.mode = 'cart'; c.home = { x, y, r: 0 }; cases.push(c);
+        c.el.animate([{ opacity: 0, translate: '0 -40px' }, { opacity: 1, translate: '0 0' }], { duration: 400, delay: 300 + k * 130, fill: 'backwards' });
+        KCG.drag(S0, c.el, {
+          lift: 1, pos: () => ({ x: c.x, y: c.y }), start: () => { if (c.mode !== 'cart') return false; idle = 0; c.mode = 'held'; return true; },
+          move: (x, y) => { c.x = x; c.y = y; c.s = 1.1; put(c); glow(c, false); },
+          drop: (p, moved) => { idle = 0; c.el.style.zIndex = 9; if (!moved) return deliver(c, c.n); let best = -1, bd = 1e9; DX.slice(0, N).forEach((x, i) => { const d = Math.hypot(c.x - x, c.y - 280); if (d < bd) { bd = d; best = i; } }); if (bd < 160 && best === c.n) deliver(c, best); else { if (bd < 160) { miss++; shake(doorEls[best].panel); KCG.snd.thud(); } c.s = 1; c.mode = 'cart'; glide(c, c.home.x, c.home.y, 0, 1, 360); } },
+        });
+      });
+      say('Take each suitcase to its door!');
+    };
+    const shake = el => el.animate([{ translate: '0 0' }, { translate: '-6px 0' }, { translate: '6px 0' }, { translate: '0 0' }], { duration: 300 });
+    const deliver = (c, i) => {
+      if (c.mode === 'given') return; c.mode = 'given'; const d = doorEls[i]; glow(c, false); KCG.hint(c.el, false);
+      d.panel.style.transform = 'perspective(500px) rotateY(-100deg)'; d.inside.style.transform = 'translateY(0)'; KCG.snd.ding();
+      glide(c, d.x, 300, 0, .55, 520, () => { c.el.style.opacity = 0; }, 'ease-in-out'); KCG.burst(S0, d.x, 250, ['heart', 'sparkle', 'star'], 8, 80, 24);
+      delivered++; L.later(700, () => sfx.coin());
+      if (delivered === N) L.later(1700, () => { KCG.burst(S0, 480, 300, ['sparkle', 'star', 'heart'], 16, 200, 28); KCG.finish(L, done, miss <= 3 ? 3 : 2, 'All the suitcases are delivered!'); });
+    };
+
+    lobby();
+    root.__hotel = { get stage() { return stage; }, get loaded() { return loaded; }, get cases() { return cases.map(c => ({ x: c.x, y: c.y, n: c.n, mode: c.mode })); }, get cart() { return { x: cart.x, y: cart.y }; }, load, toLift, deliver, get delivered() { return delivered; } };
+    L.loop((dt, now) => {
+      idle += dt;
+      if (stage === 'lobby') { cases.forEach(c => { if (c.mode === 'loaded') { c.x = cart.x + c.slot[0]; c.y = cart.y + c.slot[1]; put(c); } else if (c.mode === 'floor') { c.y = c.home.y + Math.sin(now * 3 + c.n) * 1.5; put(c); } }); }
+      if (stage === 'lobby' && cart && loaded === N) cases.forEach(c => { c.x = cart.x + c.slot[0]; c.y = cart.y + c.slot[1]; put(c); });
+      if (idle > 7 && stage !== 'lift') {
+        idle = 3; hintN++;
+        if (stage === 'lobby') { const c = cases.find(q => q.mode === 'floor'); if (c) { glow(c, true); L.later(2400, () => glow(c, false)); } else if (loaded === N) { KCG.hint(cart.el, true); L.later(2400, () => KCG.hint(cart.el, false)); } }
+        else if (stage === 'hall') { const c = cases.find(q => q.mode === 'cart'); if (c) { glow(c, true); const d = doorEls[c.n]; d.panel.firstElementChild.classList.add('ht-glow'); d.panel.classList.add('ht-ghost'); L.later(2400, () => { glow(c, false); d.panel.classList.remove('ht-ghost'); }); } }
+        if (hintN > 3 && stage === 'lobby') { hintN = 0; const c = cases.find(q => q.mode === 'floor'); if (c) { miss++; load(c); } else if (loaded === N) toLift(); }
+        else if (hintN > 3 && stage === 'hall') { hintN = 0; const c = cases.find(q => q.mode === 'cart'); if (c) { miss++; deliver(c, c.n); } }
       }
     });
   }
@@ -11751,18 +11997,32 @@ function mapPin(box, e, x, z, big, color, go) {
   if (color) { const d = h('i'); d.style.background = color; b.append(d); }
   b.onclick = () => { sfx.tap(); $('#map').hidden = true; go(); }; box.append(b);
 }
+// the map pins jump you there: a quick fade, and you're standing at the spot (shops open right away)
+function mapJump(x, z, go, ry) {
+  if (mode !== 'town') return;
+  fade(() => { standUp(); me.go = null; joyVec = null; const q = constrain(x, z); me.x = me.tx = q[0]; me.z = me.tz = q[1]; if (ry != null) me.ry = camYaw = ry; camera.position.set(me.x - Math.sin(me.ry) * 7, 3.05, me.z - Math.cos(me.ry) * 7); pushPresence(true); if (go) arrive(go); });
+}
+// pins that land on top of each other are nudged apart so every one is easy to tap
+function spreadPins(box) {
+  const W = box.clientWidth, H = box.clientHeight, ps = [...box.querySelectorAll('.m')].map(b => ({ b, x: parseFloat(b.style.left) / 100 * W, y: parseFloat(b.style.top) / 100 * H, r: b.offsetWidth / 2 + 4 }));
+  for (let it = 0; it < 60; it++) for (let i = 0; i < ps.length; i++) for (let j = i + 1; j < ps.length; j++) {
+    const a = ps[i], c = ps[j], dx = c.x - a.x, dy = c.y - a.y, d = Math.hypot(dx, dy) || .01, m = a.r + c.r;
+    if (d < m) { const k = (m - d) / 2, ux = dx / d, uy = dy / d; a.x -= ux * k; a.y -= uy * k; c.x += ux * k; c.y += uy * k; }
+  }
+  ps.forEach(p => { p.x = clamp(p.x, p.r, W - p.r); p.y = clamp(p.y, p.r, H - p.r); p.b.style.left = p.x / W * 100 + '%'; p.b.style.top = p.y / H * 100 + '%'; });
+}
 function openMap() {
   const box = $('#map-box'); box.textContent = '';
   mapBlock(box, -60, -3.5, 86, 3.5, '#e8d2d6'); mapBlock(box, -7.5, -38, -.5, -3.5, '#e8d2d6'); mapBlock(box, -14, 5.5, 6, 25, '#f0dde0'); mapBlock(box, -48, 5.5, -36, 17, '#ecd9a8'); mapBlock(box, 39.2, -42, 42.8, -3.5, '#7fb2d8'); mapBlock(box, 39.2, 3.5, 42.8, 26, '#7fb2d8'); mapBlock(box, 43, 5.5, 80, 18, '#8fbf6a'); mapBlock(box, 43, -18, 80, -5.5, '#8fbf6a');
   const sides = { '-1': 0, '1': 0 };
   SHOPS.concat(FILLERS).slice().sort((a, b) => a.door.x - b.door.x).forEach(s => {
     let mz = s.door.z; if (Math.abs(mz) < 6) { const sd = Math.sign(mz); mz = sd * (8 + (sides[sd]++ % 2) * 8); }
-    mapPin(box, s.icon, s.door.x, mz, s.kind === 'shop', s.trim, () => walkTo(s.door.x, s.door.z, { kind: s.kind, shop: s }));
+    mapPin(box, s.icon, s.door.x, mz, s.kind === 'shop', s.trim, () => mapJump(s.door.x + Math.sin(s.out) * 1.2, s.door.z + Math.cos(s.out) * 1.2, { kind: s.kind, shop: s }, s.out + Math.PI));
   });
-  mapBlock(box, -66, -2, -55.5, 2, '#e3cfa4'); mapBlock(box, -92, -13, -65.5, 13, '#cfe0a8'); mapPin(box, '🚜', -78, 0, true, '#b8402e', () => walkTo(-68, 0, null)); mapPin(box, '🛶', RENT.x, RENT.z, true, '#2f7a7a', () => walkTo(RENT.rx, RENT.rz, { kind: 'rent' }));
-  mapPin(box, '🏛️', -4, 24.5, true, null, () => walkTo(-4, 20, null)); mapPin(box, '⛲', -4, 15.5, false, null, () => walkTo(-4, 12, null)); mapPin(box, '🛝', -42, 11, true, null, () => walkTo(-42, 8, null));
-  STOPS.forEach(st => mapPin(box, '🚌', st.x, -4.6, true, '#4f6fa8', () => walkTo(st.x, -4.2, null)));
-  mapPin(box, '🏡', 60, 0, true, null, () => { const ct = myPlot && myPlot(); if (ct) walkTo(ct.door.x, ct.door.z, { kind: 'house', owner: myPeer }); else walkTo(46, 1, null); });
+  mapBlock(box, -66, -2, -55.5, 2, '#e3cfa4'); mapBlock(box, -92, -13, -65.5, 13, '#cfe0a8'); mapPin(box, '🚜', -78, 0, true, '#b8402e', () => mapJump(-68, 0, null, -Math.PI / 2)); mapPin(box, '🛶', RENT.x, RENT.z, true, '#2f7a7a', () => mapJump(RENT.rx, RENT.rz - 1.2, null, 0));
+  mapPin(box, '🏛️', -4, 24.5, true, null, () => mapJump(-4, 20, null, 0)); mapPin(box, '⛲', -4, 15.5, false, null, () => mapJump(-4, 11, null, 0)); mapPin(box, '🛝', -42, 11, true, null, () => mapJump(-42, 8, null, 0));
+  STOPS.forEach(st => mapPin(box, '🚌', st.x, -4.6, true, '#4f6fa8', () => mapJump(st.x, -3.6, null, Math.PI)));
+  mapPin(box, '🏡', 60, 0, true, null, () => { const ct = myPlot && myPlot(); if (ct) mapJump(ct.door.x, ct.door.z, { kind: 'house', owner: myPeer }); else mapJump(46, 1, null); });
   // friends: a little cat face where each one is, in the town, a shop, a house, or on the bus
   for (const o of others.values()) {
     let x = o.tx, z = o.tz, tag = '';
@@ -11774,7 +12034,7 @@ function openMap() {
     f.append(h('b', '', (o.name || 'Friend') + (tag ? ' ' + tag : ''))); box.append(f);
   }
   const you = h('div', 'you'); you.style.left = mapX(me.x) + '%'; you.style.top = mapZ(me.z) + '%'; box.append(you);
-  $('#map').hidden = false; sfx.tap();
+  $('#map').hidden = false; sfx.tap(); spreadPins(box);
 }
 $('#open-map').onclick = openMap; $('#map-close').onclick = () => { $('#map').hidden = true; sfx.tap(); };
 
@@ -12172,10 +12432,10 @@ function petStep(dt, t) {
 })();
 /* ================= school: teacher and students ================= */
 // In the school you pick Teacher or Student (only one teacher at a time). The teacher puts an adding or taking-away
-// problem on the chalkboard (numbers up to 99); students have 10 seconds to answer and get coins when they are right.
+// problem on the chalkboard (numbers up to 99); students have 30 seconds to answer and get coins when they are right.
 // Shared through presence: sr = 't' | 's', eq = [a, op (0 add, 1 take away), b, ts], an = [ts, 1] when a student got it.
 const school = { role: null, eq: null, tick: null, seen: 0, botAt: 0, pupils: [], paidFor: {} };
-const SCHOOL_TIME = 10, SCHOOL_PAY = 3;
+const SCHOOL_TIME = 30, SCHOOL_PAY = 3;
 const inSchool = () => me.building && me.building.id === 'school';
 const eqText = (e, showAns) => e[0] + (e[1] ? ' − ' : ' + ') + e[2] + ' = ' + (showAns ? (e[1] ? e[0] - e[2] : e[0] + e[2]) : '?');
 const eqAns = e => e[1] ? e[0] - e[2] : e[0] + e[2];
@@ -12259,7 +12519,7 @@ function payTeacher(e) {
   school.paidFor[e[3]] = (school.paidFor[e[3]] || 0) + 1; save.coins += 1; persist(); updateCoins();
   const t = $('#toast'); t.textContent = '🪙 +1 · a student got it right! 🎉'; t.hidden = false; clearTimeout(t._t); t._t = setTimeout(() => t.hidden = true, 2500);
 }
-// a student sees a new problem: big keypad and a 10 second bar
+// a student sees a new problem: big keypad and a 30 second bar
 function studentAnswer(e, from) {
   if (school.role !== 's' || mode !== 'inside') return;
   school.eq = e; boardShow(eqText(e)); clearInterval(school.tick);
@@ -12967,7 +13227,7 @@ function groundPoint() { return ray.ray.intersectPlane(gplane, hit) ? hit : null
 function catHit(list) { for (const o of list) { if (!o.cat || !o.cat.parent || !o.cat.visible) continue; if (o.cat.position.distanceTo(camera.position) > 45) continue; if (ray.intersectObject(o.cat, true).length) return o; } return null; }
 renderer.domElement.addEventListener('pointerdown', e => {
   if (mode === 'start' || mode === 'shop') return;
-  ['#phrases', '#fmenu', '#settings', '#music', '#fpanel'].forEach(s => $(s).hidden = true);
+  ['#fmenu', '#settings', '#music', '#fpanel'].forEach(s => $(s).hidden = true);
   setNdc(e); dragging = true; $('#hint').style.opacity = '0';
   if (mode === 'bus') { busSeatTap(); dragging = false; return; }
   if (mode === 'car') { dragging = false; return; }
@@ -13074,14 +13334,14 @@ function stepWalk(dt, speed, cons) {
     // gentle for little hands: speed eases in with the stick (squared), the kitty ramps up instead of darting, and turns smoothly
     const m = Math.min(1, Math.hypot(joyVec.x, joyVec.y)), ml = Math.hypot(mx, mz) || 1;
     me.vel = Math.min(m * m, (me.vel || 0) + dt * 1.6); let sp = speed * me.vel;
-    if (ml > .01) me.ry = angLerp(me.ry, Math.atan2(mx, mz), Math.min(1, dt * 5));
+    if (ml > .01) me.ry = angLerp(me.ry, Math.atan2(mx, mz), Math.min(1, dt * 3.5));
     const hx = Math.sin(me.ry), hz = Math.cos(me.ry), al = Math.max(.15, (hx * mx + hz * mz) / ml); sp *= al;
     [me.x, me.z] = cons(me.x + hx * sp * dt, me.z + hz * sp * dt); me.tx = me.x; me.tz = me.z; walking = true;
   } else {
     me.vel = 0;
     const dx = me.tx - me.x, dz = me.tz - me.z, d = Math.hypot(dx, dz);
-    if (d > .06) { const st = Math.min(d, speed * dt); const nx = me.x + dx / d * st, nz = me.z + dz / d * st; const q = cons(nx, nz); me.x = q[0]; me.z = q[1]; me.ry = angLerp(me.ry, Math.atan2(dx, dz), Math.min(1, dt * 7)); walking = true; if (Math.hypot(q[0] - nx, q[1] - nz) > .2 && Math.hypot(me.tx - me.x, me.tz - me.z) < 1.2) { me.tx = me.x; me.tz = me.z; } }
-    else if (me.go) { const g = me.go; me.go = null; arrive(g); }
+    if (d > .06) { const st = Math.min(d, speed * dt); const nx = me.x + dx / d * st, nz = me.z + dz / d * st; const q = cons(nx, nz); me.x = q[0]; me.z = q[1]; me.ry = angLerp(me.ry, Math.atan2(dx, dz), Math.min(1, dt * 7)); walking = true; const pushed = Math.hypot(q[0] - nx, q[1] - nz); if ((pushed > .2 && Math.hypot(me.tx - me.x, me.tz - me.z) < 1.2) || (pushed > st * .6 && me.go && me.go.kind === 'bench' && Math.hypot(me.tx - me.x, me.tz - me.z) < 3 && (me.stuck = (me.stuck || 0) + dt) > .4)) { me.tx = me.x; me.tz = me.z; } }
+    else if (me.go) { const g = me.go; me.go = null; me.stuck = 0; arrive(g); }
   }
   return walking;
 }
@@ -13111,7 +13371,7 @@ function townCamera(dt, walking) {
   camera.position.lerp(_v.set(cx, ht, cz), Math.min(1, dt * 6));
   camera.lookAt(me.x, 1.4, me.z);
 }
-function loop(ms) {
+function loopStep(ms) {
   const t = ms / 1000, dt = Math.min(.05, t - (last || t)); last = t; nowT = t;
   bgmTick(); petStep(dt, t); farmTick(t, dt); rentTick(t);
   const now = Date.now();
@@ -13186,7 +13446,8 @@ function loop(ms) {
     if (d.band) { d.band.g.visible = night > .5; if (d.band.g.visible) { d.band.m.forEach((m, i) => { m.position.y = .3 + Math.abs(Math.sin(t * 5 + i * 1.3)) * .07; m.rotation.z = Math.sin(t * 2.5 + i) * .06; }); d.band.stick.forEach((st, i) => st.rotation.x = Math.sin(t * 14 + i * 3) * .6); d.band.note.position.y = 2.4 + Math.sin(t * 3) * .15; if (t > d.band.next) { d.band.next = t + .45; const k = d.band.k++ % 8; tone([110, 110, 165, 110, 147, 147, 165, 124][k], .3, 'triangle', .05); if (k % 2 === 0) tone(80, .08, 'square', .03); } } }
     const ed = Math.hypot(me.x - d.exit.x, me.z - d.exit.z);
     if (ed > 1.6) d.exit.armed = true;
-    if (ed < .7 && d.exit.armed) { d.exit.armed = false; leaveBuilding(); }
+    // only leave when walking into the door on purpose, not when brushing past it along the front wall
+    if (ed < .7 && d.exit.armed && (Math.cos(me.ry) > .6 || Math.hypot(me.tx - d.exit.x, me.tz - d.exit.z) < .5)) { d.exit.armed = false; leaveBuilding(); }
     if (d.clerk) { animCat(d.clerk, false, t); standPose(d.clerk, t); d.clerk.rotation.y = angLerp(d.clerk.rotation.y, Math.atan2(me.x - d.clerk.position.x, me.z - d.clerk.position.z), Math.min(1, dt * 2)); }
     if (d.tiles) {
       const step = Math.floor(t * 4.35);
@@ -13222,12 +13483,13 @@ function loop(ms) {
     pushPresence(false); pushLobby(false);
   }
   if (prevCanvas.isConnected && prevCanvas.offsetParent !== null && prevObj) { prevObj.rotation.y = Math.sin(t * .8) * .7 + .6; if (headShake > 0 && prevObj.userData.head) { headShake = Math.max(0, headShake - dt * .8); prevObj.userData.head.rotation.y = Math.sin(t * 22) * .5 * headShake; } if (prevObj.userData.legs) animCat(prevObj, false, t); prevR.render(prevScene, prevCam); }
-  requestAnimationFrame(loop);
 }
+// one bad frame must never freeze the whole game: note the error and keep drawing
+function loop(ms) { try { loopStep(ms); } catch (e) { noteErr(e); } requestAnimationFrame(loop); }
 async function backup() {
   let d = null;
   try { d = window.claude && window.claude.use ? await window.claude.use('downloads') : null; } catch (e) {}
-  if (!d) { sfx.oops(); speak("Backups can't be saved here."); return; }
+  if (!d) { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify({ kittycity: 1, save })], { type: 'application/json' })); a.download = 'kitty-city-' + save.name.replace(/ /g, '-') + '.json'; document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); sfx.good(); return; }
   try { await d.save({ filename: 'kitty-city-' + save.name.replace(/ /g, '-') + '.json', data: JSON.stringify({ kittycity: 1, save }) }); sfx.good(); }
   catch (e) { if (!e || e.code !== 'declined') sfx.oops(); }
 }
