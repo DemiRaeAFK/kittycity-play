@@ -619,6 +619,7 @@ function nameOK(v) {
   if (words.some(w => BAD_WORD.map(sq).includes(w)) || BAD_WORD.map(sq).includes(joined)) return false;
   return true;
 }
+const liveName = n => { const v = String(n == null ? '' : n).replace(/\s+/g, ' ').trim(); return nameOK(v) ? v : null; }; // like safeName, but null when it is not a real name, so a missing name never replaces a saved one
 const safeName = n => { n = String(n || '').replace(/\s+/g, ' ').trim().slice(0, 12); return nameOK(n) ? n : 'Kitty'; };
 let headShake = 0;
 
@@ -10011,7 +10012,7 @@ function pushPresence(force, extra) {
   const now = performance.now();
   const x = Math.round(me.x * 10) / 10, z = Math.round(me.z * 10) / 10, r = Math.round(me.ry * 100) / 100;
   const walking = Math.hypot(me.tx - me.x, me.tz - me.z) > .05 || !!joyVec;
-  const key = [x, z, r, walking, me.loc, !!me.sit, me.bus && me.bus.join(), me.seat, mission && mission.t0, lookKey(lookNow()), me.truck, deed && deed.follow ? Math.round(deed.follow.x * 2) + ':' + Math.round(deed.follow.z * 2) : ''].join(',');
+  const key = [x, z, r, walking, me.loc, !!me.sit, me.bus && me.bus.join(), me.seat, mission && mission.t0, lookKey(lookNow()), me.truck, deed && deed.follow ? Math.round(deed.follow.x * 2) + ':' + Math.round(deed.follow.z * 2) : '', save.name].join(','); // a new name goes out at once
   if (!force && !extra && (now - lastSent < 100 || key === lastKey)) return;
   lastSent = now; lastKey = key;
   const p = Object.assign({ n: save.name, k: save.kid, a: lookArr(lookNow()), x, z, r, w: walking, l: me.loc, s: me.sit || me.swing ? 1 : 0, bu: me.bus, se: me.seat, mi: mission && mission.joined ? [mission.seed, mission.t0, mission.type] : null, h: houseCompact(), hs: save.hs, pe: save.pet || '', hr: (() => { try { const r = kcRoomOf(); return r !== 'living' ? r : undefined; } catch (e) { return undefined; } })(), mt: me.truck ? 1 : 0, lf: deed && deed.follow && mode === 'town' ? [Math.round(deed.follow.x * 10) / 10, Math.round(deed.follow.z * 10) / 10, lookArr(deed.look)] : null }, extraP);
@@ -10038,6 +10039,7 @@ function onPeers(ch) {
     let o = others.get(p.peer);
     if (!o) { o = { peer: p.peer, x: pr.x, z: pr.z, ry: 0 }; others.set(p.peer, o); }
     o.name = safeName(pr.n); o.k = typeof pr.k === 'string' && /^[a-z0-9]{10}$/.test(pr.k) ? pr.k : null;
+    if (o.k && friendRename(o.k, liveName(pr.n))) persist();
     o.look = cleanLook(pr.a);
     o.tx = clamp(pr.x, -60, 90); o.tz = clamp(pr.z, -20, 30); o.try = +pr.r || 0; o.walk = !!pr.w; o.sit = !!pr.s; o.mt = !!pr.mt; o.lf = Array.isArray(pr.lf) && pr.lf.length === 3 ? pr.lf : null;
     o.loc = typeof pr.l === 'string' ? pr.l.slice(0, 80) : 'town';
@@ -10121,11 +10123,8 @@ function locIcon(l) {
   if (l === 'bus') return '🚌';
   return '';
 }
-function goToOther(o) {
-  if (o.loc.startsWith('s:')) { const s = SHOPS.find(s => s.id === o.loc.slice(2)); if (s) { if (mode !== 'town') backToStreet(s.door.x, s.door.z, s.out); walkTo(s.door.x, s.door.z, { kind: 'shop', shop: s }); } }
-  else if (o.loc.startsWith('h:')) enterHouse(o.loc.slice(2));
-  else { if (mode !== 'town') backToStreet(o.tx, o.tz + 1, 0); walkTo(o.tx, o.tz); }
-}
+// "Go to" a friend teleports (Demi): next to them in town, or into the shop or house they are in
+function goToOther(o) { jumpToOther(o); }
 function friendMenu(o) {
   const m = $('#fmenu'); m.textContent = ''; m.hidden = false; ['#phrases', '#settings', '#fpanel'].forEach(s => $(s).hidden = true);
   m.append(h('div', 'ttl', '')); m.firstChild.textContent = o.name;
@@ -10292,16 +10291,22 @@ function askRemoveFriend(k, f) {
   safetyCard('🗑️ Remove ' + f.n + '?', 'Remove ' + f.n + ' from your friends?', [['✅ Yes', m => { delete save.friends[k]; persist(); pushLobby(true); sfx.tap(); closeCard(m); const p = $('#fpanel'); drawFriends(); p.hidden = false; }], ['✖️', closeCard]]);
 }
 const isFriend = f => f && f.me && f.them;
+// a friend can change their kitty's name later: the saved copy (friends list, "is here", postcards) follows the name they show now
+function friendRename(k, n) {
+  const f = save.friends[k]; if (!f || !n || f.n === n) return false;
+  f.n = n; save.mail.forEach(m => { if (m.k === k) m.n = n; }); return true;
+}
 // friends no longer wait for grown-ups (Demi): every saved friend counts as approved on this side
 Object.values(save.friends).forEach(f => { f.me = true; });
 async function connectLobby() {
   if (!room || connectLobby.done) return; connectLobby.done = true;
   try { room.onPeers(ch => {
     ch = unblocked(ch); const now = new Map();
-    for (const p of ch.peers) { if (p.sameTab || p.kind !== 'viewer') continue; const pr = p.presence || {}; if (typeof pr.k !== 'string') continue; now.set(pr.k, { c: typeof pr.c === 'string' && /^[a-l]{4}$/.test(pr.c) ? pr.c : '', l: typeof pr.l === 'string' ? pr.l.slice(0, 40) : '', n: safeName(pr.n), ap: Array.isArray(pr.ap) ? pr.ap.filter(v => typeof v === 'string').slice(0, 50) : [], pc: Array.isArray(pr.pc) ? pr.pc.slice(0, 5) : [] }); }
+    for (const p of ch.peers) { if (p.sameTab || p.kind !== 'viewer') continue; const pr = p.presence || {}; if (typeof pr.k !== 'string') continue; now.set(pr.k, { c: typeof pr.c === 'string' && /^[a-l]{4}$/.test(pr.c) ? pr.c : '', l: typeof pr.l === 'string' ? pr.l.slice(0, 40) : '', n: safeName(pr.n), ln: liveName(pr.n), ap: Array.isArray(pr.ap) ? pr.ap.filter(v => typeof v === 'string').slice(0, 50) : [], pc: Array.isArray(pr.pc) ? pr.pc.slice(0, 5) : [] }); }
     let changed = false;
     for (const [k, f] of Object.entries(save.friends)) {
       const on = now.get(k);
+      if (on && friendRename(k, on.ln)) changed = true;
       if (on && on.ap.includes(save.kid) && !f.them) { f.them = true; changed = true; }
       if (on && isFriend(f) && !lobbyOnline.has(k)) friendOnline(f);
     }
