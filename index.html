@@ -126,6 +126,7 @@ h1 small{display:block;font-size:.32em;color:var(--lav);text-shadow:none;letter-
 #deed button .lbl{font:800 17px var(--display);margin-top:2px}
 #order-pill{position:absolute;left:50%;bottom:calc(150px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);font:800 22px var(--display);background:var(--paper);color:var(--ink);border:3px solid #f2c94c;border-radius:999px;padding:6px 20px;box-shadow:0 4px 0 #0002;pointer-events:none;max-width:92vw;text-align:center}
 #deed button{font-size:44px;padding:8px 18px;min-width:84px}
+#deed button.big{font-size:72px;padding:12px 26px;min-width:150px}
 .backup,.restore{font-size:18px;padding:10px 14px;border-radius:16px;box-shadow:0 4px 0 #0002}
 .hint{position:absolute;left:50%;bottom:calc(94px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:#3a2e2acc;color:#fff;border-radius:999px;padding:6px 18px;font-weight:700;pointer-events:none;transition:opacity .6s;white-space:nowrap;max-width:90vw;overflow:hidden;text-overflow:ellipsis;font-size:20px}
 #joy{position:absolute;left:max(20px,env(safe-area-inset-left,0px));bottom:calc(100px + env(safe-area-inset-bottom,0px));width:150px;height:150px;border-radius:50%;background:#ffffff55;border:4px solid #fff9;touch-action:none}
@@ -260,6 +261,7 @@ h1 small{display:block;font-size:.32em;color:var(--lav);text-shadow:none;letter-
   </div>
   <div class="hud" id="hud-bot" hidden>
     <button class="round" id="open-phrases" type="button" aria-label="Say something">💬</button>
+    <button class="round" id="truck-out" type="button" aria-label="Hop out" hidden>🚪</button>
   </div>
   <div id="phrases" class="panel" hidden><div class="emorow">
     <button class="round emo" data-e="👋" type="button" aria-label="Wave">👋</button>
@@ -852,6 +854,7 @@ ART_DEF({
 });
 ART_DEF({
   '🛶': `<path d="M26 30 L68 82" stroke="#3a2a22" stroke-width="9" stroke-linecap="round"/><path d="M26 30 L68 82" stroke="#c99a5e" stroke-width="4" stroke-linecap="round"/><path d="M8 50 L92 50 Q86 74 64 77 L36 77 Q14 74 8 50 Z" fill="#b9783f" stroke="#3a2a22" stroke-width="4" stroke-linejoin="round"/><path d="M13 60 Q50 64 87 60" fill="none" stroke="#d9453a" stroke-width="6"/><path d="M14 54 L86 54" stroke="#e9b27a" stroke-width="2.5" stroke-linecap="round"/><path d="M60 50 L79 74" stroke="#3a2a22" stroke-width="9" stroke-linecap="round"/><path d="M60 50 L79 74" stroke="#c99a5e" stroke-width="4" stroke-linecap="round"/><ellipse cx="80" cy="77" rx="6" ry="11" transform="rotate(-38 80 77)" fill="#d9a46a" stroke="#3a2a22" stroke-width="3"/><path d="M5 82 Q15 76 25 82 T45 82 T65 82 T85 82 T96 81 L96 93 L5 93 Z" fill="#6fc3e8" stroke="#3a2a22" stroke-width="3" stroke-linejoin="round"/><path d="M14 87 Q20 84 26 87" fill="none" stroke="#e8f8ff" stroke-width="2.5" stroke-linecap="round"/><circle cx="24" cy="27" r="4" fill="#3a2a22"/>`,
+  '🚚': `<g stroke="#3a2a22" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"><path d="M8 30 Q8 24 14 24 H62 V74 H8 Z" fill="#fdf8ee"/><path d="M62 38 H80 Q86 38 89 46 L94 58 V74 H62 Z" fill="#fdf8ee"/><path d="M67 43 H79 Q82 43 84 48 L87 56 H67 Z" fill="#bfe3f2" stroke-width="3"/><rect x="8" y="52" width="86" height="9" fill="#4f6fa8" stroke-width="3"/><rect x="20" y="31" width="30" height="17" rx="2" fill="#fff" stroke-width="3"/><path d="M20 32 L35 42 L50 32" fill="none" stroke-width="3"/><circle cx="26" cy="76" r="9" fill="#4a3a36"/><circle cx="26" cy="76" r="3.5" fill="#d8dde4" stroke-width="2"/><circle cx="76" cy="76" r="9" fill="#4a3a36"/><circle cx="76" cy="76" r="3.5" fill="#d8dde4" stroke-width="2"/><circle cx="91" cy="64" r="2.5" fill="#ffe08a" stroke-width="2"/></g>`,
 });
 /* ================= our own icons ================= */
 // Every emoji in the game is drawn with our own SVG art (ART, filled by ART_DEF). On the page, a MutationObserver swaps
@@ -2986,7 +2989,7 @@ const SHOPS = [
   { id: 'post', name: 'Post Office', icon: '✉️', wall: '#d6e2ef', roof: '#4f6fa8', row: 'aw', z0: -28.5, w: 7, gallery: 1, plaster: '#bcd7e8', trim: '#d9a441', goods: ['✉️', '📦', '📮'], signBg: '#2f4a7a' },
   { id: 'hospital', name: 'Hospital', icon: '🩺', wall: '#eef2f0', roof: '#c2453a', row: 'n', x0: 7, w: 9, plaster: '#f4f1ea', trim: '#c2453a', goods: ['🩹', '🧸', '💊'], floors: 3, awn: false },
   { id: 'police', name: 'Police & Jail', icon: '🚓', wall: '#dfe6f0', roof: '#2f4a7a', row: 'n', x0: 22, w: 9, plaster: '#e3e3dc', trim: '#2f4a7a', goods: ['🚓', '⭐', '🔦'], awn: false },
-  { id: 'bank', name: 'Bank', icon: '🏦', wall: '#e6e1d4', roof: '#3d5a4a', row: 'n', x0: 16, w: 6, floors: 3, plaster: '#ece6d8', trim: '#3d5a4a', goods: ['💰', '🏦', '🪙'], awn: false, stone: '#d8d0bc' },
+  { id: 'bank', name: 'Bank', icon: '🏦', wall: '#e6e1d4', roof: '#3d5a4a', row: 'n', x0: -17, w: 5, floors: 3, plaster: '#ece6d8', trim: '#3d5a4a', goods: ['💰', '🏦', '🪙'], awn: false, stone: '#d8d0bc' },
   { id: 'pets', name: 'Pet Store', icon: '🐾', wall: '#ffe2c4', roof: '#8a4a2a', row: 'n', x0: 2, w: 5, gallery: 1, plaster: '#ffd0a0', trim: '#e8803a', goods: ['🐹', '🐸', '🐢'] },
   { id: 'hotel', name: 'Hotel', icon: '🛎️', wall: '#bfcfe8', roof: '#3d5a4a', row: 'x', px: -4, pz: -37.5, rot: 0, w: 11, gallery: 1, plaster: '#bfcfe8', trim: '#3d5a4a', goods: ['🛎️', '🗝️', '🧳'], floors: 3, awn: false },
   { id: 'grocery', name: 'Grocery', icon: '🍅', wall: '#cfe6c4', roof: '#5f8a46', row: 's', x0: 15, w: 6, gallery: 1, plaster: '#cfe6c4', trim: '#5f8a46', goods: ['🍅', '🥕', '🍎'], floors: 3 },
@@ -2997,7 +3000,7 @@ const SHOPS = [
 ];
 const FILLERS = [
   { name: 'Flower Shop', icon: '💐', row: 'aw', z0: -34.5, w: 5, gallery: 1, plaster: '#f7c6c0', trim: '#2f6a4a', goods: ['💐', '🌷', '🌻'] },
-  { name: 'Bakery', icon: '🥖', row: 'n', x0: -17, w: 5, gallery: 1, plaster: '#f6e3a8', trim: '#a8794a', goods: ['🥖', '🥐', '🍞'], floors: 3 },
+  { name: 'Bakery', icon: '🥖', row: 'n', x0: 16, w: 6, gallery: 1, plaster: '#f6e3a8', trim: '#a8794a', goods: ['🥖', '🥐', '🍞'], floors: 3 },
   { name: 'Candy Shop', icon: '🍫', row: 'ae', z0: -27.5, w: 6, gallery: 1, plaster: '#d8b49a', trim: '#6b4630', goods: ['🍫', '🍬', '🍫'] },
   { name: 'Cupcakes', icon: '🧁', row: 's', x0: -20, w: 6, gallery: 1, plaster: '#f6cadb', trim: '#d98aa0', goods: ['🧁', '🍰', '🥧'] },
 ];
@@ -3722,7 +3725,7 @@ const THEMES = {
       g.add(lcyl('#c8945a', it, 1.88, z0 + 1.4, .26, .28)); [0, 1, 2, 3, 4].forEach(k => g.add(lsph(.09, ['#f2c7d3', '#cfe2f1', '#f7e3a8', '#fffaf0', '#e9a3b8'][k], it + Math.sin(k * 1.7) * .12, 2.18, z0 + 1.4 + Math.cos(k * 1.7) * .12)));
       d.obst.push([SX - .1, SZ - .55, .5], [SX - .1, SZ + .55, .5]); }
     // the paperwork table in the middle, with forms, a pen cup, a rubber stamp and an ink pad
-    { const TX = 0, TZ = 1.45;
+    { const TX = -2.7, TZ = .5;
       g.add(box(wood, TX, .72, TZ, 1.7, .07, .85), box('#8a5a3c', TX, .64, TZ, 1.55, .08, .7));
       [[-1, -1], [-1, 1], [1, -1], [1, 1]].forEach(([a, b]) => g.add(lcyl('#8a5a3c', TX + a * .72, 0, TZ + b * .33, .045, .66)));
       [[-.45, .05, .2], [-.25, -.12, -.15], [.15, .1, .3], [.4, -.05, -.1]].forEach(([x, z, r], i) => { const p = box(['#fffaf0', '#cfe2f1', '#fffaf0', '#f2c7d3'][i], TX + x, .795 + i * .004, TZ + z, .34, .006, .44); p.rotation.y = r; g.add(p); if (i % 2 === 0) [0, 1, 2].forEach(l => { const ln = box('#9fb6cc', TX + x, .8 + i * .004, TZ + z - .12 + l * .1, .24, .003, .015); ln.rotation.y = r; g.add(ln); }); });
@@ -5555,6 +5558,109 @@ function eHomeProps(g, d) {
   // a soft round rug in the middle of the shop
   eRug(g, 0, 1.6, 3.6, 2.2, ['#e9a3b8', '#fffaf0', '#cfe2f1'], true);
 }
+/* ================= Kitty Club chill spot =================
+   Drop-in module. Load it AFTER b6.js (the club room is in THEMES there); anywhere after b6.js is fine, for example next to pets2.js.
+   It needs no edits to the game files: it wraps THEMES.club.props, so the lounge is added whenever the club is built.
+   The lounge sits in the free west corner of the club (x -5.9 to -3.3 and the front-left corner, z -3.6 to 3.8) and does not touch the dance floor, stage or milk bar:
+   - a curved plum velvet couch (button-tufted, gold feet) round a low brass table with milk glasses, cookies and a candle
+   - two beanbags and two big tasselled floor cushions on a round patterned rug
+   - fairy lights draped along the wall, a glowing neon moon and stars, a floor lamp, a small side table with a lamp, big potted plants
+   Seats: 7 entries are added to d.seats ({ seat: {x, z}, rot, table: null }), so tapping near one sits the cat, and club visitors can use them too.
+   Everything sits low (cushions at 0.1 to 0.4) because the cat sits at floor level. Glowing parts use unlit materials so they shine in the dark club.
+*/
+const KCL = { cx: -4.15, cz: .2, R: 1.2, velvet: '#7a3f8a', velvetD: '#5a2a6a', velvetL: '#9a5aa8', gold: '#d9b23a', glowW: '#ffd98a', glowP: '#ff7ab8', glowB: '#8fd8ff' };
+Object.assign(TSIZE, { kg: 1.4, kh: .6 });
+const kclGlow = c => { const k = 'kclg' + c; return fzUnit[k] || (fzUnit[k] = new T.MeshBasicMaterial({ color: c })); };
+const kclRug = () => tmat(ctex('kg1', 128, (g, s) => {
+  g.fillStyle = '#4a2a6a'; g.fillRect(0, 0, s, s);
+  g.strokeStyle = '#d9b23a'; g.lineWidth = 3; [10, 28, 46].forEach((r, i) => { g.beginPath(); g.arc(s / 2, s / 2, r, 0, 7); g.stroke(); });
+  g.fillStyle = '#ff9acb'; for (let i = 0; i < 8; i++) { const a = i / 8 * 6.283; g.beginPath(); g.arc(s / 2 + Math.cos(a) * 37, s / 2 + Math.sin(a) * 37, 5, 0, 7); g.fill(); }
+  g.fillStyle = '#8fd8ff'; for (let i = 0; i < 6; i++) { const a = i / 6 * 6.283 + .3; g.beginPath(); g.arc(s / 2 + Math.cos(a) * 19, s / 2 + Math.sin(a) * 19, 3.5, 0, 7); g.fill(); }
+  g.fillStyle = '#d9b23a'; g.beginPath(); g.arc(s / 2, s / 2, 6, 0, 7); g.fill();
+}));
+const kclFace = (th, r) => ({ x: KCL.cx - r * Math.cos(th), z: KCL.cz + r * Math.sin(th), rot: Math.PI / 2 + th });
+
+function kclBuildCouch(g) {
+  const v = KCL.velvet, vd = KCL.velvetD, vl = KCL.velvetL;
+  const N = 10, span = 130 * Math.PI / 180;
+  for (let i = 0; i < N; i++) {
+    const th = -span / 2 + span * (i + .5) / N, p = kclFace(th, KCL.R), s = new T.Group(); s.position.set(p.x, 0, p.z); s.rotation.y = p.rot;
+    s.add(box(M.wood('#4a2a1c'), 0, .06, -.04, .4, .1, .86), fzPuff(v, 0, .14, .02, .42, .2, .78, 4), fzPuff(vl, 0, .32, .06, .38, .08, .6, 3), fzR(fzPuff(v, 0, .3, -.4, .42, .62, .2, 4), -.14));
+    for (let k = 0; k < 3; k++) s.add(lsph(.025, KCL.gold, -.15 + k * .15, .55 - (k % 2) * .1, -.3));
+    g.add(s);
+  }
+  [-1, 1].forEach(sg => { const th = sg * (span / 2 + .08), p = kclFace(th, KCL.R), s = new T.Group(); s.position.set(p.x, 0, p.z); s.rotation.y = p.rot;
+    s.add(fzPuff(v, 0, .14, -.02, .36, .5, .86, 3), fzAlongZ(vl, 0, .66, -.02, .13, .7), lsph(.13, vl, 0, .66, .33, 1, 1, .8), lsph(.13, vl, 0, .66, -.37, 1, 1, .8)); g.add(s);
+    const f = kclFace(sg * (span / 2 + .02), KCL.R + .1); [-.3, .3].forEach(o => g.add(lcyl(KCL.gold, f.x + o * Math.cos(f.rot), 0, f.z - o * Math.sin(f.rot), .03, .08))); });
+  for (let i = 0; i < N + 1; i++) { const th = -span / 2 + span * i / N, p = kclFace(th, KCL.R); g.add(lcyl(KCL.gold, p.x - .12 * Math.cos(th), 0, p.z + .12 * Math.sin(th), .035, .1)); }
+  // two throw pillows
+  [[-.7, '#ff9acb'], [.55, '#8fd8ff']].forEach(([th, c]) => { const p = kclFace(th, KCL.R + .1), s = new T.Group(); s.position.set(p.x, 0, p.z); s.rotation.y = p.rot; s.add(fzR(fzPuff(c, 0, .38, .0, .34, .3, .1, 2.6), -.25, .3, .12)); g.add(s); });
+}
+function kclBeanbag(g, x, z, c, c2) {
+  const rot = Math.atan2(KCL.cx - x, KCL.cz - z), b = new T.Group(); b.position.set(x, 0, z); b.rotation.y = rot;
+  b.add(fzPuff(c, 0, 0, 0, .95, .55, .9, 2.2), fzPuff(c2, 0, .3, .04, .6, .14, .55, 2.5), fzPuff(c, .0, .12, -.28, .8, .5, .35, 2.4));
+  for (let i = 0; i < 6; i++) { const a = i / 6 * 6.283; b.add(lsph(.02, c2, Math.cos(a) * .4, .22 + Math.sin(a * 2) * .04, Math.sin(a) * .38 + .04)); }
+  b.add(fzTor(c2, 0, .28, .02, .3, .012, Math.PI / 2)); g.add(b);
+}
+function kclCushion(g, x, z, c, c2) {
+  const rot = Math.atan2(KCL.cx - x, KCL.cz - z), b = new T.Group(); b.position.set(x, 0, z); b.rotation.y = rot;
+  b.add(fzPuff(c, 0, .02, 0, .8, .2, .8, 2.6), fzTor(c2, 0, .2, 0, .3, .014, Math.PI / 2), lsph(.05, c2, 0, .26, 0, 1, .6, 1));
+  for (let i = 0; i < 8; i++) { const a = i / 8 * 6.283; b.add(lsph(.016, c2, Math.cos(a) * .4, .12, Math.sin(a) * .4)); }
+  [-.1, 0, .1].forEach(o => b.add(lcyl(c2, o, .0, .44, .012, .1)));
+  g.add(b);
+}
+function kclTable(g) {
+  const { cx, cz, gold } = KCL;
+  g.add(fzLathe('#5a2a1c', [[.001, 0], [.3, 0], [.32, .04], [.22, .1], [.2, .3], [.3, .36], [.001, .38]], cx, 0, cz, 18), fzTor(gold, cx, .02, cz, .31, .014, Math.PI / 2), fzTor(gold, cx, .34, cz, .22, .012, Math.PI / 2));
+  g.add(cyl('#c9a040', cx, .38, cz, .52, .035), fzTor('#a8822a', cx, .415, cz, .52, .02, Math.PI / 2), cyl('#d9b23a', cx, .41, cz, .46, .012));
+  for (let i = 0; i < 14; i++) { const a = i / 14 * 6.283; g.add(lsph(.014, '#8a5a1c', cx + Math.cos(a) * .4, .42, cz + Math.sin(a) * .4)); }
+  // three milk glasses with straws, a plate of cookies, a candle jar that glows
+  [[-.2, -.12, '#ff9acb'], [.0, .22, '#8fd8ff'], [.24, -.08, '#ffd447']].forEach(([x, z, sc]) => {
+    g.add(fzLathe('#e8f4f8', [[.001, 0], [.05, 0], [.06, .16], [.001, .16]], cx + x, .415, cz + z, 12), fzLathe('#ffffff', [[.001, .01], [.045, .01], [.054, .12], [.001, .12]], cx + x, .415, cz + z, 12), fzR(lcyl(sc, cx + x + .02, .45, cz + z, .008, .2), 0, 0, -.2));
+  });
+  g.add(cyl('#fbf1e6', cx - .22, .415, cz + .26, .13, .012)); [[0, 0], [.07, .04], [-.05, .06], [.03, -.06]].forEach(([a, b]) => g.add(lsph(.04, '#d2a060', cx - .22 + a, .445, cz + .26 + b, 1, .35, 1), lsph(.008, '#5a3a22', cx - .22 + a, .455, cz + .26 + b)));
+  g.add(fzLathe('#cfe8f4', [[.001, 0], [.05, 0], [.055, .07], [.001, .07]], cx + .25, .415, cz + .24, 10), lsph(.025, kclGlow(KCL.glowW), cx + .25, .5, cz + .24, 1, 1.4, 1));
+}
+function kclLamps(g) {
+  // floor lamp with a warm shade at the north end of the couch, side table with a glowing mushroom lamp at the south end
+  g.add(lcyl(KCL.gold, -5.45, 0, -1.75, .14, .04), lcyl(KCL.gold, -5.45, 0, -1.75, .025, 1.5), fzLathe('#ffe6b0', [[.15, 0], [.26, 0], [.2, .34], [.12, .36]], -5.45, 1.35, -1.75, 14), lsph(.1, kclGlow(KCL.glowW), -5.45, 1.5, -1.75));
+  g.add(fzLathe('#4a2a1c', [[.001, 0], [.26, 0], [.24, .04], [.06, .08], [.06, .5], [.24, .56], [.001, .6]], -5.4, 0, 2.15, 14), cyl(KCL.gold, -5.4, .56, 2.15, .27, .03));
+  g.add(fzLathe('#ff9acb', [[.001, .0], [.14, .02], [.16, .1], [.08, .18], [.001, .2]], -5.4, .6, 2.15, 14), lsph(.09, kclGlow(KCL.glowP), -5.4, .74, 2.15, 1, .7, 1), lcyl('#fff3d8', -5.4, .6, 2.15, .02, .08));
+  // fairy lights along the wall and across the corner
+  const bulb = (x, y, z, i) => g.add(lsph(.045, kclGlow([KCL.glowW, KCL.glowP, KCL.glowB][i % 3]), x, y, z));
+  for (let i = 0; i <= 18; i++) { const t = i / 18; bulb(-5.88, 3.05 - Math.sin(t * Math.PI) * .45, -3.6 + t * 7.4, i); }
+  for (let i = 0; i <= 10; i++) { const t = i / 10; bulb(-5.88 + t * 2.4, 3.2 - Math.sin(t * Math.PI) * .35 - t * .2, -3.6 + t * .8, i + 1); }
+  g.add(fzTube('#3a3040', Array.from({ length: 10 }, (_, i) => { const t = i / 9; return [-5.88, 3.05 - Math.sin(t * Math.PI) * .45, -3.6 + t * 7.4]; }), .008, { rad: 4, seg: 40 }));
+  // neon moon and stars on the wall above the couch
+  const moon = new T.Mesh(new T.TorusGeometry(.5, .05, 8, 28, Math.PI * 1.35), kclGlow(KCL.glowP)); moon.position.set(-5.88, 2.3, .2); moon.rotation.set(0, Math.PI / 2, Math.PI * .6); g.add(moon);
+  [[2.7, -.9, .09], [2.0, .9, .07], [2.9, 1.2, .06], [1.8, -1.0, .06]].forEach(([y, z, r], i) => g.add(lsph(r, kclGlow(i % 2 ? KCL.glowB : KCL.glowW), -5.88, y, z, .4, 1, 1)));
+}
+function kclPlant(g, x, z, s = 1) {
+  g.add(fzLathe('#c8643c', [[.001, 0], [.2 * s, 0], [.3 * s, .5 * s], [.32 * s, .6 * s], [.001, .6 * s]], x, 0, z, 12), cyl('#4a2a1c', x, .58 * s, z, .29 * s, .03));
+  for (let i = 0; i < 11; i++) { const a = i * 2.4, o = fzLeaf(['#3f8a4a', '#5aa85a', '#2f7a42'][i % 3], (.9 + (i % 4) * .25) * s, .17 * s, x, .6 * s, z, a, .45 + (i % 3) * .2); g.add(o); }
+}
+
+const kclSeats = [];
+function kclBuildAll() {
+  const g = new T.Group(), { cx, cz } = KCL;
+  g.add(mesh(new T.CircleGeometry(1, 40), kclRug(), cx + .05, .05, cz, .92, 1.6, 1).rotateX(-Math.PI / 2));
+  const rug = g.children[g.children.length - 1]; rug.rotation.x = -Math.PI / 2; rug.scale.set(.92, 1.6, 1);
+  kclBuildCouch(g); kclTable(g); kclLamps(g);
+  kclBeanbag(g, -4.95, 2.75, '#ff9acb', '#ffc8e0'); kclBeanbag(g, -3.8, 2.85, '#8fd8ff', '#c8eeff');
+  kclCushion(g, -3.85, -1.6, '#ffd447', '#fff3a8'); kclCushion(g, -4.95, -2.4, '#8fe6c8', '#d0f6e8');
+  kclPlant(g, -5.5, -3.55, 1.25); kclPlant(g, -5.5, 3.6, 1); kclPlant(g, -2.9, 3.7, .8);
+  bake(g);
+  return g;
+}
+const kclProto = {};
+function kcClubLounge(g, d) {
+  if (!kclProto.g) kclProto.g = kclBuildAll();
+  g.add(kclProto.g.clone());
+  [-38, 0, 38].forEach(deg => { const p = kclFace(deg * Math.PI / 180, KCL.R - .02); d.seats.push({ seat: { x: p.x, z: p.z }, rot: p.rot, table: null }); });
+  [[-4.95, 2.75], [-3.8, 2.85], [-3.85, -1.6], [-4.95, -2.4]].forEach(([x, z]) => d.seats.push({ seat: { x, z }, rot: Math.atan2(KCL.cx - x, KCL.cz - z), table: null }));
+  d.obst.push([KCL.cx, KCL.cz, .6], [-5.2, KCL.cz - .8, .55], [-5.2, KCL.cz + .8, .55], [-5.45, KCL.cz, .5], [-5.5, -3.55, .5], [-5.5, 3.6, .45], [-5.45, -1.75, .25], [-5.4, 2.15, .3]);
+}
+(function installClubLounge() { const o = THEMES.club.props; THEMES.club.props = function (g, d) { o.call(this, g, d); kcClubLounge(g, d); }; })();
 
 /* ================= day and night ================= */
 // A full day lasts 20 minutes and follows the clock, so every iPad in town sees the same time of day.
@@ -5604,12 +5710,12 @@ function instrument(kind) {
   return g;
 }
 [['accordion', '#c2453a', 'beanie'], ['mandolin', '#4f7a46', 'party'], ['violin', '#3a2e2a', 'top'], ['tambourine', '#d9a441', 'flower']].forEach(([k, c, hat], i) => {
-  const cat = buildCat(Object.assign(randomLook(), { hat, back: '', face: '', lod: 0 })); cat.position.set(-16.4 + i * 1.15, 0, -4.5); cat.rotation.y = .15 - i * .1; nightStuff.add(cat);
+  const cat = buildCat(Object.assign(randomLook(), { hat, back: '', face: '', lod: 0 })); cat.position.set(16.6 + i * 1.15, 0, -4.5); cat.rotation.y = .15 - i * .1; nightStuff.add(cat);
   const ins = instrument(k); ins.position.set(0, .95, .62); cat.userData.body.children[0].add(ins);
   band.push({ cat, ins, k });
 });
-{ const s = new T.Mesh(new T.PlaneGeometry(1.6, .45), new T.MeshBasicMaterial({ map: textTex('🎶 Music!', 384, 110, '#4f7a46', '#fdf3dc') })); s.position.set(-14.7, .6, -5.05); nightStuff.add(s);
-  const hat = lcyl('#3a2e2a', -12.2, 0, -4, .25, .18); nightStuff.add(hat, lsph(.06, '#d9b23a', -12.2, .2, -4)); }
+{ const s = new T.Mesh(new T.PlaneGeometry(1.6, .45), new T.MeshBasicMaterial({ map: textTex('🎶 Music!', 384, 110, '#4f7a46', '#fdf3dc') })); s.position.set(18.3, .6, -5.05); nightStuff.add(s);
+  const hat = lcyl('#3a2e2a', 20.8, 0, -4, .25, .18); nightStuff.add(hat, lsph(.06, '#d9b23a', 20.8, .2, -4)); }
 const queue = [];
 const QSPOTS = [[9.5, 4.7, -Math.PI / 2], [8.6, 4.7, -Math.PI / 2], [7.7, 4.7, -Math.PI / 2], [6.8, 4.7, -Math.PI / 2], [5.2, 6.1, 0], [5.2, 7.1, 0], [5.2, 8.1, 0], [5.2, 9.1, 0], [5.2, 10.1, 0], [5.2, 11.1, 0]];
 QSPOTS.forEach(([x, z, r]) => { const cat = buildCat(Object.assign(randomLook(), { lod: 0 })); cat.position.set(x, 0, z); cat.rotation.y = r + Math.PI; nightStuff.add(cat); queue.push(cat); });
@@ -5726,14 +5832,15 @@ function openDeed() {
   if (!deed || deed.happy) return;
   const p = $('#deed'); p.textContent = ''; p.hidden = false; ['#phrases', '#fmenu', '#settings', '#busq'].forEach(s => $(s).hidden = true);
   p.append(h('div', 'ttl', '😿 This kitty is sad. What nice thing can you do?'));
-  DEEDS.forEach(([id, ic, , label], i) => { const b = btn('', ic, label); b.onclick = () => tryDeed(i, b); p.append(b); });
+  // three big choices: the one the kitty hinted at plus two more, and any of them cheers it up
+  const three = [deed.need]; while (three.length < 3) { const k = rand(DEEDS.length); if (!three.includes(k)) three.push(k); }
+  three.sort(() => Math.random() - .5).forEach(i => { const [, ic, , label] = DEEDS[i]; const b = btn('big', ic, label); b.onclick = () => tryDeed(i, b); p.append(b); });
   const x = btn('', '✖️', 'Close'); x.onclick = () => { p.hidden = true; }; p.append(x);
   speak('This kitty is sad. ' + DEEDS[deed.need][2] + ' What nice thing can you do?');
   me.ry = Math.atan2(deed.b.seat.x - me.x, deed.b.seat.z - me.z);
 }
 function tryDeed(i, b) {
   if (!deed || deed.happy) return;
-  if (i !== deed.need) { deed.tries++; bump(b, 'shake'); sfx.oops(); say(deed, '😿', true); speak(pick(['Hmm, not that.', 'Maybe something else?']) + ' ' + DEEDS[deed.need][2]); return; }
   $('#deed').hidden = true; deed.happy = 1; deed.cloud.material = new T.SpriteMaterial({ map: emojiTex('😻') });
   sfx.yay(); say(deed, DEEDS[i][1] + ' 💖', true); deed.hop = nowT;
   setTimeout(() => surprise('You made a kitty happy! Here is a surprise!'), 1600);
@@ -5763,7 +5870,9 @@ function updateDeed(t) {
 /* ================= the bus ================= */
 // Shared through presence: bu = [stop, callTime, boardTime]. Everyone works out the same bus from the newest call.
 const BUS_ARRIVE = 5000, BUS_WAIT = 10000, BUS_IDLE = 20000, BUS_RIDE = 16000, BUS_UNLOAD = 3500, BUS_LEAVE = 5000;
-const STOP_X = [-44, 40], BUS_Z = -2.1, BUS_FROM = [-80, 100];
+const STOP_X = [-44, 40], BUS_Z = -2.1, BUS_FROM = [-80, 100], SHELTER_X = [-47.4, 43.4];
+// where the bus parks so its door (2 steps ahead of its middle) lines up with the shelter, facing the way it is going
+const busPark = (s, face) => SHELTER_X[s] - face * 2;
 const bus = new T.Group(); bus.visible = false; town.add(bus);
 const busSeats = [], busDoors = [];
 let busRoof;
@@ -5794,7 +5903,7 @@ function computeBus(now) {
   const boards = list.filter(e => e[0] === top[0] && e[1] === top[1] && e[2]).map(e => e[2]);
   const s = top[0], c = top[1], b = boards.length ? Math.min(...boards) : 0;
   const arrive = c + BUS_ARRIVE, dep = b ? Math.max(b + BUS_WAIT, arrive + 1000) : arrive + BUS_IDLE, rideEnd = dep + BUS_RIDE, unloadEnd = rideEnd + BUS_UNLOAD, end = unloadEnd + BUS_LEAVE;
-  const from = STOP_X[s], to = STOP_X[1 - s], dir = Math.sign(to - from);
+  const dir = Math.sign(STOP_X[1 - s] - STOP_X[s]), from = busPark(s, dir), to = busPark(1 - s, dir);
   let x, phase;
   const ease = k => k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
   if (now < arrive) { phase = 'arrive'; const k = 1 - Math.pow(1 - (now - c) / BUS_ARRIVE, 2); x = BUS_FROM[s] + (from - BUS_FROM[s]) * k; }
@@ -5845,7 +5954,9 @@ const CAR_PATH = (() => {
   const pts = [], R = 2.1;
   const line = (x0, z0, x1, z1) => { const n = Math.ceil(Math.hypot(x1 - x0, z1 - z0) / .5); for (let i = 0; i < n; i++) pts.push([x0 + (x1 - x0) * i / n, z0 + (z1 - z0) * i / n]); };
   const turn = (cx, east) => { for (let i = 0; i < 14; i++) { const a = i / 14 * Math.PI; pts.push(east ? [cx + Math.sin(a) * R, -Math.cos(a) * R] : [cx - Math.sin(a) * R, Math.cos(a) * R]); } };
-  line(25, -R, 44, -R); turn(44, true); line(44, R, 6, R); turn(6, false); line(6, -R, 16.5, -R); pts.push([16.5, -R]);
+  // the bank sits across town from the police station (Demi), so the chase runs the length of the main street
+  const bx = SHOPS.find(s => s.id === 'bank').door.x;
+  line(25, -R, 44, -R); turn(44, true); line(44, R, bx - 4, R); turn(bx - 4, false); line(bx - 4, -R, bx, -R); pts.push([bx, -R]);
   const len = [0]; for (let i = 1; i < pts.length; i++) len.push(len[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
   return { pts, len, total: len[len.length - 1] };
 })();
@@ -6390,7 +6501,7 @@ function enterBuilding(s, spawn) {
 function leaveBuilding() {
   const s = me.building; if (!s) return;
   if (s.id === 'loft') { const cf = SHOPS.find(x => x.id === 'coffee'); sfx.tap(); return enterBuilding(Object.assign(cf), { x: 4.2, z: -.4 }); }
-  fade(() => { stopClubMusic(); npcCust.forEach(n => dropLabel(n)); resetRole(); $('#order-pill').hidden = true; $('#deed').hidden = true; backToStreet(s.door.x, s.door.z, s.out); });
+  fade(() => { stopClubMusic(); npcCust.forEach(n => dropLabel(n)); resetRole(); $('#order-pill').hidden = true; $('#deed').hidden = true; backToStreet(s.door.x + Math.sin(s.out) * 2.4, s.door.z + Math.cos(s.out) * 2.4, s.out); camYaw = s.out; me.leftAt = performance.now(); me.leftShop = s; });
   sfx.tap();
 }
 $('#inside-exit').onclick = leaveBuilding;
@@ -11491,13 +11602,14 @@ const ROLE_SHOPS = {
   salon: { job: 'nail artist', menu: [['💅', 'Nails', 3], ['🎀', 'Bow', 2], ['✨', 'Glitter', 2]], make: ['🧴', '💅', '✨'] },
   hospital: { job: 'doctor', menu: [['🩹', 'Band-aid', 1], ['🩺', 'Checkup', 2], ['🍭', 'Lollipop', 1]], make: ['🧼', '🩺', '💖'] },
   icecream: { job: 'scooper', menu: [['🍦', 'Soft serve', 2], ['🍨', 'Sundae', 3], ['🍧', 'Snow cone', 2], ['🧁', 'Cupcake', 3]], make: ['🥣', '🍦', '🍫', '✨'] },
-  post: { job: 'post cat', menu: [['✉️', 'Stamp', 1], ['💌', 'Card', 2], ['📦', 'Parcel', 3]], make: ['✏️', '📮', '📦'] },
 };
 let ticket = null;   // worker: { o, npc, ts, item, state: 'ask' | 'ordered' | 'made' | 'delivered', at }
 let myOrder = null;  // customer: { ts, wo, item, state: 'asked' | 'ordered' | 'eating', at }
 let npcCust = [], nextNpcT = 0, satAt = 0, carrySp = null;
 const roleShop = () => me.building && ROLE_SHOPS[me.building.id];
 const menuOf = () => roleShop().menu;
+// at the hospital you're a patient, everywhere else a customer
+const custWord = () => me.building && me.building.id === 'hospital' ? 'patient' : 'customer';
 
 function resetRole() {
   if (school.role) schoolReset();
@@ -11507,19 +11619,20 @@ function resetRole() {
 function chooseRole() {
   const rs = roleShop(); if (!rs) return;
   const p = $('#deed'); p.textContent = ''; p.hidden = false;
-  p.append(h('div', 'ttl', 'Work here, or be a customer?'));
-  const w = btn('', '👩‍🍳'), c = btn('', '😋');
-  w.append(h('div', 'lbl', 'Worker')); c.append(h('div', 'lbl', 'Customer'));
+  const cu = custWord();
+  p.append(h('div', 'ttl', 'Work here, or be a ' + cu + '?'));
+  const w = btn('', '👩‍🍳'), c = btn('', cu === 'patient' ? '🩹' : '😋');
+  w.append(h('div', 'lbl', 'Worker')); c.append(h('div', 'lbl', cu[0].toUpperCase() + cu.slice(1)));
   w.onclick = () => { p.hidden = true; setRole('w'); }; c.onclick = () => { p.hidden = true; setRole('c'); };
   p.append(w, c);
-  speak('Do you want to work here, or be a customer?');
+  speak('Do you want to work here, or be a ' + cu + '?');
 }
 function setRole(r) {
   me.role = r; ticket = null; myOrder = null; carrySp = null;
   npcCust.forEach(n => { roomDyn.remove(n.cat); dropLabel(n); }); npcCust = []; nextNpcT = nowT + 3;
   myCatModel(); sfx.good();
   pushPresence(true, { ro: r, tk: null, od: null, dl: null, pd: null, cr: null, fd: null });
-  $('#role-pill').hidden = false; $('#role-pill').textContent = r === 'w' ? '👩‍🍳 Worker' : '😋 Customer';
+  $('#role-pill').hidden = false; $('#role-pill').textContent = r === 'w' ? '👩‍🍳 Worker' : custWord() === 'patient' ? '🩹 Patient' : '😋 Customer';
   const job = roleShop().job;
   if (r === 'w') speak('You are the ' + job + '! When a kitty sits down, tap them to take their order.');
   else speak('Find a seat and sit down. A worker will come and take your order!');
@@ -11531,7 +11644,7 @@ function orderPill() {
   const p = $('#order-pill'), rs = roleShop();
   let txt = '';
   if (rs && me.role === 'w' && ticket) {
-    const who = ticket.npc ? 'a customer' : ticket.o.name, it = ticket.item != null ? menuOf()[ticket.item] : null;
+    const who = ticket.npc ? 'a ' + custWord() : ticket.o.name, it = ticket.item != null ? menuOf()[ticket.item] : null;
     txt = ticket.state === 'ask' ? '📝 Asking ' + who + '…' : ticket.state === 'ordered' ? '📝 ' + it[0] + ' for ' + who + ' · go make it at the glowing spot!' : ticket.state === 'made' ? '🍽️ Take the ' + it[0] + ' to ' + who + '!' : '🪙 Waiting to get paid…';
   } else if (rs && me.role === 'w') txt = '👀 Tap a kitty who sits down to take their order';
   else if (rs && me.role === 'c' && myOrder && myOrder.state === 'ordered') txt = '⏳ Your ' + menuOf()[myOrder.item][0] + ' is being made…';
@@ -11569,7 +11682,7 @@ function openMake() {
     i++; tone(500 + i * 120, .12, 'triangle', .08);
     if (i < steps.length) { b.textContent = steps[i]; bar.textContent = '👆 ' + (steps.length - i) + ' more!'; return; }
     p.hidden = true; ticket.state = 'made'; sfx.good(); say(meLab(), it[0], true);
-    speak('Ready! Take it to ' + (ticket.npc ? 'the customer' : ticket.o.name) + '!');
+    speak('Ready! Take it to ' + (ticket.npc ? 'the ' + custWord() : ticket.o.name) + '!');
     pushPresence(true, { cr: ticket.item }); orderPill();
   };
   p.append(b, bar);
@@ -11580,7 +11693,7 @@ function deliver() {
   const it = menuOf()[ticket.item]; sfx.yay(); say(meLab(), '🍽️', true);
   if (ticket.npc) {
     const n = ticket.o; n.state = 'eat'; n.eatAt = nowT; n.food = foodSprite(it[0], n.seat); roomDyn.add(n.food); say(n, '😋', true);
-    getPaid(it[2], 'the customer'); ticket = null; pushPresence(true, { cr: null });
+    getPaid(it[2], 'the ' + custWord()); ticket = null; pushPresence(true, { cr: null });
   } else {
     ticket.state = 'delivered'; ticket.at = nowT; speak('Here is your ' + it[1] + '!');
     pushPresence(true, { dl: [ticket.k, ticket.ts], cr: null });
@@ -11678,7 +11791,7 @@ function updateRoles(t) {
     if (ticket) {
       if (!ticket.npc) {
         const o = [...others.values()].find(x => x.k === ticket.k);
-        if (!o || o.loc !== me.loc) { ticket = null; pushPresence(true, { tk: null, dl: null, cr: null }); speak('Your customer left.'); orderPill(); return; }
+        if (!o || o.loc !== me.loc) { ticket = null; pushPresence(true, { tk: null, dl: null, cr: null }); speak('Your ' + custWord() + ' left.'); orderPill(); return; }
         ticket.o = o;
         if (ticket.state === 'ask' && o.od && o.od[0] === save.kid && o.od[1] === ticket.ts && o.od[2] < 0) { speak(o.name + ' is just sitting. No order!'); ticket = null; pushPresence(true, { tk: null }); orderPill(); return; }
         if (ticket.state === 'ask' && o.od && o.od[0] === save.kid && o.od[1] === ticket.ts) { ticket.item = clamp(o.od[2] | 0, 0, rs.menu.length - 1); ticket.state = 'ordered'; const it = rs.menu[ticket.item]; say(o, it[0], true); speak(o.name + ' wants ' + it[1] + '! Go to the glowing spot to make it.'); orderPill(); }
@@ -12795,7 +12908,122 @@ function rentTick(t) {
   rentSpot.boat.position.y = -.12 + Math.sin(t * 1.3 + 1) * .04; rentSpot.boat.rotation.z = Math.sin(t * 1.1 + 2) * .04;
   if (mode !== 'town') return;
   const d = Math.hypot(me.x - RENT.rx, me.z - RENT.rz);
-  if (d > 1.6) rentSpot.armed = true; else if (d < .8 && rentSpot.armed && !me.go) openRent();
+  if (d > 1.6) rentSpot.armed = true; else if (d < .8 && rentSpot.armed && !me.go && !me.truck) openRent();
+}
+/* ---------- the mail truck: parked by the post office; its glowing spot puts your kitty in the driver's seat ----------
+   You drive it like walking (tap the road or use the stick), a bit quicker. A glowing parcel marks the shop that gets the mail;
+   drive up to it and the parcel hops to the door. After three shops, drive back to the post office for your coins. Nothing to miss, no clock. */
+const MAILT = { stops: 3 };
+let mailT = null;
+function mailTruck() {
+  const t = new T.Group(), CREAM = '#fdf8ee', BLUE = '#4f6fa8', PINK = '#e86a8a', DARK = '#2b2b2b';
+  // chassis, the cream cargo box with a blue band and a pink pinstripe, and a rounded roof
+  t.add(box(DARK, 0, .28, -.1, 1.55, .25, 3.3));
+  t.add(box(CREAM, 0, .5, -.75, 1.7, 1.4, 2.1), box(BLUE, 0, .78, -.75, 1.72, .3, 2.12), box(PINK, 0, 1.12, -.75, 1.72, .05, 2.12));
+  const top = mesh(new T.CylinderGeometry(.85, .85, 2.1, 20, 1, false, 0, Math.PI), CREAM, 0, 1.9, -.75); top.rotation.set(Math.PI / 2, 0, -Math.PI / 2); top.scale.set(1, 1, .22); t.add(top);
+  t.add(box(BLUE, 0, .5, -1.81, 1.2, 1.25, .04), box('#d9a441', .35, 1.0, -1.84, .06, .25, .04));
+  // an envelope badge on both sides and the back
+  [[.86, Math.PI / 2], [-.86, -Math.PI / 2]].forEach(([x, r]) => { const s = new T.Mesh(new T.PlaneGeometry(.7, .7), new T.MeshBasicMaterial({ map: emojiTex('✉️'), transparent: true, alphaTest: .4 })); s.position.set(x * 1.01, 1.45, -.75); s.rotation.y = r; t.add(s); });
+  // the cab: hood, dashboard, wheel and a seat
+  t.add(box(CREAM, 0, .5, 1.2, 1.7, .55, 1.0), box(BLUE, 0, .5, 1.69, 1.72, .3, .04), box(CREAM, 0, 1.05, 1.55, 1.6, .25, .3));
+  t.add(box('#c86a8a', 0, .55, .62, 1.3, .45, .45), box('#c86a8a', 0, .75, .38, 1.3, .7, .12));
+  const wh = mesh(TOR, DARK, .3, 1.38, 1.35, .17, .17, .5); wh.rotation.x = -.9; t.add(wh);
+  // open-topped like a little parade truck, so you can always see who's driving
+  [-.8, .8].forEach(x => t.add(box(CREAM, x, 1.05, 1.62, .08, .9, .08))); t.add(box(CREAM, 0, 1.92, 1.62, 1.68, .08, .1));
+  t.add(mesh(new T.PlaneGeometry(1.5, .75), new T.MeshLambertMaterial({ color: '#cfe8f5', transparent: true, opacity: .3, depthWrite: false }), 0, 1.6, 1.64));
+  // headlights, a grille, bumpers and a little orange flag like a mailbox's
+  [-1, 1].forEach(s => t.add(lsph(.13, '#fff3c8', s * .58, .78, 1.71, 1, 1, .4)));
+  for (let i = 0; i < 4; i++) t.add(box('#9aa2ad', 0, .58 + i * .07, 1.71, .6, .03, .02));
+  t.add(box('#9aa2ad', 0, .2, 1.78, 1.75, .14, .12), box('#9aa2ad', 0, .2, -1.88, 1.75, .14, .12));
+  t.add(box(DARK, .86, 1.6, -1.6, .04, .6, .04), box('#ff8a2a', .9, 2.05, -1.47, .04, .18, .3));
+  [[-.8, 1.1], [.8, 1.1], [-.8, -1.25], [.8, -1.25]].forEach(([x, z]) => { const w = mesh(CYL, DARK, x, .34, z, .36, .24, .36); w.rotation.z = Math.PI / 2; t.add(w); const hb = mesh(CYL, '#d8dde4', x * 1.16, .34, z, .17, .02, .17); hb.rotation.z = Math.PI / 2; t.add(hb); });
+  // parcels peeking out of the back window
+  t.add(parcel(-.35, 1.0, -1.5, .4, .3, .3, '#c99a6a'), parcel(.25, 1.0, -1.45, .35, .25, .3, '#e9d3b0', '#4f6fa8'));
+  return t;
+}
+{
+  const po = SHOPS.find(s => s.id === 'post'), o = po.out, ox = Math.sin(o), oz = Math.cos(o), ax = Math.cos(o), az = -Math.sin(o);
+  const P = { x: po.door.x + ox * 2.6 + ax * 3.2, z: po.door.z + oz * 2.6 + az * 3.2, ry: Math.atan2(-ax, -az) };
+  const truck = mailTruck(); truck.position.set(P.x, 0, P.z); truck.rotation.y = P.ry; town.add(truck); truck.traverse(m => m.userData.dyn = 1);
+  const ob = OBST.push([P.x, P.z, 1.5]) - 1;
+  const spot = stationRing(P.x + ax * 2.9, P.z + az * 2.9, '🚚', { kind: 'truck' }); town.add(spot.g);
+  const goal = stationRing(0, 0, '📦', {}); goal.g.visible = false; town.add(goal.g); goal.g.userData.ring.scale.setScalar(1.6);
+  const arrow = new T.Group(); arrow.visible = false; town.add(arrow);
+  { const am = new T.MeshBasicMaterial({ color: '#ffd84a' }), a = mesh(CONE, am, 0, 0, .25, .22, .45, .22); a.rotation.x = Math.PI / 2; const b = mesh(CYL, am, 0, 0, -.12, .08, .35, .08); b.rotation.x = Math.PI / 2; arrow.add(a, b); }
+  mailT = { P, truck, ob, spot, goal, arrow, hop: null };
+}
+function startTruck() {
+  const m = mailT; if (mode !== 'town' || me.truck) return;
+  fade(() => {
+    standUp(); me.go = null; joyVec = null; me.truck = true; OBST[m.ob] = [1e5, 1e5, 0];
+    me.x = me.tx = m.P.x; me.z = me.tz = m.P.z; me.ry = m.P.ry; camYaw = me.ry;
+    const pool = SHOPS.filter(s => s.id !== 'post' && s.door); m.route = [];
+    while (m.route.length < MAILT.stops) { const s = pick(pool); if (!m.route.includes(s)) m.route.push(s); }
+    m.route.push(null); m.i = 0; m.spot.g.visible = false; $('#truck-out').hidden = false;
+    nextStop(); pushPresence(true);
+  });
+}
+function nextStop() {
+  const m = mailT, s = m.route[m.i];
+  const at = s ? { x: s.door.x, z: s.door.z } : { x: m.P.x, z: m.P.z };
+  m.goal.g.position.set(at.x, 0, at.z); m.goal.g.visible = true; m.at = at;
+  speak(s ? 'Drive the mail to the ' + s.name.split(' & ')[0] + '!' : 'Drive back to the post office!');
+}
+function endTruck(done) {
+  const m = mailT; if (!me.truck) return;
+  const park = () => {
+    me.truck = false; OBST[m.ob] = [m.P.x, m.P.z, 1.5]; m.goal.g.visible = false; m.arrow.visible = false; m.spot.g.visible = true; m.spot.armed = false;
+    m.truck.position.set(m.P.x, 0, m.P.z); m.truck.rotation.y = m.P.ry; $('#truck-out').hidden = true;
+    const c = myCatModel(); c.scale.setScalar(1);
+    me.x = me.tx = m.spot.x; me.z = me.tz = m.spot.z; me.go = null; pushPresence(true);
+  };
+  if (done) { park(); pay(3, 'All the mail is delivered!'); $('#again').hidden = true; }
+  else if (mode === 'town') fade(park); else park();
+}
+$('#truck-out').onclick = () => { sfx.tap(); endTruck(false); };
+function truckFollow(c, t) {
+  const m = mailT, s = Math.sin(me.ry), k = Math.cos(me.ry);
+  m.truck.position.set(me.x, Math.abs(Math.sin(t * 9)) * .02, me.z); m.truck.rotation.y = me.ry;
+  c.scale.setScalar(.62); c.position.set(me.x + s * .62, .42, me.z + k * .62); c.rotation.y = me.ry; c.rotation.x = 0; animCat(c, false, t, true);
+}
+function mailTick(t, dt) {
+  const m = mailT; if (!m) return;
+  m.spot.g.userData.sprite.position.y = 2.3 + Math.sin(t * 2.5) * .15; m.spot.g.userData.ring.material.opacity = .55 + Math.sin(t * 4) * .35;
+  if (!me.truck) {
+    if (mode !== 'town') return;
+    const d = Math.hypot(me.x - m.spot.x, me.z - m.spot.z);
+    if (d > 1.6) m.spot.armed = true; else if (d < .8 && m.spot.armed && !me.go) { m.spot.armed = false; startTruck(); }
+    return;
+  }
+  if (mode !== 'town') return endTruck(false);
+  const g = m.goal.g; g.userData.sprite.position.y = 2.6 + Math.sin(t * 3) * .25; g.userData.ring.material.opacity = .55 + Math.sin(t * 4) * .35;
+  // a yellow arrow over the truck points at the next stop
+  const dx = m.at.x - me.x, dz = m.at.z - me.z, d = Math.hypot(dx, dz);
+  m.arrow.visible = d > 6 && !m.hop; m.arrow.position.set(me.x, 2.9 + Math.sin(t * 3) * .1, me.z); m.arrow.rotation.y = Math.atan2(dx, dz);
+  if (m.hop) {
+    const h = m.hop, e = Math.min(1, (t - h.t0) / .8);
+    h.p.position.set(h.a.x + (h.b.x - h.a.x) * e, 1.2 + Math.sin(e * Math.PI) * 1.6 - e * 1.0, h.a.z + (h.b.z - h.a.z) * e); h.p.rotation.y = e * 6;
+    if (e >= 1) { town.remove(h.p); m.hop = null; sfx.good(); m.i++; nextStop(); }
+    return;
+  }
+  const last = !m.route[m.i];
+  if (d < (last ? 2.2 : 2.8)) {
+    if (last) return endTruck(true);
+    m.goal.g.visible = false; me.tx = me.x; me.tz = me.z; me.go = null; joyVec = null;
+    const p = parcel(0, 0, 0, .5, .38, .4, pick(['#c99a6a', '#e9d3b0']), pick(['#e86a8a', '#4f6fa8', '#5f8a8a'])); town.add(p); p.traverse(o => o.userData.dyn = 1);
+    m.hop = { p, t0: t, a: { x: me.x, z: me.z }, b: { x: m.at.x, z: m.at.z } }; tone(660, .12, 'sine', .05); setTimeout(() => tone(880, .14, 'sine', .05), 140);
+  }
+}
+// the post office job board gets a fourth card: drive the mail truck around town
+{
+  const base = GAMES.post;
+  GAMES.post = (root, done) => {
+    base(root, done);
+    const row = root.querySelector('.row'), first = row && row.querySelector('.kcg-job'); if (!first) return;
+    const b = btn('kcg-job', '<div style="font-size:110px;line-height:1.2">🚚</div><div class="t">Mail truck</div>', 'Mail truck'); b.style.cssText = first.style.cssText; b.querySelector('.t').style.textAlign = 'center';
+    b.onclick = () => { sfx.tap(); speak('Mail truck'); closeGame(); leaveBuilding(); let n = 0; const wait = setInterval(() => { if (mode === 'town') { clearInterval(wait); startTruck(); } else if (++n > 40) clearInterval(wait); }, 150); };
+    row.append(b);
+  };
 }
 /* ================= landscaping: grass tufts, wildflowers and clover scattered over every lawn ================= */
 // Where the lawns are is read from the town itself: one top-down colour render and one height render, done once at load.
@@ -12968,7 +13196,8 @@ $('#milk').onclick = () => {
 function applyDance(c, d, t) {
   if (!d) return;
   const e = t - d.t0; if (e < 0 || e > 2.4) return;
-  if (d.k === 0) c.rotation.y += e / 2.4 * Math.PI * 4;
+  // one slow, eased twirl (two quick spins looked dizzy)
+  if (d.k === 0) { const k = e / 2.4; c.rotation.y += (k * k * (3 - 2 * k)) * Math.PI * 2; }
   else if (d.k === 1) c.userData.body.position.y = BODY_Y + Math.abs(Math.sin(e * 7)) * .5;
   else c.userData.body.rotation.z = Math.sin(e * 12) * .3;
 }
@@ -13062,7 +13291,7 @@ function boardBus() {
 function getOffBus(atStop) {
   const bc = busCycle; const s = atStop != null ? atStop : bc ? bc.s : 0;
   me.loc = 'town'; me.seat = null; me.bus = null; const c = myCatModel(); c.visible = true; c.scale.setScalar(1); c.rotation.set(0, 0, 0);
-  backToStreet(STOP_X[s] + (s === 0 ? 2 : -2), -3.9, s === 0 ? 0 : 0);
+  backToStreet(SHELTER_X[s] + (s === 0 ? 1.2 : -1.2), -3.9, 0);
 }
 function busSeatTap() {
   if (mode !== 'bus') return false;
@@ -13245,11 +13474,14 @@ renderer.domElement.addEventListener('pointerdown', e => {
   }
   const other = catHit([...others.values()]); if (other) { friendMenu(other); dragging = false; return; }
   // town
+  if (me.truck) { const hs = ray.intersectObjects(hits.filter(m => m.parent && m.userData.hit.door), false), d = hs.length && hs[0].object.userData.hit, p = d ? d.door : groundPoint(); if (p) walkTo(p.x, p.z); return; }
   if (deed && !deed.happy && ray.intersectObject(deed.cat, true).length) { sfx.tap(); const s = deed.b.seat, r = deed.b.rot; walkTo(s.x + Math.sin(r) * 1.4, s.z + Math.cos(r) * 1.4, { kind: 'deed' }); dragging = false; return; }
   const npc = catHit(npcs); if (npc) { sfx.meow(); say(npc, pick(['😸', '💖', '👋', '😺', '🎵']), true); dragging = false; return; }
   const hs = ray.intersectObjects(hits.filter(m => { const k = m.userData.hit.kind; return m.parent && k !== 'seat' && k !== 'deed' && (k !== 'bus' || bus.visible) && (k !== 'plot' || m.userData.hit.i <= farmView.land); }), false);
   if (hs.length) {
     const d = hs[0].object.userData.hit; dragging = false; sfx.tap();
+    // just walked out of this shop: a tap on it now means "walk away", not "go back in"
+    if (d === me.leftShop && performance.now() - me.leftAt < 2500) { const p = groundPoint(); if (p) walkTo(p.x, p.z); return; }
     if (d.kind === 'shop' || d.kind === 'filler' || d.kind === 'res') return walkTo(d.door.x, d.door.z, { kind: d.kind, shop: d });
     if (d.kind === 'cottage') { const ct = cottages.find(c => c.owner === d.owner); if (ct) walkTo(ct.door.x, ct.door.z, { kind: 'house', owner: d.owner }); return; }
     if (d.kind === 'bench' && d.bench.chair) return walkTo(d.bench.seat.x, d.bench.seat.z, { kind: 'bench', bench: d.bench });
@@ -13363,7 +13595,7 @@ function townCamera(dt, walking) {
   if (me.busq && busCycle) { const p = busDoorPoint(busCycle); camera.position.lerp(_v.set(p.x - .6, 2.1, -5.15), Math.min(1, dt * 4)); camera.lookAt(p.x, 1.4, BUS_Z); return; }
   if (walking) camYaw = angLerp(camYaw, me.ry, Math.min(1, dt * 1.6));
   const blocked = (x, z) => foots.some(f => x > f.x0 - .4 && x < f.x1 + .4 && z > f.z0 - .4 && z < f.z1 + .4) || lampXZ.some(l => lampBlocks(l, x, z) || Math.hypot(x - l[0], z - l[1]) < 1.8) || CAMBLK.some(b => Math.hypot(x - b[0], z - b[1]) < b[2]);
-  const fit = yaw => { let dist = 7, ht = 3.05, x, z; for (; dist > 2.2; dist -= .4) { x = me.x - Math.sin(yaw) * dist; z = me.z - Math.cos(yaw) * dist; if (!blocked(x, z)) break; ht += .12; } return { dist, ht, x, z }; };
+  const fit = yaw => { let dist = me.truck ? 9.5 : 7, ht = me.truck ? 5.4 : 3.05, x, z; for (; dist > 2.2; dist -= .4) { x = me.x - Math.sin(yaw) * dist; z = me.z - Math.cos(yaw) * dist; if (!blocked(x, z)) break; ht += .12; } return { dist, ht, x, z }; };
   let c = fit(camYaw);
   // tucked against a building or under a balcony: swing round along the street instead of squeezing in
   if (c.dist < 4.5) for (const o of [.5, -.5, 1, -1, 1.5, -1.5, 2.2, -2.2]) { const k = fit(camYaw + o); if (k.dist >= 4.5) { camYaw = angLerp(camYaw, camYaw + o, Math.min(1, dt * 3)); c = k; break; } }
@@ -13373,7 +13605,7 @@ function townCamera(dt, walking) {
 }
 function loopStep(ms) {
   const t = ms / 1000, dt = Math.min(.05, t - (last || t)); last = t; nowT = t;
-  bgmTick(); petStep(dt, t); farmTick(t, dt); rentTick(t);
+  bgmTick(); petStep(dt, t); farmTick(t, dt); rentTick(t); mailTick(t, dt);
   const now = Date.now();
   if (mode === 'town' || mode === 'bus' || mode === 'car') {
     applyDayNight(mode === 'bus' ? bus.position.x : me.x, me.z);
@@ -13385,11 +13617,12 @@ function loopStep(ms) {
         const sw = me.swing, a = Math.sin((t - sw.t0) * 2.2) * .55; sw.p.rotation.x = a;
         me.x = sw.x; me.z = sw.z - Math.sin(a) * 2.45; c.position.set(sw.x, 2.95 - Math.cos(a) * 2.45 - .1, me.z); c.rotation.y = 0; me.ry = 0; animCat(c, false, t, true);
       } else {
-        walking = stepWalk(dt, 3.4, (x, z) => { const q = constrain(x, z); if (night > .5) for (const o of NIGHT_OBST) { const dx = q[0] - o[0], dz = q[1] - o[1], d = Math.hypot(dx, dz); if (d < o[2] && d > 1e-4) { q[0] = o[0] + dx / d * o[2]; q[1] = o[1] + dz / d * o[2]; } } return q; });
+        walking = stepWalk(dt, me.truck ? 4.4 : 3.4, (x, z) => { const q = constrain(x, z); if (night > .5) for (const o of NIGHT_OBST) { const dx = q[0] - o[0], dz = q[1] - o[1], d = Math.hypot(dx, dz); if (d < o[2] && d > 1e-4) { q[0] = o[0] + dx / d * o[2]; q[1] = o[1] + dz / d * o[2]; } } return q; });
         if (walking && me.sit) me.sit = null;
         c.rotation.x = 0; c.position.set(me.x, 0, me.z); c.rotation.y = me.ry; animCat(c, walking, t, !!me.sit); applyDance(c, me.dance, t);
       }
       swings.forEach(sw => { if (sw !== me.swing) sw.p.rotation.x *= .97; });
+      if (me.truck) truckFollow(c, t);
       townCamera(dt, walking);
     } else if (mode === 'car') updateCar(dt, t);
     else {
@@ -13453,7 +13686,7 @@ function loopStep(ms) {
       const step = Math.floor(t * 4.35);
       d.tiles.forEach(m => m.material.color.copy(TILE_COLORS[(m.userData.k + step) % TILE_COLORS.length]));
       d.disco.rotation.y = t; animCat(d.dj, false, t); d.dj.userData.body.position.y = BODY_Y + Math.abs(Math.sin(t * 6.8)) * .1; d.dj.userData.head.rotation.z = Math.sin(t * 6.8) * .15;
-      d.dancers.forEach((dn, i) => { animCat(dn.cat, false, t); const ph = (t + dn.off) % 4; applyDance(dn.cat, { k: dn.k, t0: t - (ph % 2.4) }, t); dn.cat.rotation.y += dt * .3; });
+      d.dancers.forEach((dn, i) => { animCat(dn.cat, false, t); const ph = (t + dn.off) % 4; dn.ry = (dn.ry != null ? dn.ry : dn.cat.rotation.y) + dt * .3; dn.cat.rotation.y = dn.ry; applyDance(dn.cat, { k: dn.k, t0: t - (ph % 2.4) }, t); });
     }
     animOthers(dt, t);
     camera.position.lerp(_v.set(me.x * .45, 7.2, me.z + 7.4), Math.min(1, dt * 4));
