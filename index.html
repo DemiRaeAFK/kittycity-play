@@ -554,6 +554,8 @@ const save = {
 try { const s = JSON.parse(localStorage.getItem('kittycity3d') || '{}'); Object.assign(save, s); save.look = Object.assign({ fur: 1, eye: 0, pat: 3, ear: 0, tail: 0, hat: '', neck: 'collar', face: '', back: '' }, s.look || {}); save.opts = Object.assign({ joy: false, sound: true, voice: true }, s.opts || {}); save.lv = Object.assign({ math: 1, abc: 1, shapes: 1 }, s.lv || {}); } catch (e) {}
 // every kitty starts with 500 coins; older saves get topped up once
 if (!save.c500) { save.c500 = 1; if (save.coins < 500) save.coins = 500; }
+// kitties made before v27 started with a bow saved on their head; take it off once (it stays in the closet)
+if (!save.nobow) { save.nobow = 1; if (save.look.hat === 'bow') save.look.hat = ''; }
 if (!save.name || !/^[A-Za-z ]{1,12}$/.test(save.name)) save.name = 'Mittens';
 if (!Array.isArray(save.pets)) save.pets = []; save.pets = save.pets.filter(p => PET_BY_ID[p]); if (!PET_BY_ID[save.pet]) save.pet = '';
 const persist = () => { try { localStorage.setItem('kittycity3d', JSON.stringify(save)); } catch (e) {} };
@@ -21133,6 +21135,7 @@ function restore(obj) {
   if (v.rooms && typeof v.rooms === 'object') { save.rooms = {}; Object.entries(v.rooms).slice(0, 8).forEach(([k, l]) => { if (/^[a-z]{1,12}$/.test(k)) save.rooms[k] = furnList(l); }); }
   ['pet', 'wallt', 'wallc'].forEach(k => { if (typeof v[k] === 'string' || typeof v[k] === 'number') save[k] = v[k]; });
   ['c500', 'start50', 'starterV2'].forEach(k => { if (v[k] != null && typeof v[k] !== 'object') save[k] = v[k]; });
+  if (!v.nobow && save.look.hat === 'bow') save.look.hat = '';
   persist(); return true;
 }
 document.querySelectorAll('.backup').forEach(b => b.onclick = backup);
