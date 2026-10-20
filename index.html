@@ -17750,6 +17750,762 @@ function fiStationTick(t, dt) {
   if (d) { if (d.fe) d.fe.visible = !live; if (d.dog) d.dog.userData.tail.rotation.z = Math.sin(t * 9) * .5; }
 }
 Object.assign(FIRE, { ring: fireRing, join: fireJoin, suitUp: fireSuit, leave: fireLeave, clear: fireClear, start: fireStart, finish: fiFinish, aimAt: fiAimAt, hall: fiHall, FX, FI });
+/* ================= town square extras =================
+   Added around the fountain; nothing that was already in the square is moved. A paw-print medallion in the paving, flower beds round the
+   plane trees, hanging baskets on the lamps, pigeons that flutter off when you walk by, a balloon cart (carry a balloon, friends see it),
+   falling petals, and a pergola with wisteria and string lights round the fountain. A bandstand and a flower cart are built too but switched
+   off (SQ_ON below). Static things go through S_ so they are baked; vertex-coloured merged meshes (pigeons, balloons) are added to `town`
+   directly because bake() drops colours. Hooks without touching other files: fountainTick (per-frame tick), fountainSplash (startles the
+   pigeons), arrive, playStep and friendSignals are wrapped at the bottom. */
+const SQ = { cx: -4, cz: 15.5 };
+const sqRand = (() => { let s = 11; return () => (s = s * 16807 % 2147483647) / 2147483647; })(); // fixed seed, so every iPad builds the same flowers
+const sqPick = a => a[Math.floor(sqRand() * a.length)];
+const _sqO = new T.Object3D();
+// light shapes for the many small round things (flower heads, leaves, bulbs): a 20-face blob with smooth shading, and a 7x5 sphere for the pigeons
+const BOX1 = new T.BoxGeometry(1, 1, 1), ICO0 = new T.IcosahedronGeometry(1, 0), LS6 = new T.SphereGeometry(1, 7, 5), ICOS = (() => { const g = ICO0.toNonIndexed(), p = g.attributes.position, n = new T.Vector3(), a = []; for (let i = 0; i < p.count; i++) { n.fromBufferAttribute(p, i).normalize(); a.push(n.x, n.y, n.z); } g.setAttribute('normal', new T.Float32BufferAttribute(a, 3)); return g; })();
+const bsph = (r, c, x, y, z, sx = 1, sy = 1, sz = 1) => mesh(ICOS, c, x, y, z, r * sx, r * sy, r * sz);
+// merge parts [geometry, colour, x, y, z, sx, sy, sz, rx, ry, rz] into one vertex-coloured geometry (one draw call per animal)
+function sqMerge(parts) {
+  const P = [], N = [], C = [], col = new T.Color();
+  for (const [geo, color, x = 0, y = 0, z = 0, sx = 1, sy = 1, sz = 1, rx = 0, ry = 0, rz = 0] of parts) {
+    _sqO.position.set(x, y, z); _sqO.scale.set(sx, sy, sz); _sqO.rotation.set(rx, ry, rz); _sqO.updateMatrix();
+    const g = geo.index ? geo.toNonIndexed() : geo.clone(); g.applyMatrix4(_sqO.matrix); col.set(color);
+    const p = g.attributes.position.array, n = g.attributes.normal.array;
+    for (let i = 0; i < p.length; i++) { P.push(p[i]); N.push(n[i]); }
+    for (let i = 0; i < p.length / 3; i++) C.push(col.r, col.g, col.b);
+    g.dispose();
+  }
+  const bg = new T.BufferGeometry();
+  bg.setAttribute('position', new T.Float32BufferAttribute(P, 3)); bg.setAttribute('normal', new T.Float32BufferAttribute(N, 3)); bg.setAttribute('color', new T.Float32BufferAttribute(C, 3));
+  return bg;
+}
+const SQ_VC = new T.MeshLambertMaterial({ vertexColors: true });
+// a thin round bar between two points
+function sqBar(a, b, c, r) {
+  const d = new T.Vector3(b[0] - a[0], b[1] - a[1], b[2] - a[2]), L = d.length(), m = mesh(LCYL, c, (a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2, r, L, r);
+  m.quaternion.setFromUnitVectors(new T.Vector3(0, 1, 0), d.normalize()); return m;
+}
+
+/* ---------- paving: a paw-print medallion round the fountain ---------- */
+function sqMedallion() {
+  const S = 1024, c = document.createElement('canvas'); c.width = c.height = S; const g = c.getContext('2d'), C0 = S / 2, k = S / 12.8; // 80 px per metre, disc radius 6.4 m
+  const ring = (r0, r1, col) => { g.fillStyle = col; g.beginPath(); g.arc(C0, C0, r1 * k, 0, 7); g.arc(C0, C0, r0 * k, 0, 7, true); g.fill(); };
+  g.fillStyle = '#b9d3dd'; g.fillRect(0, 0, S, S);
+  ring(3.0, 5.55, '#f3e8d8'); ring(5.55, 5.72, '#8fb08a'); ring(5.72, 6.0, '#f3e8d8'); ring(6.0, 6.4, '#d9a0ab');
+  // tiles: cream blocks round the rose rim, thin grout lines across the field
+  g.fillStyle = '#f6ece0'; for (let i = 0; i < 72; i++) { g.save(); g.translate(C0, C0); g.rotate(i / 72 * Math.PI * 2); g.fillRect(6.08 * k, -.1 * k, .24 * k, .2 * k); g.restore(); }
+  g.strokeStyle = '#e3d3c0'; g.lineWidth = 2; for (let r = 3.6; r < 5.5; r += .6) { g.beginPath(); g.arc(C0, C0, r * k, 0, 7); g.stroke(); }
+  for (let i = 0; i < 24; i++) { const a = i / 24 * Math.PI * 2; g.beginPath(); g.moveTo(C0 + Math.cos(a) * 3.0 * k, C0 + Math.sin(a) * 3.0 * k); g.lineTo(C0 + Math.cos(a) * 5.5 * k, C0 + Math.sin(a) * 5.5 * k); g.stroke(); }
+  // an eight-pointed star in pale blue behind the paws
+  g.beginPath(); for (let i = 0; i < 16; i++) { const a = i / 16 * Math.PI * 2 - Math.PI / 2, r = i % 2 ? 3.7 : 5.3; g.lineTo(C0 + Math.cos(a) * r * k, C0 + Math.sin(a) * r * k); } g.closePath();
+  g.fillStyle = '#d3e4ea'; g.fill(); g.lineWidth = 5; g.strokeStyle = '#b9a79a'; g.lineJoin = 'round'; g.stroke();
+  // paw prints, toes pointing outwards
+  const paw = (a, r, s, fill, edge) => {
+    g.save(); g.translate(C0 + Math.cos(a) * r * k, C0 + Math.sin(a) * r * k); g.rotate(a + Math.PI / 2); g.scale(s * k, s * k); g.fillStyle = fill; g.strokeStyle = edge; g.lineWidth = .06;
+    const blob = (x, y, rx, ry, rot = 0) => { g.beginPath(); g.ellipse(x, y, rx, ry, rot, 0, 7); g.fill(); g.stroke(); };
+    blob(0, .22, .5, .42); blob(-.66, -.18, .2, .27, -.45); blob(-.24, -.52, .2, .28, -.12); blob(.24, -.52, .2, .28, .12); blob(.66, -.18, .2, .27, .45); g.restore();
+  };
+  for (let i = 0; i < 8; i++) paw(i / 8 * Math.PI * 2 + Math.PI / 8, 4.45, .78, '#e8a3b0', '#c9707f');
+  for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2 + Math.PI / 8; g.save(); g.translate(C0 + Math.cos(a + Math.PI / 8) * 5.0 * k, C0 + Math.sin(a + Math.PI / 8) * 5.0 * k); g.fillStyle = '#9dbf94'; g.beginPath(); g.ellipse(0, 0, .16 * k, .09 * k, a, 0, 7); g.fill(); g.restore(); }
+  const t = new T.CanvasTexture(c); t.anisotropy = 8;
+  const m = new T.Mesh(new T.CircleGeometry(6.4, 72), new T.MeshLambertMaterial({ map: t }));
+  m.rotation.x = -Math.PI / 2; m.position.set(SQ.cx, .062, SQ.cz); m.receiveShadow = true; town.add(m);
+}
+sqMedallion();
+
+/* ---------- flower beds round the plane trees ---------- */
+const SQ_BED = [
+  { at: [-11.5, 9.5], pal: ['#ff8fb0', '#ffc2d6', '#fff0f4'] }, { at: [3.5, 9.5], pal: ['#ffd23f', '#ffffff', '#ffb347'] },
+  { at: [-11.5, 21.5], pal: ['#b79af0', '#e0d0ff', '#ffffff'] }, { at: [3.5, 21.5], pal: ['#ff7f6a', '#ffc9a8', '#fff0c0'] },
+];
+const SQ_RIM = new T.LatheGeometry([[1.24, 0], [1.24, .36], [1.18, .43], [1.0, .43], [1.0, .3]].map(([r, y]) => new T.Vector2(r, y)), 28);
+function sqBed({ at: [x, z], pal }) {
+  const g = new T.Group(); g.position.set(x, 0, z); S_(g);
+  g.add(mesh(SQ_RIM, M.stone('#e8dcc4')), cyl('#5a3f2a', 0, 0, 0, 1.0, .3));
+  for (let i = 0; i < 38; i++) {
+    const a = i * 2.39996 + .4, r = .46 + .5 * Math.sqrt((i + .5) / 38), px = Math.cos(a) * r, pz = Math.sin(a) * r, h = .3 + sqRand() * .06;
+    g.add(bsph(.17, GREENS[i % 5], px, h + .05, pz, 1, .8, 1));
+    if (i % 3 === 2) g.add(mesh(CONE, '#9b86c4', px, h + .26, pz, .05, .34, .05), bsph(.05, pal[0], px, h + .45, pz));
+    else g.add(bsph(.095, pal[i % pal.length], px + .03, h + .26 + sqRand() * .1, pz), bsph(.035, '#ffd23f', px + .03, h + .36 + sqRand() * .1, pz + .05));
+  }
+  OBST.push([x, z, 1.3]); FLW.push([x + 1, .8, z], [x - 1, .8, z + .5]);
+}
+SQ_BED.forEach(sqBed);
+
+/* ---------- hanging baskets on the lamps in and beside the square ---------- */
+const SQ_BOWL = new T.LatheGeometry([[0, 0], [.1, .02], [.2, .08], [.26, .17], [.28, .25]].map(([r, y]) => new T.Vector2(r, y)), 14);
+function sqBasket(x, z, i) {
+  const g = new T.Group(); g.position.set(x, 0, z); S_(g);
+  const side = z < 10 ? 1 : (x < SQ.cx ? 1 : -1); // arm points into the square
+  g.add(box('#2f6a4a', side * .2, 2.72, 0, .4, .035, .035), bsph(.045, '#2f6a4a', side * .4, 2.72, 0), box('#2f6a4a', side * .3, 2.58, 0, .3, .03, .03));
+  [-1, 1].forEach(s => g.add(sqBar([side * .4, 2.72, 0], [side * .4 + s * .17, 2.36, 0], '#2f6a4a', .008)));
+  g.add(mesh(SQ_BOWL, '#8a6a42', side * .4, 2.14, 0), cyl('#4a3220', side * .4, 2.36, 0, .26, .02));
+  const pal = [['#ff8fb0', '#ffd23f'], ['#b79af0', '#ffffff'], ['#ff7f6a', '#fff0c0'], ['#ffffff', '#ff8fb0']][i % 4];
+  for (let k = 0; k < 9; k++) { const a = k * 2.4, r = .06 + .17 * (k % 3) / 2; g.add(bsph(.11, GREENS[k % 5], side * .4 + Math.cos(a) * r, 2.42 + (k % 2) * .05, Math.sin(a) * r), bsph(.07, pal[k % 2], side * .4 + Math.cos(a) * r * 1.1, 2.52 + (k % 3) * .03, Math.sin(a) * r * 1.1)); }
+  [-1, 1].forEach(s => { for (let k = 0; k < 3; k++) g.add(bsph(.055 - k * .008, k % 2 ? pal[1] : GREENS[k], side * .4 + s * (.22 + k * .02), 2.2 - k * .1, k % 2 ? .07 : -.05)); });
+}
+lampXZ.filter(([x, z]) => x > -15 && x < 7 && z > 2.5 && z < 26).forEach(([x, z], i) => sqBasket(x, z, i));
+
+/* ---------- bunting ---------- */
+const SQ_FLAG = new T.BufferGeometry(); SQ_FLAG.setAttribute('position', new T.Float32BufferAttribute([-.14, 0, 0, .14, 0, 0, 0, -.34, 0], 3)); SQ_FLAG.setAttribute('normal', new T.Float32BufferAttribute([0, 0, 1, 0, 0, 1, 0, 0, 1], 3));
+const SQ_FLAGM = ['#f2a3b8', '#ffd98a', '#a9d6e5', '#b7e0b0', '#d7b9f0', '#ffb27d'].map(c => new T.MeshLambertMaterial({ color: c, side: T.DoubleSide }));
+function sqBunting(a, b, sag, n, s = 1, parent) { // a, b: [x, y, z]; the cord hangs in a curve and the pennants hang from it
+  const at = t => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t - sag * 4 * t * (1 - t), a[2] + (b[2] - a[2]) * t], add = o => parent ? parent.add(o) : S_(o);
+  const ry = Math.atan2(-(b[2] - a[2]), b[0] - a[0]);
+  for (let i = 0; i < n; i++) add(sqBar(at(i / n), at((i + 1) / n), '#8a6a4a', .012 * Math.sqrt(s)));
+  for (let i = 1; i < n; i++) { const p = at(i / n), f = new T.Mesh(SQ_FLAG, SQ_FLAGM[i % SQ_FLAGM.length]); f.position.set(p[0], p[1], p[2]); f.rotation.y = ry; f.scale.setScalar(s); add(f); }
+}
+
+/* ---------- pigeons ---------- */
+const SQ_PCOL = [['#a9adbb', '#c6c9d4', '#8f93a4'], ['#f4f1ea', '#fffdf8', '#e2ded4'], ['#7f90aa', '#9aaac2', '#68799a'], ['#d8c3a2', '#eadcc2', '#bba37f'], ['#a9adbb', '#c6c9d4', '#8f93a4'], ['#b9b0a6', '#d6cec6', '#9a9087']];
+function sqPigeon(c) {
+  const [b, br, w] = c, rim = '#9b86b8', pink = '#e88a9a';
+  const body = new T.Mesh(sqMerge([[LS6, b, 0, .2, 0, .13, .12, .2], [LS6, br, 0, .22, .09, .115, .105, .13], [LS6, rim, 0, .31, .1, .07, .055, .055], [BOX, b, 0, .22, -.21, .09, .025, .16, .3, 0, 0], [BOX, w, 0, .235, -.2, .06, .02, .12, .3, 0, 0],
+    [LCYL, pink, -.045, .06, .02, .013, .12, .013], [LCYL, pink, .045, .06, .02, .013, .12, .013], [BOX, pink, -.045, .005, .05, .04, .012, .07], [BOX, pink, .045, .005, .05, .04, .012, .07]]), SQ_VC);
+  const head = new T.Group(); head.position.set(0, .31, .13);
+  head.add(new T.Mesh(sqMerge([[LS6, br, 0, .07, .04, .085, .085, .085], [CONE, '#f2a33a', 0, .06, .135, .024, .065, .024, Math.PI / 2], [LS6, '#1d1612', -.052, .09, .09, .03, .034, .026], [LS6, '#1d1612', .052, .09, .09, .03, .034, .026],
+    [LS6, '#ffffff', -.058, .1, .108, .011, .011, .011], [LS6, '#ffffff', .046, .1, .108, .011, .011, .011], [LS6, '#f4a6ae', -.066, .055, .095, .022, .015, .012], [LS6, '#f4a6ae', .066, .055, .095, .022, .015, .012]]), SQ_VC));
+  const wings = [-1, 1].map(s => { const wg = new T.Mesh(sqMerge([[LS6, w, 0, -.02, -.12, .03, .07, .17], [LS6, b, 0, .0, -.04, .028, .06, .09]]), SQ_VC); wg.position.set(s * .115, .27, .04); wg.userData.s = s; return wg; });
+  const g = new T.Group(); g.scale.setScalar(1.3); g.add(body, head, ...wings); body.castShadow = true;
+  return { g, body, head, wings };
+}
+const sqPigeons = [];
+const sqSpot = (x, z, pad = .5) => { // a free bit of paving in the square
+  if (x < -13 || x > 5 || z < 6 || z > 24) return false;
+  for (const o of OBST) if (o && Math.hypot(x - o[0], z - o[1]) < o[2] + pad) return false;
+  for (const b of benches) if (Math.hypot(x - b.x, z - b.z) < 1.1 && !b.chair) return false;
+  return true;
+};
+function sqPerches() { // the fountain rim and the backs of the benches, for pigeons that like a view
+  const L = [];
+  for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; L.push([FOUNT.x + Math.sin(a) * 2.98, .8, FOUNT.z + Math.cos(a) * 2.98]); }
+  benches.filter(b => b.deed).forEach(b => { for (const o of [-.6, .6]) L.push([b.x - .27 * Math.sin(b.rot) + o * Math.cos(b.rot), .97, b.z - .27 * Math.cos(b.rot) - o * Math.sin(b.rot)]); });
+  return L.concat(PERG_PERCH); // plus the beams of the pergola
+}
+let SQ_PERCH = null;
+function sqRandomSpot(avoid) {
+  if (!SQ_PERCH) SQ_PERCH = sqPerches();
+  if (Math.random() < .22) { const p = SQ_PERCH[Math.floor(Math.random() * SQ_PERCH.length)]; if (!sqPigeons.some(q => !q.fly && Math.hypot(q.x - p[0], q.z - p[2]) < .35) && (!avoid || Math.hypot(avoid[0] - p[0], avoid[1] - p[2]) > 3)) return p; }
+  for (let i = 0; i < 30; i++) { const x = -12.8 + Math.random() * 17.6, z = 6.3 + Math.random() * 17.4; if (sqSpot(x, z) && (!avoid || Math.hypot(avoid[0] - x, avoid[1] - z) > 4)) return [x, 0, z]; }
+  return [-4, 0, 8];
+}
+function sqMakePigeons() {
+  const home = [[-8, 12], [-7.2, 12.6], [-8.6, 12.9], [0, 11], [.8, 11.7], [-.4, 12], [-6, 19.5], [-5, 19.8], [-1.5, 20], [-10, 17.5], [2.5, 19], [-3, 8.2]];
+  home.forEach(([x, z], i) => {
+    const p = Object.assign(sqPigeon(SQ_PCOL[i % SQ_PCOL.length]), { x, z, y: 0, h: Math.random() * 6.28, st: 'peck', until: Math.random() * 2, ph: Math.random() * 9, fly: null, tx: x, tz: z, wait: 0 });
+    p.g.position.set(x, 0, z); p.g.rotation.y = p.h; town.add(p.g); sqPigeons.push(p);
+  });
+}
+sqMakePigeons();
+function sqScare(p, fx, fz, t, delay = 0) {
+  if (p.fly) return;
+  const to = sqRandomSpot([fx, fz]), d = Math.hypot(to[0] - p.x, to[2] - p.z);
+  p.fly = { t0: t + delay, dur: .9 + d * .11, x0: p.x, y0: p.y, z0: p.z, x1: to[0], y1: to[1], z1: to[2], hh: 1.1 + d * .16 }; p.st = 'fly';
+}
+const SQ_PREV = { x: 0, z: 0 };
+let sqCooT = 0;
+function sqPigeonTick(dt, t) {
+  const show = mode === 'town' && night < .5 && Math.hypot(me.x - SQ.cx, me.z - SQ.cz) < 22;
+  for (const p of sqPigeons) p.g.visible = show;
+  if (!show) return;
+  const cats = [], mv = Math.hypot(me.x - SQ_PREV.x, me.z - SQ_PREV.z) / Math.max(dt, .001); SQ_PREV.x = me.x; SQ_PREV.z = me.z;
+  if (!me.act || me.act.kind !== 'splash') cats.push([me.x, me.z, mv > .3 || joyVec ? 2.7 : 1.1]);
+  for (const o of others.values()) if (o.cat && o.cat.parent === town) cats.push([o.x, o.z, o.walk ? 2.4 : 1]);
+  for (const n of npcs) if (n.cat.visible) cats.push([n.x, n.z, 2]);
+  for (const p of sqPigeons) {
+    if (p.fly) {
+      const f = p.fly, k = (t - f.t0) / f.dur;
+      if (k < 0) continue;
+      if (k >= 1) { p.fly = null; p.x = f.x1; p.z = f.z1; p.y = f.y1; p.st = 'peck'; p.until = t + 1 + Math.random() * 3; p.body.rotation.x = 0; p.wings.forEach(w => { w.rotation.set(0, 0, w.userData.s * .08); });
+        // land facing a random way; if it landed beside a cat it will hop off again
+      } else {
+        const e = k < .5 ? 2 * k * k : 1 - 2 * (1 - k) * (1 - k);
+        p.x = f.x0 + (f.x1 - f.x0) * e; p.z = f.z0 + (f.z1 - f.z0) * e; p.y = f.y0 + (f.y1 - f.y0) * e + Math.sin(Math.PI * k) * f.hh;
+        const dx = f.x1 - f.x0, dz = f.z1 - f.z0; if (dx || dz) p.h = angLerp(p.h, Math.atan2(dx, dz), Math.min(1, dt * 8));
+        p.body.rotation.x = -.5 * Math.sin(Math.PI * k) * (k < .5 ? 1 : -.3);
+        const fl = Math.sin(t * 34 + p.ph) * (k > .85 ? .5 : 1.1); p.wings.forEach(w => { w.rotation.set(0, -w.userData.s * .8, w.userData.s * fl); });
+        p.head.rotation.x = 0;
+      }
+    } else {
+      const sc = cats.find(c => Math.hypot(c[0] - p.x, c[1] - p.z) < c[2]);
+      if (sc) { sqScare(p, sc[0], sc[1], t); for (const q of sqPigeons) if (q !== p && !q.fly && Math.hypot(q.x - p.x, q.z - p.z) < 3 && Math.random() < .6) sqScare(q, sc[0], sc[1], t, Math.random() * .35); if (!p.fly) continue; sfxFlap(p, t); continue; }
+      if (p.st === 'peck') {
+        p.head.rotation.x += ((Math.sin((t + p.ph) * 8) > .5 ? .95 : .05) - p.head.rotation.x) * Math.min(1, dt * 14);
+        if (t > p.until) { if (p.y < .1 && Math.random() < .5) { const nx = p.x + (Math.random() - .5) * 3, nz = p.z + (Math.random() - .5) * 3; if (sqSpot(nx, nz, .3)) { p.tx = nx; p.tz = nz; p.st = 'walk'; p.until = t + 4; } else p.until = t + .8; } else p.until = t + 1 + Math.random() * 2.5; }
+      } else if (p.st === 'walk') {
+        const dx = p.tx - p.x, dz = p.tz - p.z, d = Math.hypot(dx, dz);
+        if (d < .08 || t > p.until) { p.st = 'peck'; p.until = t + 1 + Math.random() * 2; } else {
+          p.h = angLerp(p.h, Math.atan2(dx, dz), Math.min(1, dt * 6)); const s = Math.min(d, .55 * dt); p.x += dx / d * s; p.z += dz / d * s;
+          p.head.position.z = .13 + Math.sin(t * 11 + p.ph) * .03; p.body.rotation.z = Math.sin(t * 11 + p.ph) * .06; p.head.rotation.x += (0 - p.head.rotation.x) * Math.min(1, dt * 10);
+        }
+        if (p.st !== 'walk') { p.head.position.z = .13; p.body.rotation.z = 0; }
+      }
+    }
+    p.g.position.set(p.x, p.y, p.z); p.g.rotation.y = p.h;
+  }
+  if (t > sqCooT) { sqCooT = t + 7 + Math.random() * 9; if (sqPigeons.some(p => !p.fly && Math.hypot(p.x - me.x, p.z - me.z) < 9)) { tone(200, .3, 'sine', .02, [225, 175]); setTimeout(() => tone(215, .28, 'sine', .018, [240, 190]), 260); } }
+}
+function sfxFlap(p, t) { if (t - (sfxFlap.t || 0) > .25) { sfxFlap.t = t; tone(520, .08, 'triangle', .02, [900, 420]); } }
+
+/* ---------- bandstand: a little round pavilion; tap it to hop up and play a xylophone and drums ---------- */
+// Demi (2026-10-20): not sure about the bandstand and the flower cart yet, so they are built but switched off. Set a 1 to bring one back.
+const SQ_ON = { band: 0, flowers: 0 };
+const BS = { x: 4.0, z: 15.5, y: .24, door: 2.45 };
+const SQ_ROOFM = ['#4f6fa8', '#fdf8ee'].map(c => new T.MeshLambertMaterial({ color: c, side: T.DoubleSide }));
+const SQ_BARCOL = ['#ff6b6b', '#ff9f43', '#ffd93d', '#6bcb77', '#4d96ff', '#9b7bff', '#ff7bd5', '#ff6b6b'];
+const SQ_NOTES = [523.25, 587.33, 659.25, 783.99, 880, 1046.5, 1174.66, 1318.5]; // a pentatonic scale, so any tapping sounds nice
+const SQ_SCAL = new T.CircleGeometry(.15, 10, Math.PI, Math.PI), SQ_RING = new T.TorusGeometry(.1, .012, 6, 16), GOLD_M = new T.MeshLambertMaterial({ color: '#d9b23a', emissive: 0x2a1f00 });
+const SQ_BAND = { bars: [], hit: [], drums: [], dhit: [], notes: [], on: false, dance: 0 };
+if (SQ_ON.band) {
+  const g = new T.Group(); g.position.set(BS.x, 0, BS.z); S_(g);
+  const R = 1.55, AP = R * Math.cos(Math.PI / 8), FL = 2 * R * Math.sin(Math.PI / 8), IRON = '#2f6a4a', WHITE = '#f6f1e6', GOLD = '#d9b23a', A = k => k * Math.PI / 4 + Math.PI / 8;
+  const octo = (r0, r1, h, y, m) => g.add(mesh(new T.CylinderGeometry(r0, r1, h, 8, 1, false, Math.PI / 8), m, 0, y + h / 2, 0));
+  octo(2.02, 2.08, .1, 0, M.stone('#e3d7bd')); octo(1.84, 1.84, .14, .1, M.wood('#c49a6a')); octo(1.5, 1.5, .012, .238, '#dfbe8e'); octo(1.24, 1.24, .014, .24, '#c99a62');
+  // steps and the two pots beside them
+  g.add(box(M.stone('#e3d7bd'), 0, 0, -1.9, 1.35, .17, .32), box(M.stone('#e3d7bd'), 0, 0, -2.2, 1.55, .08, .3));
+  { const pg = new T.Group(); pg.position.y = .17; g.add(pg); [-1, 1].forEach((s, i) => potPlant(pg, s * 1.0, -1.82, .9, 'bloom', i ? ['#ff8fb0', '#fff0c0'] : ['#b79af0', '#ffffff'])); }
+  for (let k = 0; k < 8; k++) {
+    const a = A(k), x = Math.sin(a) * R, z = Math.cos(a) * R;
+    g.add(box(WHITE, x, .24, z, .2, .1, .2), lcyl(IRON, x, .34, z, .052, 2.1), cyl(IRON, x, 2.34, z, .06, .1, .11), cyl(GOLD, x, .5, z, .068, .05), cyl(GOLD, x, 1.6, z, .068, .05));
+    // the face between this post and the next, built in its own frame: x along the face, z pointing out
+    const fg = new T.Group(), phi = (k + 1) * Math.PI / 4; fg.position.set(Math.sin(phi) * AP, .24, Math.cos(phi) * AP); fg.rotation.y = phi; g.add(fg);
+    fg.add(box(WHITE, 0, 2.2, 0, FL + .1, .26, .1), box(GOLD, 0, 2.46, 0, FL + .14, .03, .13), box(WHITE, 0, 2.17, .04, FL + .1, .035, .13));
+    for (let m = 0; m < 4; m++) { const sc = new T.Mesh(SQ_SCAL, SQ_ROOFM[(m + k) % 2]); sc.position.set(-FL / 2 + (m + .5) * FL / 4, 2.2, .07); fg.add(sc); }
+    for (let m = 0; m <= 5; m++) fg.add(bsph(.035, BULB, -FL / 2 + .08 + m * (FL - .16) / 5, 2.5, .09));
+    if (k === 3) continue; // the doorway faces the street
+    fg.add(box(WHITE, 0, .96, 0, FL, .07, .07), box(IRON, 0, .3, 0, FL, .035, .035), box(IRON, 0, .62, 0, FL, .025, .025));
+    for (let m = 0; m < 7; m++) fg.add(lcyl(IRON, -FL / 2 + .1 + m * (FL - .2) / 6, .3, 0, .013, .66));
+    fg.add(mesh(SQ_RING, IRON, 0, .62, 0), mesh(SQ_RING, IRON, -.31, .62, 0, .6, .6, 1), mesh(SQ_RING, IRON, .31, .62, 0, .6, .6, 1));
+  }
+  for (let k = 0; k < 8; k++) if (k !== 3) { const a0 = A(k), a1 = A(k + 1), r = R + .06; sqBunting([BS.x + Math.sin(a0) * r, 2.0, BS.z + Math.cos(a0) * r], [BS.x + Math.sin(a1) * r, 2.0, BS.z + Math.cos(a1) * r], .16, 7, .36); }
+  // roof: eight curved panels in blue and cream, a little lantern on top
+  for (let k = 0; k < 8; k++) g.add(mesh(new T.LatheGeometry([[2.1, 0], [1.9, .07], [1.42, .42], [.92, .82], [.42, 1.16], [.13, 1.36]].map(([r, y]) => new T.Vector2(r, y)), 1, A(k), Math.PI / 4), SQ_ROOFM[k % 2], 0, 2.72, 0));
+  g.add(cyl(WHITE, 0, 4.04, 0, .2, .26), mesh(CONEG, '#4f6fa8', 0, 4.3 + .17, 0, .27, .34, .27), bsph(.06, GOLD, 0, 4.7, 0), lcyl(GOLD, 0, 4.7, 0, .012, .3));
+  g.add(lcyl(IRON, 0, 3.05, 0, .01, 1.0)); lantern(g, 0, 2.92, 0);
+  OBST.push([BS.x, BS.z, 2.0]); CAMBLK.push([BS.x, BS.z, 3.0]);
+  hitBox(g, 3.9, 2.6, 3.9, 0, 0, 0, { kind: 'play', act: 'sqband', x: BS.x, z: BS.z - BS.door });
+}
+// the instruments are separate so they can move when played
+if (SQ_ON.band) {
+  const bg = new T.Group(); bg.position.set(BS.x, BS.y, BS.z); bg.userData.dyn = 1; town.add(bg); SQ_BAND.g = bg;
+  const wood = M.wood('#a07850');
+  [[-.74, .78], [.74, .78], [-.9, 1.3], [.9, 1.3]].forEach(([x, z]) => bg.add(lcyl('#8a5a3c', x, 0, z, .03, .6)));
+  [-1, 1].forEach(s => bg.add(sqBar([s * .74, .6, .78], [s * .9, .6, 1.3], '#8a5a3c', .03)));
+  for (let i = 0; i < 8; i++) {
+    const m = new T.MeshLambertMaterial({ color: SQ_BARCOL[i] }), b = new T.Mesh(BOX, m); b.scale.set(.18, .035, .62 - i * .045); b.position.set((i - 3.5) * .2, .64, 1.04 + (i - 3.5) * .02); bg.add(b); SQ_BAND.bars.push(b); SQ_BAND.hit.push(-9);
+    bg.add(box('#6b4a32', (i - 3.5) * .2, .62, 1.04 + (i - 3.5) * .02 - .12, .02, .02, .02));
+  }
+  [[-.5, .5], [.5, .47]].forEach(([x, z], i) => { const st = sqBar([x - .1, .67, z], [x + .1, .67, z + .12], '#c49a6a', .012); bg.add(st, bsph(.03, i ? '#ff7bd5' : '#4d96ff', x + .1, .67, z + .12)); });
+  // big drum on the left, a small drum and a cymbal on the right
+  const drumHead = (() => { const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d'); x.fillStyle = '#fbf3e4'; x.beginPath(); x.arc(64, 64, 62, 0, 7); x.fill(); x.fillStyle = '#e8a3b0';
+    [[64, 78, 22, 18], [34, 56, 9, 12], [50, 38, 9, 12], [78, 38, 9, 12], [94, 56, 9, 12]].forEach(([a, b, rx, ry]) => { x.beginPath(); x.ellipse(a, b, rx, ry, 0, 0, 7); x.fill(); }); return new T.MeshLambertMaterial({ map: new T.CanvasTexture(c) }); })();
+  const drum = (x, z, r, len, y, color, k) => {
+    const d = new T.Group(); d.position.set(x, y, z); bg.add(d);
+    const body = mesh(LCYL, color, 0, 0, 0, r, len, r); body.rotation.z = Math.PI / 2; d.add(body);
+    [-1, 1].forEach(s => { const hp = mesh(new T.TorusGeometry(r, .02, 6, 20), GOLD_M, s * len / 2, 0, 0); hp.rotation.y = Math.PI / 2; d.add(hp); });
+    const head = new T.Mesh(new T.CircleGeometry(r * .97, 24), drumHead); head.rotation.y = Math.PI / 2; head.position.x = len / 2 + .006; d.add(head);
+    for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2; d.add(bsph(.024, GOLD_M, 0, Math.sin(a) * r * 1.01, Math.cos(a) * r * 1.01)); }
+    [-1, 1].forEach(s => { const l = lcyl('#6b4a32', 0, -y, s * r * .8, .02, y - r * .5); l.rotation.x = s * .25; l.position.y = -y / 2 - r * .25; d.add(l); });
+    d.userData.base = y; SQ_BAND.drums[k] = d; SQ_BAND.dhit[k] = -9;
+  };
+  drum(-1.0, .22, .36, .3, .56, '#c2453a', 0); drum(.85, -.5, .22, .22, .46, '#f2c94c', 1);
+  { const c = new T.Group(); c.position.set(1.05, 0, .35); bg.add(c); c.add(lcyl('#2b2b2b', 0, 0, 0, .02, 1.0), lcyl('#2b2b2b', .12, 0, .1, .012, .3).rotateZ(.5));
+    const cy = new T.Group(); cy.position.y = 1.0; cy.rotation.set(.1, 0, -.12); c.add(cy); cy.add(mesh(LCYL, GOLD_M, 0, 0, 0, .3, .014, .3), mesh(SPH, GOLD_M, 0, .015, 0, .07, .03, .07)); cy.userData.base = 1.0; SQ_BAND.drums[2] = cy; SQ_BAND.dhit[2] = -9; }
+  bg.traverse(o => { if (o.isMesh) o.castShadow = true; });
+}
+
+/* ---------- playing the band ---------- */
+function sqNote(i) {
+  const f = SQ_NOTES[i]; tone(f, .55, 'triangle', .16); tone(f * 2.76, .12, 'sine', .045);
+  SQ_BAND.hit[i] = nowT; sqFloat(); sqCheer(1);
+}
+function sqDrum(i) {
+  if (i === 0) { tone(130, .3, 'sine', .3, [70, 48]); tone(65, .2, 'triangle', .2); } else if (i === 1) { tone(260, .16, 'triangle', .22, [170, 150]); tone(900, .04, 'square', .03); } else { tone(5200, .5, 'square', .014); tone(7400, .4, 'square', .012); tone(3300, .6, 'triangle', .02); }
+  SQ_BAND.dhit[i] = nowT; sqFloat(); sqCheer(i === 0 ? 2 : i === 1 ? 1 : 0);
+}
+function sqCheer(k) { // the kitty dances on the stage, and friends see it too
+  me.dance = { k, t0: nowT };
+  if (nowT - SQ_BAND.dance > .7) { SQ_BAND.dance = nowT; pushPresence(false, { d: k, dt: Date.now() }); }
+}
+const SQ_FLOAT = [];
+function sqFloat() { // a music note drifts up from the pavilion
+  let n = SQ_FLOAT.find(o => !o.on); if (!n) { if (SQ_FLOAT.length > 9) return; const s = emojiSprite('🎵', .6, false); s.material.transparent = true; town.add(s); n = { s, on: false }; SQ_FLOAT.push(n); }
+  n.on = true; n.t0 = nowT; n.x = BS.x + (Math.random() - .5) * 1.8; n.z = BS.z + (Math.random() - .3) * 1.2; n.s.visible = true;
+}
+function sqSong() {
+  const tune = [2, 1, 0, 1, 2, 2, 2, 1, 1, 1, 2, 3, 3, 2, 1, 0, 1, 2, 2, 2, 2, 1, 1, 2, 1, 0]; clearTimeout(sqSong.t);
+  let k = 0; const next = () => { if (!SQ_BAND.on || k >= tune.length) return; sqNote(tune[k]); if (k % 4 === 0) { SQ_BAND.dhit[0] = nowT; tone(110, .22, 'sine', .16, [70, 50]); } k++; sqSong.t = setTimeout(next, k % 3 === 0 ? 520 : 360); }; next();
+}
+function sqOpenBand() {
+  const p = $('#deed'); p.textContent = ''; p.hidden = false; p.dataset.sq = 1;
+  const row = h('div', ''); row.style.cssText = 'display:flex;gap:5px;justify-content:center;align-items:flex-end;width:100%;margin-top:6px';
+  SQ_BARCOL.forEach((c, i) => { const b = btn('', '', 'note'); b.style.cssText = 'flex:1;min-width:0;height:' + (88 - i * 4) + 'px;padding:0;border-radius:12px;background:' + c + ';border:3px solid #fff;box-shadow:0 4px 0 #0003'; b.onpointerdown = e => { e.preventDefault(); sqNote(i); }; row.append(b); });
+  const dr = h('div', ''); dr.style.cssText = 'display:flex;gap:14px;justify-content:center;align-items:center;width:100%;margin-top:4px';
+  [['#c2453a', 62, 0], ['#f2c94c', 52, 1], ['#4d96ff', 52, 2]].forEach(([c, sz, i]) => { const b = btn('', '', 'drum'); b.style.cssText = 'padding:0;min-width:0;width:' + sz + 'px;height:' + sz + 'px;border-radius:50%;background:' + c + ';border:5px solid #fff;box-shadow:0 5px 0 #0003'; b.onpointerdown = e => { e.preventDefault(); sqDrum(i); }; dr.append(b); });
+  const song = btn('', '🎶'); song.onclick = () => sqSong(); const x = btn('', '✖️'); x.style.fontSize = '30px'; x.onclick = sqCloseBand; dr.append(song, x);
+  p.append(row, dr); speak('Tap the colors to play music!');
+}
+function sqCloseBand() {
+  const p = $('#deed'); if (p.dataset.sq) { p.hidden = true; delete p.dataset.sq; } clearTimeout(sqSong.t);
+  if (me.act && me.act.kind === 'sqband') { me.act = null; me.x = me.tx = BS.x; me.z = me.tz = BS.z - BS.door; me.ry = Math.PI; }
+}
+function sqBandStep(c, t) {
+  const a = me.act, el = t - a.t0, k = Math.min(1, el / .9), e = k * k * (3 - 2 * k), gx = BS.x, gz = BS.z - .25;
+  const x = a.from[0] + (gx - a.from[0]) * e, z = a.from[1] + (gz - a.from[1]) * e, y = BS.y * e + Math.sin(Math.PI * k) * .45;
+  c.position.set(x, y, z); c.rotation.set(0, k < 1 ? Math.atan2(gx - a.from[0], gz - a.from[1]) : 0, 0); animCat(c, k < 1, t, false); applyDance(c, me.dance, t);
+  me.x = x; me.z = z; me.ry = c.rotation.y;
+}
+function sqBandTick(dt, t) {
+  if (!SQ_ON.band) return;
+  const on = !!(me.act && me.act.kind === 'sqband');
+  if (on !== SQ_BAND.on) { SQ_BAND.on = on; if (!on) { const p = $('#deed'); if (p.dataset.sq) { p.hidden = true; delete p.dataset.sq; } clearTimeout(sqSong.t); } }
+  SQ_BAND.bars.forEach((b, i) => { const k = Math.max(0, 1 - (t - SQ_BAND.hit[i]) / .35); b.position.y = .64 - .03 * k; b.material.emissive.setRGB(.5 * k, .5 * k, .5 * k); });
+  SQ_BAND.drums.forEach((d, i) => { const k = Math.max(0, 1 - (t - SQ_BAND.dhit[i]) / .3); if (i < 2) d.scale.setScalar(1 + .09 * k); else d.rotation.set(.1 + Math.sin(t * 40) * .09 * k, 0, -.12 + Math.cos(t * 33) * .09 * k); });
+  for (const n of SQ_FLOAT) if (n.on) { const e = t - n.t0; if (e > 1.8) { n.on = false; n.s.visible = false; continue; } n.s.position.set(n.x + Math.sin(e * 3) * .25, 2.6 + e * .9, n.z); n.s.material.opacity = Math.min(1, (1.8 - e) * 1.4); }
+}
+
+/* ---------- the flower cart and the balloon cart ---------- */
+const SQ_BCOL = ['#ff5a5a', '#ffb23f', '#ffe14d', '#5fd07a', '#4d9cff', '#a47cff', '#ff7bd5', '#5fd6d0'];
+const SQ_BMAT = SQ_BCOL.map(c => new T.MeshPhongMaterial({ color: c, shininess: 90, specular: 0x777777 }));
+const SQ_VCP = new T.MeshPhongMaterial({ vertexColors: true, shininess: 90, specular: 0x666666 });
+function sqCart(x, z, ry, o) { // front faces +z in its own frame; o: { body, panel, awn: [a, b], icon }
+  const g = new T.Group(); g.position.set(x, 0, z); g.rotation.y = ry; S_(g);
+  const wood = M.wood('#a07850'), WHITE = '#f6f1e6';
+  g.add(box(wood, 0, .4, 0, 1.24, .1, .66), box(o.body, 0, .5, 0, 1.24, .5, .68), box(WHITE, 0, 1.0, 0, 1.42, .05, .86), box(o.panel, 0, .55, .345, .98, .36, .02), box(WHITE, 0, .53, .35, 1.06, .02, .02), box(WHITE, 0, .93, .35, 1.06, .02, .02));
+  const ic = new T.Mesh(PLANE1, iconMat(o.icon)); ic.scale.set(.36, .36, 1); ic.position.set(0, .74, .362); g.add(ic);
+  [-1, 1].forEach(s => {
+    const w = new T.Group(); w.position.set(s * .72, .36, .05); g.add(w);
+    const rim = mesh(new T.TorusGeometry(.34, .035, 4, 16), '#6b4a32'); rim.rotation.y = Math.PI / 2; w.add(rim, cyl('#6b4a32', 0, -.04, 0, .07, .08).rotateZ(Math.PI / 2));
+    for (let k = 0; k < 3; k++) { const sp = box('#8a5a3c', 0, -.34, 0, .035, .68, .035); sp.rotation.x = k * Math.PI / 3; w.add(sp); }
+    g.add(sqBar([s * .5, .62, -.34], [s * .5, .8, -1.1], '#8a5a3c', .03), lcyl('#2f3330', s * .68, 1.0, -.38, .022, 1.38), lcyl('#2f3330', s * .68, 1.0, .38, .022, 1.38));
+  });
+  g.add(lcyl('#8a5a3c', 0, 0, .55, .03, .5));
+  // striped awning with a scalloped edge
+  const aw = box(M.stripes(o.awn[0], o.awn[1]), 0, 2.36, 0, 1.78, .05, 1.16); aw.rotation.x = .08; g.add(aw);
+  for (let m = 0; m < 6; m++) { const sc = new T.Mesh(SQ_SCAL, SQ_ROOFM_FOR(o.awn[m % 2])); sc.scale.setScalar(1.05); sc.position.set(-.74 + m * .296, 2.37, .64); g.add(sc); }
+  return g;
+}
+const SQ_ROOFM_FOR = c => (SQ_ROOFM_FOR[c] = SQ_ROOFM_FOR[c] || new T.MeshLambertMaterial({ color: c, side: T.DoubleSide }));
+function sqBucket(g, x, y, z, kind) {
+  g.add(cyl('#b8c3cc', x, y, z, .12, .22, .15), cyl('#8e9aa4', x, y + .2, z, .155, .02, .155));
+  const cols = [['#ff5a6e', '#ff7f8f'], ['#ff9ec4', '#ffc2d6'], ['#ffd23f', '#ffe27a'], ['#ffffff', '#fff6e0'], ['#a98cf0', '#c9b5ff'], ['#ff9f43', '#ffbb70']][kind];
+  for (let i = 0; i < 9; i++) {
+    const a = i * 2.4 + kind, r = .02 + .085 * Math.sqrt(i / 9), px = x + Math.cos(a) * r, pz = z + Math.sin(a) * r, hh = .2 + .1 * (i % 3) + .03 * ((i * 7) % 3), top = y + .22 + hh;
+    g.add(lcyl('#4f8a3a', px, y + .18, pz, .007, hh + .05));
+    if (kind === 4) g.add(mesh(CONE, cols[i % 2], px, top, pz, .03, .14, .03));
+    else if (kind === 2) g.add(bsph(.075, cols[0], px, top, pz, 1, 1, .45), bsph(.04, '#6b4a22', px, top, pz + .03));
+    else if (kind === 3) g.add(bsph(.06, cols[0], px, top, pz, 1, .35, 1), bsph(.025, '#ffd23f', px, top + .01, pz));
+    else g.add(bsph(.065, cols[i % 2], px, top, pz, .9, 1.1, .9));
+  }
+}
+const SQ_CARTS = { flower: { x: -12.45, z: 13.2, ry: Math.PI / 2 }, balloon: { x: 4.95, z: 12.0, ry: -Math.PI / 2 } };
+if (SQ_ON.flowers) { // flowers
+  const c = SQ_CARTS.flower, g = sqCart(c.x, c.z, c.ry, { body: '#f3d7de', panel: '#9ed0bc', awn: ['#fdf8ee', '#e8908f'], icon: '💐' });
+  [[-.42, .2], [0, .22], [.42, .2], [-.42, -.16], [0, -.18], [.42, -.16]].forEach(([x, z], i) => sqBucket(g, x, 1.02, z, i));
+  for (let i = 0; i < 16; i++) g.add(bsph(.05, i % 2 ? '#ff9ec4' : GREENS[i % 5], -.78 + i * .104, 2.28 - Math.sin(i / 15 * Math.PI) * .05, .7)); // a garland along the awning
+  [-1, 1].forEach((s, i) => potPlant(g, s * 1.1, .55, 1.1, 'bloom', i ? ['#ff8fb0', '#fff0c0', '#ffd23f'] : ['#b79af0', '#ffffff', '#ff8fb0']));
+  OBST.push([c.x, c.z, 1.05]); FLW.push([c.x + .5, 1.5, c.z], [c.x + .5, 1.5, c.z + .4]);
+  hitBox(g, 1.9, 2.4, 1.4, 0, 0, .2, { kind: 'play', act: 'sqflower', x: c.x + 1.9, z: c.z });
+}
+{ // balloons
+  const c = SQ_CARTS.balloon, g = sqCart(c.x, c.z, c.ry, { body: '#cfe3ea', panel: '#f2a3b8', awn: ['#fdf8ee', '#4f9fd6'], icon: '🎈' });
+  g.add(mesh(LCYL, '#4d96ff', -.28, 1.2, .1, .16, .5, .16).rotateZ(Math.PI / 2), cyl('#c8c8d0', .0, 1.04, .1, .035, .06), lcyl('#2f3330', 0, 1.0, -.2, .03, 1.45), bsph(.06, GOLD_M, 0, 2.52, -.2));
+  OBST.push([c.x, c.z, 1.05]);
+  hitBox(g, 1.9, 2.4, 1.4, 0, 0, .2, { kind: 'play', act: 'sqballoon', x: c.x - 1.9, z: c.z });
+  // the bunch: sixteen balloons on strings from the pole, swaying a little
+  const Y = new T.Vector3(0, 1, 0), parts = [];
+  for (let i = 0; i < 16; i++) {
+    const a = i * 2.4, r = .1 + .55 * Math.sqrt(i / 16), px = Math.cos(a) * r, py = .75 + (i % 4) * .2 + .25 * Math.sqrt(i / 16), pz = Math.sin(a) * r, col = SQ_BCOL[i % 8];
+    const d = new T.Vector3(px, py - .28, pz), L = d.length(), e = new T.Euler().setFromQuaternion(new T.Quaternion().setFromUnitVectors(Y, d.clone().normalize()));
+    parts.push([LS6, col, px, py, pz, .2, .25, .2], [LS6, '#ffffff', px - .07, py + .09, pz + .08, .045, .07, .03], [CONE, col, px, py - .27, pz, .035, .06, .035, Math.PI], [LCYL, '#f6f1e6', px / 2, (py - .28) / 2, pz / 2, .005, L, .005, e.x, e.y, e.z]);
+  }
+  const bunch = new T.Mesh(sqMerge(parts), SQ_VCP); bunch.position.set(c.x, 2.52, c.z - .2); bunch.userData.dyn = 1; bunch.castShadow = true; town.add(bunch); SQ_BAND.bunch = bunch;
+  CAMBLK.push([c.x, c.z, 1.8]);
+}
+// the two sellers: a kitty beside each cart who turns to look at you
+const SQ_VEND = [];
+function sqVendor(look, x, z, ry) {
+  const c = buildCat(Object.assign({ lod: 0 }, look)); c.position.set(x, 0, z); c.rotation.y = ry; c.userData.dyn = 1; town.add(c); OBST.push([x, z, .5]);
+  SQ_VEND.push({ c, x, z, ry }); return c;
+}
+if (SQ_ON.flowers) sqVendor({ fur: 3, eye: 0, pat: 0, ear: 0, tail: 0, hat: 'flower', neck: 'scarf', face: '', back: '', body: 'sundress' }, -12.35, 15.0, Math.PI / 2);
+sqVendor({ fur: 0, eye: 1, pat: 0, ear: 0, tail: 0, hat: 'party', neck: 'bowtie', face: '', back: '', body: '' }, 4.95, 10.7, -Math.PI / 2);
+
+/* ---------- petals ---------- */
+const SQ_PET = { n: 80, p: [], on: false };
+{
+  const m = new T.InstancedMesh(new T.PlaneGeometry(.12, .16), new T.MeshLambertMaterial({ side: T.DoubleSide }), SQ_PET.n), w = new T.Color('#ffffff');
+  m.instanceMatrix.setUsage(T.DynamicDrawUsage); _sqO.scale.setScalar(0); _sqO.position.set(0, -9, 0); _sqO.rotation.set(0, 0, 0); _sqO.updateMatrix(); for (let i = 0; i < SQ_PET.n; i++) { m.setColorAt(i, w); m.setMatrixAt(i, _sqO.matrix); SQ_PET.p.push({ t0: -99 }); } m.frustumCulled = false; town.add(m); SQ_PET.m = m;
+}
+function sqBurst(x, y, z, cols, n = 60) {
+  const c = new T.Color(); let k = 0;
+  for (let i = 0; i < SQ_PET.n && k < n; i++) { const p = SQ_PET.p[i]; if (nowT - p.t0 < 3.2) continue; k++;
+    const a = Math.random() * 6.28, r = Math.random() * .9; Object.assign(p, { t0: nowT, x: x + Math.cos(a) * r, y: y + Math.random() * .6, z: z + Math.sin(a) * r, vx: (Math.random() - .5) * 1.2, vy: 1.2 + Math.random() * 1.6, vz: (Math.random() - .5) * 1.2, s: 3 + Math.random() * 4, ph: Math.random() * 6 });
+    c.set(cols[i % cols.length]); SQ_PET.m.setColorAt(i, c); }
+  SQ_PET.m.instanceColor.needsUpdate = true; SQ_PET.on = true;
+}
+function sqPetalTick(dt, t) {
+  if (!SQ_PET.on) return; let live = 0;
+  SQ_PET.p.forEach((p, i) => {
+    const e = t - p.t0;
+    if (e > 3.2) { _sqO.scale.setScalar(0); _sqO.position.set(0, -9, 0); } else {
+      live++; p.vy -= 2.2 * dt; p.vx *= .985; p.vz *= .985; p.x += (p.vx + Math.sin(e * 3 + p.ph) * .4) * dt; p.y = Math.max(.08, p.y + p.vy * dt * (p.vy < -.5 ? .35 : 1)); p.z += p.vz * dt;
+      if (p.y <= .08) { p.vx = p.vz = p.vy = 0; }
+      _sqO.position.set(p.x, p.y, p.z); _sqO.rotation.set(e * p.s, e * p.s * .6, p.ph); _sqO.scale.setScalar(e > 2.6 ? Math.max(0, (3.2 - e) / .6) : 1);
+    }
+    _sqO.updateMatrix(); SQ_PET.m.setMatrixAt(i, _sqO.matrix);
+  });
+  SQ_PET.m.instanceMatrix.needsUpdate = true; if (!live) SQ_PET.on = false;
+}
+
+/* ---------- balloons you can carry: yours and your friends' ---------- */
+const SQ_Y = new T.Vector3(0, 1, 0);
+function sqString(m, a, b) { const d = new T.Vector3().subVectors(b, a), L = d.length(); m.position.copy(a).addScaledVector(d, .5); m.scale.set(.008, L, .008); m.quaternion.setFromUnitVectors(SQ_Y, d.normalize()); }
+function sqBalloon(ci) {
+  const g = new T.Group(); g.userData.dyn = 1;
+  const body = new T.Mesh(SPH, SQ_BMAT[ci], 0, 0, 0); body.scale.set(.2, .25, .2); const knot = new T.Mesh(CONE, SQ_BMAT[ci]); knot.scale.set(.035, .06, .035); knot.position.y = -.27; knot.rotation.z = Math.PI;
+  const hi = new T.Mesh(SPH, new T.MeshBasicMaterial({ color: '#ffffff' })); hi.scale.set(.045, .07, .03); hi.position.set(-.07, .09, .09); g.add(body, knot, hi);
+  const str = new T.Mesh(LCYL, new T.MeshBasicMaterial({ color: '#f6f1e6' })); str.userData.dyn = 1;
+  return { g, body, knot, str, ci, p: new T.Vector3(), v: new T.Vector3(), on: false, anchor: new T.Vector3(), last: new T.Vector3() };
+}
+function sqBalloonTick(b, ax, ay, az, dt, t, show) {
+  if (!show) { if (b.on) { b.on = false; town.remove(b.g, b.str); } return; }
+  if (!b.on) { b.on = true; b.p.set(ax, ay + 1.9, az); b.last.set(ax, ay, az); town.add(b.g, b.str); }
+  const vx = (ax - b.last.x) / Math.max(dt, .001), vz = (az - b.last.z) / Math.max(dt, .001); b.last.set(ax, ay, az);
+  b.v.x += (vx - b.v.x) * Math.min(1, dt * 3); b.v.z += (vz - b.v.z) * Math.min(1, dt * 3);
+  const tx = ax - b.v.x * .22 + Math.sin(t * .9 + b.ci) * .1, ty = ay + 2.05 + Math.sin(t * 1.3 + b.ci) * .06, tz = az - b.v.z * .22 + Math.cos(t * .8) * .1;
+  const k = Math.min(1, dt * 4); b.p.x += (tx - b.p.x) * k; b.p.y += (ty - b.p.y) * k; b.p.z += (tz - b.p.z) * k;
+  b.g.position.copy(b.p); b.g.rotation.z = -b.v.x * .03; b.g.rotation.x = b.v.z * .03;
+  sqString(b.str, _sqV1.set(ax + .12, ay + .85, az), _sqV2.set(b.p.x, b.p.y - .29, b.p.z));
+}
+const _sqV1 = new T.Vector3(), _sqV2 = new T.Vector3();
+const SQ_B = { mine: 0, obj: null, others: new Map(), free: [] };
+function sqSetBalloon(i) { // i: 1..8, or 0 for none
+  SQ_B.mine = i; pushPresence(false, { bl: i });
+  if (i) { if (!SQ_B.obj || SQ_B.obj.ci !== i - 1) { const old = SQ_B.obj; if (old) { old.on = true; sqBalloonTick(old, 0, 0, 0, .016, 0, false); } SQ_B.obj = sqBalloon(i - 1); const hb = hitBox(SQ_B.obj.g, .8, .9, .8, 0, -.45, 0, { kind: 'play', act: 'sqpop', x: me.x, z: me.z }); SQ_B.obj.hit = hb; } }
+}
+function sqLetGo() { // the balloon floats away
+  const b = SQ_B.obj; if (!b) return; const f = sqBalloon(b.ci); f.g.position.copy(b.g.position); f.p.copy(b.p); f.on = true; town.add(f.g); f.t0 = nowT; SQ_B.free.push(f); sqSetBalloon(0); b.hit && b.hit.parent && b.hit.parent.remove(b.hit); sqBalloonTick(b, 0, 0, 0, .016, 0, false); SQ_B.obj = null;
+  tone(700, .25, 'sine', .08, [1100, 1500]); sqBurst(b.p.x, b.p.y, b.p.z, ['#ffffff', SQ_BCOL[b.ci], '#ffe9a8'], 18);
+}
+function sqBalloonsTick(dt, t) {
+  const inTown = mode === 'town' || mode === 'bus';
+  const c = me.cat;
+  if (SQ_B.obj) { const o = SQ_B.obj, c2 = c && c.parent === town ? c.position : null, vis = mode === 'town' && !!c2; if (vis && o.hit) { o.hit.userData.hit.x = me.x; o.hit.userData.hit.z = me.z; if (!o.hit.parent) o.g.add(o.hit); } else if (o.hit && o.hit.parent) o.hit.parent.remove(o.hit); sqBalloonTick(o, c2 ? c2.x : 0, c2 ? c2.y : 0, c2 ? c2.z : 0, dt, t, vis); }
+  for (const [k, o] of others) {
+    let b = SQ_B.others.get(k); const want = o.bl && o.cat && o.cat.parent === town && inTown;
+    if (want && (!b || b.ci !== o.bl - 1)) { if (b) sqBalloonTick(b, 0, 0, 0, dt, t, false); b = sqBalloon(o.bl - 1); SQ_B.others.set(k, b); }
+    if (b) sqBalloonTick(b, o.cat ? o.cat.position.x : 0, o.cat ? o.cat.position.y : 0, o.cat ? o.cat.position.z : 0, dt, t, !!want);
+  }
+  for (const [k, b] of SQ_B.others) if (!others.has(k)) { sqBalloonTick(b, 0, 0, 0, dt, t, false); SQ_B.others.delete(k); }
+  for (let i = SQ_B.free.length - 1; i >= 0; i--) { const f = SQ_B.free[i], e = t - f.t0; f.p.y += (1.6 + e) * dt; f.p.x += Math.sin(e * 1.4) * .4 * dt; f.g.position.copy(f.p); sqString(f.str, f.p, f.p); if (e > 4) { town.remove(f.g, f.str); SQ_B.free.splice(i, 1); } else if (e > 3) f.g.scale.setScalar(Math.max(.01, 4 - e)); }
+}
+
+/* ---------- the carts and sellers come alive ---------- */
+function sqVendorTick(dt, t) {
+  SQ_VEND.forEach((v, i) => {
+    const d = Math.hypot(me.x - v.x, me.z - v.z), near = mode === 'town' && d < 7; v.c.visible = mode === 'town' && d < 28; // far away they are not drawn at all
+    if (!v.c.visible) return;
+    animCat(v.c, false, t + i * 2); standPose(v.c, t + i * 2);
+    v.c.rotation.y = angLerp(v.c.rotation.y, near ? Math.atan2(me.x - v.x, me.z - v.z) : v.ry, Math.min(1, dt * 2.5));
+  });
+  if (SQ_BAND.bunch) { const b = SQ_BAND.bunch; b.rotation.z = Math.sin(nowT * .8) * .05; b.rotation.x = Math.cos(nowT * .65) * .05; b.position.y = 2.52 + Math.sin(nowT * 1.1) * .05; }
+}
+function sqFlowerArrive() {
+  standUp(); me.ry = Math.PI / 2 + Math.PI; sfx.good(); say(meLab(), '🌷', true);
+  [0, 1, 2, 3, 4].forEach((k, i) => setTimeout(() => tone(659.25 * Math.pow(2, [0, 4, 7, 12, 16][k] / 12), .5, 'sine', .07), i * 90));
+  sqBurst(me.x, 2.0, me.z, ['#ff9ec4', '#ffffff', '#ffd23f', '#ff6b7a', '#c9b5ff', '#ffbb70'], 70);
+}
+function sqBalloonArrive() {
+  standUp(); me.ry = -Math.PI / 2 + Math.PI; sfx.good(); say(meLab(), '🎈', true);
+  sqSetBalloon(SQ_B.mine % 8 + 1); tone(500, .3, 'sine', .1, [700, 1000]); setTimeout(() => tone(1200, .2, 'triangle', .06), 140);
+  sqBurst(SQ_CARTS.balloon.x, 2.0, SQ_CARTS.balloon.z, ['#ffffff', SQ_BCOL[SQ_B.mine - 1], '#ffe9a8'], 16);
+}
+
+/* ---------- pergola round the fountain: white posts and beams, hanging wisteria, string lights that glow at night ---------- */
+const PERG = { R: 5.3, h: 3.95, RH: 1.9, hh: 4.75, C: Math.cos(Math.PI / 8) }; // post ring radius, beam height, hub ring radius and height
+const PERG_A = k => Math.PI / 8 + k * Math.PI / 4; // the eight posts stand beside the eight paw prints
+const pgAt = (a, r, y) => [SQ.cx + Math.cos(a) * r, y, SQ.cz + Math.sin(a) * r];
+const pgY = r => PERG.h + (PERG.R - r) / (PERG.R - PERG.RH) * (PERG.hh - PERG.h); // the roof frame rises gently towards the middle
+const pgV = (k, r) => pgAt(PERG_A(k), r, pgY(r)); // corner k of the eight-sided ring with corner radius r
+const pgM = (j, r) => pgAt(j * Math.PI / 4, r * PERG.C, pgY(r)); // middle of the side between corners j-1 and j
+CAMBLK.push([FOUNT.x, FOUNT.z, 3.4]); // the follow camera stays out of the basin when you stand on its far side
+function sqRod(a, b, w, h, c) { // a beam from a to b, w wide and h tall, as a part for sqMerge
+  _sqO.position.set((a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2); _sqO.scale.set(w, h, Math.hypot(b[0] - a[0], b[1] - a[1], b[2] - a[2])); _sqO.lookAt(b[0], b[1], b[2]); _sqO.updateMatrix();
+  return [BOX1.clone().applyMatrix4(_sqO.matrix), c];
+}
+const PERG_VIO = ['#a283df', '#b499ec', '#c4aaf3', '#ab8de9', '#d6c0f8'], PERG_LEAF = ['#5f9e4c', '#79b85d', '#4a8a45', '#8cc96b'];
+const PERG_GLOW = new T.PointsMaterial({ size: .62, map: (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d'), g = x.createRadialGradient(32, 32, 2, 32, 32, 32); g.addColorStop(0, '#fff6d0'); g.addColorStop(.25, '#ffe08acc'); g.addColorStop(1, '#ffd98a00'); x.fillStyle = g; x.fillRect(0, 0, 64, 64); return new T.CanvasTexture(c); })(), transparent: true, depthWrite: false, blending: T.AdditiveBlending, opacity: 0 });
+const PERG_FLM = new T.MeshLambertMaterial({ vertexColors: true, side: T.DoubleSide, emissive: 0x2e2046 }); // a touch of glow keeps the shady side of the flowers from going grey
+const PERG_PERCH = [], SQ_GLOWS = [], SQ_GLOWM = [PERG_GLOW], SQ_PERG = [], SQ_POSTOB = []; // SQ_PERG: the pergola meshes, hidden while you fight the Town Hall fire (the fire camera looks over the fountain) // SQ_GLOWS: Points objects whose glow follows the street lamps (the pergola lights, the shop-sign lights)
+{
+  const W = [], F = [], bu = [], rr = (a, b) => a + (b - a) * sqRand(), mix = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
+  const CREAM = '#f6eee0', TRIM = '#e6dac4', GOLD = '#e8b53a', VINE = '#7d6448', rod = (a, b, w, h, c = CREAM) => W.push(sqRod(a, b, w, h, c));
+  const ext = (a, b, e) => { const l = Math.hypot(b[0] - a[0], b[1] - a[1], b[2] - a[2]), u = [(b[0] - a[0]) / l * e, (b[1] - a[1]) / l * e, (b[2] - a[2]) / l * e]; return [[a[0] - u[0], a[1] - u[1], a[2] - u[2]], [b[0] + u[0], b[1] + u[1], b[2] + u[2]]]; };
+  const leaf = (x, y, z, s = 1) => F.push([ICOS, sqPick(PERG_LEAF), x, y, z, .15 * s, .06 * s, .11 * s, sqRand() * 6, sqRand() * 6, sqRand() * 6]);
+  // a hanging cluster of wisteria: fat at the top, thin and pale at the tip
+  const raceme = (x, y, z, len, k = 1) => {
+    const base = new T.Color(sqPick(PERG_VIO)), tip = new T.Color('#f4eefe'), n = len > .95 ? 4 : 3;
+    for (let i = 0; i < n; i++) { const t = i / n, r = (.17 - .09 * t) * k; F.push([ICOS, base.clone().lerp(tip, t * .8), x + (sqRand() - .5) * .07, y - .1 - t * len * .85, z + (sqRand() - .5) * .07, r * 1.05, r * 1.7, r * 1.05, 0, sqRand() * 6, 0]); }
+    if (sqRand() < .6) leaf(x + (sqRand() - .5) * .2, y + .01, z + (sqRand() - .5) * .2, 1 + sqRand() * .4);
+  };
+  const swag = (a, b, sag, n) => { // a cord that sags between two points with a small bulb every so often
+    const at = t => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t - sag * 4 * t * (1 - t), a[2] + (b[2] - a[2]) * t];
+    for (let i = 0; i < n; i++) rod(at(i / n), at((i + 1) / n), .014, .014, '#3d3a38');
+    for (let i = 1; i < n; i++) { const p = at(i / n); bu.push([p[0], p[1] - .06, p[2]]); }
+  };
+  for (let k = 0; k < 8; k++) {
+    const a = PERG_A(k), x = SQ.cx + Math.cos(a) * PERG.R, z = SQ.cz + Math.sin(a) * PERG.R, ry = Math.PI / 2 - a, b = (k + 1) % 8;
+    W.push([BOX1, '#e2d6bf', x, .21, z, .66, .32, .66, 0, ry, 0], [BOX1, TRIM, x, .54, z, .48, .34, .48, 0, ry, 0], [BOX1, CREAM, x, 2.155, z, .3, 2.89, .3, 0, ry, 0], [BOX1, TRIM, x, 1.05, z, .4, .1, .4, 0, ry, 0],
+      [BOX1, TRIM, x, 3.25, z, .38, .1, .38, 0, ry, 0], [BOX1, TRIM, x, 3.7, z, .5, .22, .5, 0, ry, 0], [ICO0, GOLD, x, 4.22, z, .1, .13, .1]);
+    { const ob = [x, z, .36]; SQ_POSTOB.push([OBST.push(ob) - 1, ob]); } CAMBLK.push([x, z, .9]); FLW.push([x, 3.3, z]);
+    const A = pgAt(a, PERG.R, PERG.h), B = pgAt(PERG_A(b), PERG.R, PERG.h);
+    rod(...ext(A, B, .3), .22, .3); // outer beam
+    const dl = Math.hypot(B[0] - A[0], B[2] - A[2]), perp = [-(B[2] - A[2]) / dl, (B[0] - A[0]) / dl];
+    const brace = (f, t) => { const u = mix(f, t, .12 / dl), v = mix(f, t, 1.05 / dl); rod([u[0], 3.2, u[2]], [v[0], 3.82, v[2]], .09, .09, TRIM); }; brace(A, B); brace(B, A); // corner braces
+    rod(pgV(k, PERG.RH), pgV(k, PERG.R + .3), .16, .22); // hip rafter
+    rod(pgM(k, PERG.RH), pgM(k, PERG.R + .3), .13, .2); // middle rafter
+    for (const r of [PERG.RH, 3.4, 4.4]) rod(pgV(k, r), pgV(b, r), r === PERG.RH ? .16 : .1, r === PERG.RH ? .22 : .14); // hub ring and two purlin rings
+    // vine winding up the post, with leaves
+    for (let i = 0; i < 16; i++) { const t0 = i / 16, t1 = (i + 1) / 16, p = t => { const h = t * Math.PI * 5 + k * 2; return [x + Math.cos(h) * .2, .75 + t * 2.85, z + Math.sin(h) * .2]; }; rod(p(t0), p(t1), .06, .06, VINE); if (i % 2) leaf(p(t0)[0], p(t0)[1], p(t0)[2], 1.2); }
+    // long wisteria curtains at the post top
+    for (let i = 0; i < 6; i++) { const q = rr(0, 6.28); raceme(x + Math.cos(q) * .3, 3.58, z + Math.sin(q) * .3, rr(1.1, 1.9), 1.15); }
+    // wisteria along the outer beam, on both sides
+    for (let i = 0; i <= 15; i++) { const t = Math.min(.97, Math.max(.03, (i + (sqRand() - .5) * .6) / 15)), p = mix(A, B, t), o = (sqRand() - .5) * .4; raceme(p[0] + perp[0] * o, 3.8, p[2] + perp[1] * o, rr(.45, .95)); }
+    // a winding vine along the beam top
+    for (let i = 0; i < 14; i++) { const q0 = mix(A, B, i / 14), q1 = mix(A, B, (i + 1) / 14), o0 = Math.sin(i * 1.7 + k) * .13, o1 = Math.sin((i + 1) * 1.7 + k) * .13; rod([q0[0] + perp[0] * o0, 4.08 + (i % 2) * .03, q0[2] + perp[1] * o0], [q1[0] + perp[0] * o1, 4.08 + ((i + 1) % 2) * .03, q1[2] + perp[1] * o1], .05, .05, VINE); leaf(q0[0] + perp[0] * o0, 4.12, q0[2] + perp[1] * o0, 1.3); }
+    // a little wisteria on the purlins, hips and rafters
+    for (const r of [3.4, 4.4]) { const P = pgV(k, r), Q = pgV(b, r), ln = Math.hypot(Q[0] - P[0], Q[2] - P[2]), n = Math.round(ln / .75); for (let i = 0; i <= n; i++) { const p = mix(P, Q, i / n); raceme(p[0], p[1] - .08, p[2], rr(.4, .8), .9); } }
+    for (let i = 0; i < 6; i++) { const r = 2.3 + i * .5, p = pgV(k, r), q = pgM(k, r + .2); raceme(p[0] + rr(-.1, .1), p[1] - .12, p[2] + rr(-.1, .1), rr(.4, .85), .9); if (i % 2) raceme(q[0], q[1] - .1, q[2], rr(.4, .7), .85); }
+    // string lights: under the outer beam, under the purlin ring, down each hip and round the hub
+    swag(pgAt(a, PERG.R - .14, 3.78), pgAt(PERG_A(b), PERG.R - .14, 3.78), .5, 11);
+    const dn = (p, d) => [p[0], p[1] - d, p[2]];
+    swag(pgAt(a, PERG.R - .14, 3.78), pgAt(PERG_A(b), PERG.R - .14, 3.78), .5, 11);
+    swag(dn(pgV(k, 4.4), .12), dn(pgV(b, 4.4), .12), .32, 8);
+    swag(dn(pgV(k, PERG.RH), .1), pgAt(a, PERG.R - .14, 3.78), .8, 13);
+    swag(dn(pgV(k, PERG.RH), .14), dn(pgV(b, PERG.RH), .14), .2, 4);
+    // pigeons may sit on the middle of the beam
+    const m = pgM(k, PERG.R); PERG_PERCH.push([m[0], 4.26, m[2]]); FLW.push([m[0], 3.4, m[2]]);
+  }
+  // petals that have dropped onto the paving
+  for (let i = 0; i < 70; i++) { const a = sqRand() * 6.28, r = 2.9 + sqRand() * 3.4; F.push([new T.PlaneGeometry(.1, .07), sqPick(PERG_VIO), SQ.cx + Math.cos(a) * r, .066, SQ.cz + Math.sin(a) * r, 1, 1, 1, -Math.PI / 2, 0, sqRand() * 6.28]); }
+  const wood = new T.Mesh(sqMerge(W), SQ_VC); wood.castShadow = true; town.add(wood);
+  const bloom = new T.Mesh(sqMerge(F), PERG_FLM); town.add(bloom);
+  const bulbs = new T.Mesh(sqMerge(bu.map(([x, y, z], i) => [ICO0, i % 3 ? '#fff0b0' : '#ffe2a0', x, y, z, .05, .062, .05])), new T.MeshBasicMaterial({ vertexColors: true })); town.add(bulbs);
+  SQ_PERG.push(wood, bloom, bulbs);
+  const pg = new T.BufferGeometry(); pg.setAttribute('position', new T.Float32BufferAttribute(bu.flat(), 3)); const glow = new T.Points(pg, PERG_GLOW); glow.frustumCulled = false; glow.visible = false; glow.userData.pergola = 1; town.add(glow); SQ_GLOWS.push(glow);
+}
+
+/* ---------- wiring ---------- */
+{
+  const _ft = fountainTick; fountainTick = function (t) { _ft(t); try { sqTick(t); } catch (e) { noteErr(e); } };
+  const _fsp = fountainSplash; fountainSplash = function (x, z, t) { _fsp(x, z, t); for (const p of sqPigeons) if (!p.fly && Math.hypot(p.x - x, p.z - z) < 8) sqScare(p, x, z, t, Math.random() * .3); };
+  const _ar = arrive; arrive = function (go) {
+    if (go.kind === 'play') {
+      if (go.act === 'sqband') { standUp(); me.act = { kind: 'sqband', t0: nowT, from: [me.x, me.z] }; sfx.good(); sqOpenBand(); return; }
+      if (go.act === 'sqflower') return sqFlowerArrive(); if (go.act === 'sqballoon') return sqBalloonArrive(); if (go.act === 'sqpop') return sqLetGo();
+    }
+    return _ar(go);
+  };
+  const _ps = playStep; playStep = function (c, t) { if (me.act && me.act.kind === 'sqband') return sqBandStep(c, t); return _ps(c, t); };
+  const _fg = friendSignals; friendSignals = function (o, pr) { _fg(o, pr); o.bl = typeof pr.bl === 'number' ? clamp(pr.bl | 0, 0, 8) : 0; };
+}
+let sqFireHid = false;
+const sqPergolaTick = () => {
+  const o = HALO_MAT.opacity, fire = typeof FIRE !== 'undefined' && !!FIRE.cam; // string lights glow when the lamps do
+  SQ_GLOWM.forEach(m => m.opacity = o); PERG_FLM.emissive.setHex(0x2e2046).multiplyScalar(1 - .75 * Math.min(1, o / .85)); SQ_GLOWS.forEach(g => g.visible = o > .02 && !(fire && g.userData.pergola));
+  if (fire !== sqFireHid) { sqFireHid = fire; SQ_PERG.forEach(m => m.visible = !fire); SQ_POSTOB.forEach(([i, ob]) => OBST[i] = fire ? [1e5, 1e5, 0] : ob); }
+};
+let sqLast = 0;
+function sqTick(t) {
+  const dt = Math.min(.1, t - (sqLast || t)); sqLast = t;
+  const far = Math.hypot(me.x - SQ.cx, me.z - SQ.cz) > 26; if (SQ_BAND.g) SQ_BAND.g.visible = !far; if (SQ_BAND.bunch) SQ_BAND.bunch.visible = !far; // the small moving parts are not drawn from far away
+  sqPergolaTick(); sqPigeonTick(dt, t); sqBandTick(dt, t); sqVendorTick(dt, t); sqPetalTick(dt, t); sqBalloonsTick(dt, t);
+}
+/* ================= storefronts: big gilded name signs, scalloped awnings, hanging blade signs and lettering on the windows =================
+   Dressing added on top of the shop fronts b5.js builds, for the Nail Salon, Boutique, Home Store and School. The brickwork, windows, doors and big street props are left
+   exactly as they were; only the thin sign and the plain awning are taken down and replaced. Runs after the town is built and before bake(townStatic). */
+const SFR = {
+  'Nail Salon': { bg: '#a3306b', bg2: '#d65a94', icons: ['💅', '✨'], blade: '💅', bladeBg: '#ffc2dc', stripe: ['#ff6fae', '#fffaf0'], win: ['Nails', 'Polish'], pal: ['#ff8fb0', '#fff0f4', '#ffd0e4'] },
+  'Boutique': { bg: '#4b2f80', bg2: '#7c5bbb', icons: ['👗', '👠'], blade: '👗', bladeBg: '#e2d3f6', stripe: ['#a98adb', '#fffaf0'], win: ['Dresses', 'Hats'], pal: ['#c9a8f0', '#ffffff', '#ff9ec4'] },
+  'Home Store': { bg: '#2a6a43', bg2: '#4f9a66', icons: ['💡', '🪑'], blade: '💡', bladeBg: '#e3f2d4', stripe: ['#6fb86a', '#fffaf0'], win: ['Sofas', 'Lamps'], pal: ['#ffd23f', '#ffffff', '#ff9a6a'] },
+  'School': { bg: '#244d95', bg2: '#4a7cc4', icons: ['🍎', '📚'], blade: '🔔', bladeBg: '#ffe9a8', stripe: ['#3f78d0', '#ffd23f'], win: ['ABC', '123'], kid: ['#e2483d', '#3f78d0', '#3fa65a', '#f2a33a'], pal: ['#ff6b7a', '#ffd23f', '#ffffff'] },
+};
+const SFR_GOLD = '#d9aa3a', SFR_ICO = new T.IcosahedronGeometry(1, 0);
+const sfrFont = (name, fs, bold) => { const f = SIGN_FONTS[name] || { f: '"Fredoka",sans-serif', w: 700 }; return `${bold ? 800 : f.w || 800} ${fs}px ${f.f || f}`; };
+const sfrRR = (g, x, y, w, h, r) => { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); };
+const sfrGold = (g, y0, y1) => { const k = g.createLinearGradient(0, y0, 0, y1); k.addColorStop(0, '#fff6c8'); k.addColorStop(.45, '#f7d25c'); k.addColorStop(1, '#d99a2a'); return k; };
+function sfrCanvasTex(W, H, paint) { // a canvas texture that repaints itself when the sign fonts or the icon art arrive
+  const c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d'), t = new T.CanvasTexture(c); t.anisotropy = 4;
+  const draw = () => { g.clearRect(0, 0, W, H); paint(g, W, H, draw); t.needsUpdate = true; }; draw(); signs.push(draw); return t;
+}
+// the big name board: deep colour, double gold frame, a curl of gold either side of the name, a round picture at each end
+function sfrSignTex(name, sp, W, H) {
+  return sfrCanvasTex(W, H, (g, W, H, redraw) => {
+    const bg = g.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, sp.bg2); bg.addColorStop(.5, sp.bg); bg.addColorStop(1, shade(sp.bg, .72));
+    g.fillStyle = bg; sfrRR(g, 0, 0, W, H, 30); g.fill();
+    g.strokeStyle = sfrGold(g, 0, H); g.lineWidth = 12; sfrRR(g, 12, 12, W - 24, H - 24, 22); g.stroke();
+    g.strokeStyle = 'rgba(255,243,214,.7)'; g.lineWidth = 3; sfrRR(g, 30, 30, W - 60, H - 60, 14); g.stroke();
+    const cy = H / 2, r = H * .36, pic = (cx, e) => { g.fillStyle = '#fff6e4'; g.beginPath(); g.arc(cx, cy, r, 0, 7); g.fill(); g.lineWidth = 9; g.strokeStyle = sfrGold(g, cy - r, cy + r); g.stroke(); drawArt(g, e, cx - r * .76, cy - r * .76, r * 1.52, redraw); };
+    pic(H * .68, sp.icons[0]); pic(W - H * .68, sp.icons[1]);
+    let fs = H * .76 * (SIGN_FONTS[name] && SIGN_FONTS[name].k || 1); g.font = sfrFont(name, fs); while (g.measureText(name).width > W - H * 2.5 && fs > 24) { fs -= 3; g.font = sfrFont(name, fs); }
+    g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineJoin = 'round';
+    const tw = g.measureText(name).width / 2, cx = W / 2, ty = cy + fs * .05;
+    // gold curls either side of the name
+    g.strokeStyle = sfrGold(g, cy - 40, cy + 40); g.lineWidth = 7; g.lineCap = 'round';
+    [-1, 1].forEach(s => { const x0 = cx + s * (tw + 34); g.beginPath(); g.moveTo(x0, cy); g.bezierCurveTo(x0 + s * 40, cy - 34, x0 + s * 90, cy + 34, x0 + s * 130, cy); g.stroke(); g.beginPath(); g.arc(x0 + s * 146, cy, 9, 0, 7); g.fillStyle = sfrGold(g, cy - 9, cy + 9); g.fill(); });
+    g.strokeStyle = shade(sp.bg, .3); g.lineWidth = fs * .17; g.strokeText(name, cx, ty + 5); // dark edge and shadow so the letters stand out
+    g.fillStyle = sfrGold(g, ty - fs * .45, ty + fs * .5); g.fillText(name, cx, ty);
+    g.fillStyle = 'rgba(255,255,255,.28)'; g.save(); g.beginPath(); g.rect(0, ty - fs * .5, W, fs * .3); g.clip(); g.fillStyle = 'rgba(255,255,255,.22)'; g.fillText(name, cx, ty); g.restore();
+  });
+}
+// the hanging blade sign: a picture in a round frame on a gold-edged plaque with a scalloped bottom and three little jewels
+function sfrBladeTex(sp) {
+  return sfrCanvasTex(256, 300, (g, W, H, redraw) => {
+    const shape = () => { g.beginPath(); g.moveTo(26, 0); g.lineTo(W - 26, 0); g.arcTo(W, 0, W, 26, 26); g.lineTo(W, H - 70); for (let i = 0; i < 4; i++) g.arc(W - 32 - i * 64, H - 70, 32, 0, Math.PI); g.lineTo(0, 26); g.arcTo(0, 0, 26, 0, 26); g.closePath(); };
+    shape(); g.fillStyle = sp.bladeBg; g.fill(); g.lineWidth = 14; g.strokeStyle = SFR_GOLD; g.stroke();
+    g.beginPath(); g.arc(W / 2, 122, 90, 0, 7); g.fillStyle = '#fffaf0'; g.fill(); g.lineWidth = 8; g.strokeStyle = SFR_GOLD; g.stroke();
+    drawArt(g, sp.blade, W / 2 - 70, 122 - 70, 140, redraw);
+    [W / 2 - 50, W / 2, W / 2 + 50].forEach(x => { g.beginPath(); g.arc(x, 252, 8, 0, 7); g.fillStyle = SFR_GOLD; g.fill(); });
+  });
+}
+// gold lettering painted on a display window; the school's letters are in the colours of a kid's alphabet set
+function sfrWordTex(name, word, sp, kid) {
+  return sfrCanvasTex(512, kid ? 200 : 160, (g, W, H) => {
+    let fs = H * .8; g.font = sfrFont(name, fs, true); while (g.measureText(word).width > W - 40 && fs > 20) { fs -= 3; g.font = sfrFont(name, fs, true); }
+    g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineJoin = 'round';
+    if (kid) { const n = word.length, ws = [...word].map(ch => g.measureText(ch).width + fs * .06), tot = ws.reduce((a, b) => a + b, 0); let x = W / 2 - tot / 2; [...word].forEach((ch, i) => { const cx = x + ws[i] / 2, cy = H / 2 + Math.sin(i * 1.7) * 6; g.strokeStyle = '#ffffff'; g.lineWidth = fs * .2; g.strokeText(ch, cx, cy); g.fillStyle = sp.kid[i % sp.kid.length]; g.fillText(ch, cx, cy); x += ws[i]; }); return; }
+    g.strokeStyle = shade(sp.bg, .35); g.lineWidth = fs * .16; g.strokeText(word, W / 2, H / 2 + 4); g.fillStyle = sfrGold(g, H / 2 - fs * .4, H / 2 + fs * .45); g.fillText(word, W / 2, H / 2);
+  });
+}
+const sfrStripeTex = (c1, c2, scallop) => {
+  const c = document.createElement('canvas'); c.width = scallop ? 128 : 64; c.height = 64; const g = c.getContext('2d'), k = scallop ? 64 : 32;
+  [c1, c2].forEach((col, i) => { g.fillStyle = col; if (scallop) { g.fillRect(i * k, 0, k, 28); g.beginPath(); g.arc(i * k + k / 2, 28, k / 2, 0, Math.PI); g.fill(); g.strokeStyle = 'rgba(0,0,0,.16)'; g.lineWidth = 2; g.beginPath(); g.arc(i * k + k / 2, 28, k / 2 - 1, 0, Math.PI); g.stroke(); } else g.fillRect(i * k, 0, k, 64); });
+  const t = new T.CanvasTexture(c); t.wrapS = t.wrapT = T.RepeatWrapping; t.anisotropy = 4; return t;
+};
+// one sloping awning with a scalloped edge, centred at x with width aw, sloping from the wall out over the pavement
+function sfrAwning(g, x, aw, stripe) {
+  const t1 = sfrStripeTex(stripe[0], stripe[1]), t2 = sfrStripeTex(stripe[0], stripe[1], true); t1.repeat.set(aw / .7, 1); t2.repeat.set(aw / .7, 1);
+  const y0 = 2.5, z0 = .22, y1 = 2.0, z1 = 1.2, L = Math.hypot(y0 - y1, z1 - z0);
+  const slope = new T.Mesh(new T.PlaneGeometry(aw, L), new T.MeshLambertMaterial({ map: t1, side: T.DoubleSide })); slope.position.set(x, (y0 + y1) / 2, (z0 + z1) / 2); slope.rotation.x = Math.atan2(z1 - z0, y1 - y0); g.add(slope);
+  const val = new T.Mesh(new T.PlaneGeometry(aw, .35), new T.MeshLambertMaterial({ map: t2, alphaTest: .5, side: T.DoubleSide })); val.position.set(x, y1 - .175, z1); g.add(val);
+  [-1, 1].forEach(s => g.add(sqBar([x + s * aw / 2, y0, z0], [x + s * aw / 2, y1, z1], '#2f3330', .02)));
+  g.add(sqBar([x - aw / 2, y1, z1], [x + aw / 2, y1, z1], '#2f3330', .02));
+}
+// lights round a sign: little warm bulbs every so often, and a glow at night (the shared glow material follows the street lamps)
+const SFR_GLOW = [];
+function sfrBulbs(g, x, y, w, h, z) {
+  const put = (bx, by) => { g.add(mesh(SFR_ICO, BULB, bx, by, z, .045, .055, .045)); SFR_GLOW.push(new T.Vector3(bx, by, z).applyMatrix4(g.matrixWorld)); };
+  const nx = Math.round(w / .34), ny = Math.max(1, Math.round(h / .34));
+  for (let i = 0; i <= nx; i++) { const bx = x - w / 2 + i * w / nx; put(bx, y + h / 2); put(bx, y - h / 2); }
+  for (let i = 1; i < ny; i++) { const by = y - h / 2 + i * h / ny; put(x - w / 2, by); put(x + w / 2, by); }
+}
+function sfrPlanter(g, cx, ww, pal) { // a flower box under a display window
+  g.add(box(M.wood('#8a5a3c'), cx, .06, .68, ww, .34, .3), box('#6b4630', cx, .4, .68, ww + .06, .05, .34));
+  const n = Math.max(3, Math.round(ww / .22));
+  for (let i = 0; i < n; i++) {
+    const x = cx - ww / 2 + .11 + i * (ww - .22) / (n - 1), z = .66 + (i % 2) * .07;
+    g.add(bsph(.12, GREENS[i % 5], x, .5, z, 1, .8, 1), bsph(.08, pal[i % pal.length], x + .02, .62 + (i % 3) * .04, z + .03));
+    if (i % 2) g.add(bsph(.03, '#ffd23f', x, .75, z + .06));
+  }
+}
+function sfrDress(sp) {
+  const name = sp.name, S = SFR[name], g = sp.group, w = sp.w, dx = sp.doorX || 0;
+  // take down the thin sign and the plain awning
+  const old = g.children.filter(o => (o.geometry && o.geometry.type === 'PlaneGeometry' && o.geometry.parameters.height === .52 && Math.abs(o.position.y - 2.84) < .01) || (o.isGroup && Math.abs(o.position.y - 2.5) < .01 && Math.abs(o.rotation.x - .5) < .01));
+  old.forEach(o => g.remove(o));
+  // the big name board, with a gold frame, a cornice and lights round it
+  const bw = Math.min(w - 1.2, 6.6), bh = .9, by = 3.02, PX = 270;
+  const board = new T.Mesh(new T.PlaneGeometry(bw, bh), new T.MeshBasicMaterial({ map: sfrSignTex(name, S, Math.round(bw * PX), Math.round(bh * PX)) })); board.position.set(0, by, .287); g.add(board);
+  g.add(box(shade(S.bg, .55), 0, by - bh / 2 - .04, .175, bw + .12, bh + .08, .17), box(SFR_GOLD, 0, by - bh / 2 - .06, .22, bw + .2, .05, .12), box(SFR_GOLD, 0, by + bh / 2 + .02, .22, bw + .2, .05, .12), box(shade(S.bg, .7), 0, by + bh / 2 + .07, .2, bw + .3, .08, .2));
+  [-1, 1].forEach(s => g.add(box(SFR_GOLD, s * (bw / 2 + .08), by - bh / 2 - .06, .22, .05, bh + .13, .12)));
+  sfrBulbs(g, 0, by, bw + .2, bh + .12, .31);
+  // awnings: one across the front, or (the school) one over each window
+  const wins = [[-(w / 2 - .75), Math.min(dx - .72, dx - 1.15)], [Math.max(dx + .72, dx + 1.15), w / 2 - .75]].map(([a, b]) => [(a + b) / 2, b - a]);
+  if (name === 'School') wins.forEach(([cx, ww]) => sfrAwning(g, cx, ww + .3, S.stripe)); else sfrAwning(g, 0, w - 1.1, S.stripe);
+  // lettering on the glass and a flower box under each window
+  wins.forEach(([cx, ww], i) => {
+    if (ww < .6) return;
+    const kid = name === 'School', pw = kid ? Math.min(2.3, ww * .6) : Math.min(1.44, ww * .86), ph = pw * (kid ? 200 : 160) / 512;
+    const m = new T.Mesh(new T.PlaneGeometry(pw, ph), new T.MeshBasicMaterial({ map: sfrWordTex(name, S.win[i], S, kid), transparent: true, alphaTest: .3 })); m.position.set(cx, kid ? 1.3 : 1.22, .58); g.add(m);
+    sfrPlanter(g, cx, ww - .1, S.pal);
+  });
+  // the blade sign on a bracket, on the side opposite the cloth banner
+  const bx = -(w / 2 - .42), bt = sfrBladeTex(S), bm = new T.MeshBasicMaterial({ map: bt, alphaTest: .35 });
+  const sc = mesh(TOR, '#2f3330', bx, 3.7, .55, .14, .14, .14); sc.rotation.y = Math.PI / 2;
+  g.add(box('#2f3330', bx, 3.9, .8, .06, .06, 1.5), sqBar([bx, 3.35, .1], [bx, 3.9, .95], '#2f3330', .025), sc);
+  [.62, 1.35].forEach(z => g.add(sqBar([bx, 3.9, z], [bx, 3.7, z], '#9a9aa2', .01)));
+  [[Math.PI / 2, -.015], [-Math.PI / 2, .015]].forEach(([ry, ox]) => { const p = new T.Mesh(new T.PlaneGeometry(.86, 1.0), bm); p.rotation.y = ry; p.position.set(bx + ox, 3.2, .98); g.add(p); });
+  g.add(mesh(SFR_ICO, SFR_GOLD, bx, 3.93, 1.5, .06, .06, .06));
+}
+SHOPS.filter(s => SFR[s.name]).forEach(sfrDress);
+// the school: a flag and a clock on the bell tower
+{
+  const sp = SHOPS.find(s => s.name === 'School'), L = new T.Group(); L.position.set(4, sp.H, -(sp.d || 7) / 2); sp.group.add(L);
+  const fl = new T.Mesh(new T.PlaneGeometry(1.1, .7), new T.MeshBasicMaterial({ side: T.DoubleSide, map: sfrCanvasTex(220, 140, (g, W, H) => { g.fillStyle = '#f2c230'; g.fillRect(0, 0, W, H); g.fillStyle = '#244d95'; g.fillRect(0, 0, W, 22); g.fillRect(0, H - 22, W, 22); g.fillStyle = '#e2483d'; g.beginPath(); for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, r = i % 2 ? 22 : 52; g.lineTo(W / 2 + Math.cos(a) * r, H / 2 + Math.sin(a) * r); } g.closePath(); g.fill(); }) }));
+  fl.position.set(.6, 4.8, 0); L.add(lcyl('#c8c8d0', 0, 4.2, 0, .03, 1.1), fl, bsph(.06, SFR_GOLD, 0, 5.34, 0));
+  const ck = new T.Mesh(new T.CircleGeometry(.34, 28), new T.MeshBasicMaterial({ map: sfrCanvasTex(128, 128, (g) => { g.fillStyle = '#fdf8ee'; g.beginPath(); g.arc(64, 64, 62, 0, 7); g.fill(); g.lineWidth = 8; g.strokeStyle = '#3a2e2a'; g.stroke(); g.fillStyle = '#3a2e2a'; for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; g.fillRect(64 + Math.sin(a) * 48 - 3, 64 - Math.cos(a) * 48 - 3, 6, 6); } g.lineWidth = 6; g.lineCap = 'round'; g.beginPath(); g.moveTo(64, 64); g.lineTo(64, 24); g.moveTo(64, 64); g.lineTo(92, 78); g.stroke(); }) }));
+  ck.position.set(0, 2.35, .43); L.add(ck, mesh(TOR, SFR_GOLD, 0, 2.35, .43, .36, .36, .36));
+}
+// glow for the sign lights at night: one Points object for all of them
+{
+  const pg = new T.BufferGeometry(); pg.setAttribute('position', new T.Float32BufferAttribute(SFR_GLOW.flatMap(v => [v.x, v.y, v.z]), 3));
+  const p = new T.Points(pg, PERG_GLOW); p.frustumCulled = false; p.visible = false; town.add(p); SQ_GLOWS.push(p);
+}
+/* ================= street lamps: cast-iron gas lamps with a fluted post, scrollwork and a lantern cage =================
+   Dressing added to every lamp() b5.js already put up. Its post, glowing globe, halo and walk-around circle stay as they were; this adds a stepped base,
+   a fluted column, a ladder bar, curls of scrollwork and a caged lantern with a roof and finial. The lamps at the main corners (the square entrance,
+   the town hall corners, the avenue crossing) also get a crossarm with two small hanging lanterns that glow at night. */
+const LMP = { I: '#2f6a4a', D: '#1f4a35', G: '#d9aa3a' }, LP5 = new T.CylinderGeometry(1, 1, 1, 5), LP7 = new T.CylinderGeometry(1, 1, 1, 7), LP4 = new T.ConeGeometry(1, 1, 4), LMP_GLOW = [];
+const lpCyl = (c, x, y, z, r, hh) => mesh(LP7, c, x, y + hh / 2, z, r, hh, r);
+const LP_BASE = new T.CylinderGeometry(.14, .24, 1, 7), lpCone = (c, x, y, z, hh) => mesh(LP_BASE, c, x, y + hh / 2, z, 1, hh, 1); // the tapered foot
+function lpBar(a, b, c, r) { // a thin five-sided rod between two points
+  const d = new T.Vector3(b[0] - a[0], b[1] - a[1], b[2] - a[2]), L = d.length(), m = mesh(LP5, c, (a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2, r, L, r);
+  m.quaternion.setFromUnitVectors(new T.Vector3(0, 1, 0), d.normalize()); return m;
+}
+// a curl of iron hanging off the post, in the plane 'x' (sideways) or 'z' (towards and away from the road); s is the side
+function lpScroll(g, plane, s) {
+  const pts = [];
+  for (let i = 0; i <= 6; i++) { const t = i / 6, th = Math.PI + t * 1.75 * Math.PI, r = .17 - .12 * t, u = s * (.27 + r * Math.cos(th)), y = 3.02 + r * Math.sin(th); pts.push(plane === 'x' ? [u, y, 0] : [0, y, u]); }
+  g.add(lpBar([0, 3.02, 0], pts[0], LMP.I, .022));
+  for (let i = 0; i < 6; i++) g.add(lpBar(pts[i], pts[i + 1], LMP.I, .022 - i * .0017));
+  g.add(bsph(.032, LMP.G, ...pts[6]));
+}
+function lpLantern(g, x, y, z, s, glow) { // a small hanging lantern whose top is at y
+  g.add(lpBar([x, y + .16, z], [x, y, z], '#9a9aa2', .008), mesh(LP4, LMP.D, x, y - .06, z, .15 * s, .12 * s, .15 * s), bsph(.075 * s, LAMPGLOW, x, y - .2 * s, z), mesh(CONE, LMP.G, x, y - .38 * s, z, .06 * s, .1 * s, .06 * s));
+  g.children[g.children.length - 3].rotation.y = Math.PI / 4; g.children[g.children.length - 1].rotation.x = Math.PI;
+  [-1, 1].forEach(a => [-1, 1].forEach(b => g.add(box(LMP.I, x + a * .075 * s, y - .33 * s, z + b * .075 * s, .018, .26 * s, .018))));
+  if (glow) LMP_GLOW.push([x, y - .2 * s, z]);
+}
+function lpDress(x, z, main, plane) {
+  const g = new T.Group(); g.position.set(x, 0, z); S_(g);
+  // stepped base and a swelling vase under the fluted column
+  g.add(lpCyl(LMP.D, 0, 0, 0, .3, .12), lpCone(LMP.I, 0, .12, 0, .34), lpCyl(LMP.G, 0, .46, 0, .17, .05), bsph(.17, LMP.I, 0, .74, 0, 1, 1.55, 1), lpCyl(LMP.G, 0, .96, 0, .13, .05));
+  g.add(lpCyl(LMP.I, 0, 1.0, 0, .095, 1.22));
+  for (let k = 0; k < 5; k++) { const a = k / 5 * Math.PI * 2; g.add(mesh(LP5, LMP.D, Math.cos(a) * .1, 1.62, Math.sin(a) * .1, .022, 1.14, .022)); }
+  g.add(lpCyl(LMP.G, 0, 2.2, 0, .125, .05), lpCyl(LMP.D, 0, 2.25, 0, .1, .1), lpCyl(LMP.G, 0, 2.35, 0, .095, .035));
+  // ladder bar with a knob at each end, and the scrollwork
+  g.add(box(LMP.D, 0, 2.62, 0, plane === 'x' ? .5 : .06, .035, plane === 'x' ? .06 : .5), bsph(.04, LMP.G, plane === 'x' ? .27 : 0, 2.64, plane === 'x' ? 0 : .27), bsph(.04, LMP.G, plane === 'x' ? -.27 : 0, 2.64, plane === 'x' ? 0 : -.27));
+  [-1, 1].forEach(s => lpScroll(g, plane, s));
+  // lantern cage round the glowing globe: four corner bars, a pyramid roof, a gold ball and spike, a hanging point underneath
+  [-1, 1].forEach(a => [-1, 1].forEach(b => g.add(box(LMP.I, a * .19, 3.3, b * .19, .03, .46, .03))));
+  const roof = mesh(LP4, LMP.D, 0, 3.96, 0, .38, .36, .38); roof.rotation.y = Math.PI / 4; g.add(roof, lpCyl(LMP.G, 0, 4.14, 0, .06, .03), bsph(.055, LMP.G, 0, 4.22, 0), mesh(CONE, LMP.G, 0, 4.36, 0, .02, .16, .02));
+  const pend = mesh(CONE, LMP.G, 0, 3.15, 0, .1, .15, .1); pend.rotation.x = Math.PI; g.add(pend);
+  if (main) { // a crossarm with a small lantern at each end, towards and away from the road
+    g.add(lpBar([0, 2.9, -.66], [0, 2.9, .66], LMP.I, .02), bsph(.035, LMP.G, 0, 2.9, .68), bsph(.035, LMP.G, 0, 2.9, -.68));
+    [-1, 1].forEach(s => lpLantern(g, 0, 2.78, s * .62, 1, true));
+    LMP_GLOW.splice(-2).forEach(([lx, ly, lz]) => LMP_GLOW.push([x + lx, ly, z + lz]));
+  }
+}
+lampXZ.forEach(([x, z]) => {
+  const main = x > -15 && x < 7 && z > -4 && z < 26, aveSide = Math.abs(x - AVE) < 3.5 && z < -5;
+  lpDress(x, z, main, main ? 'x' : aveSide || Math.abs(z) > 4 ? 'x' : 'z');
+});
+{ // glow for the small lanterns at night
+  const mat = PERG_GLOW.clone(); mat.size = 1.25; SQ_GLOWM.push(mat);
+  const pg = new T.BufferGeometry(); pg.setAttribute('position', new T.Float32BufferAttribute(LMP_GLOW.flat(), 3));
+  const p = new T.Points(pg, mat); p.frustumCulled = false; p.visible = false; town.add(p); SQ_GLOWS.push(p);
+}
 /* ================= landscaping: grass tufts, wildflowers and clover scattered over every lawn ================= */
 // Where the lawns are is read from the town itself: one top-down colour render and one height render, done once at load.
 // A cell gets plants only when it is green and at ground height, so paths, plazas, water and anything under a roof stay clear.
