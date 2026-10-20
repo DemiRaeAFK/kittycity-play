@@ -5011,7 +5011,7 @@ for (let z = -11; z >= -33; z -= 11) { lamp(AVE - 3.3, z); if (z > -30) lamp(AVE
 
 /* ---------- playground across from the school ---------- */
 const PG = { x0: -48, x1: -36, z0: 5.5, z1: 17 };
-// soft rubber ground in sunny colours, with a sand patch under the swings
+// soft rubber ground in sunny colours
 { const c = document.createElement('canvas'); c.width = 512; c.height = 490; const g = c.getContext('2d');
   g.fillStyle = '#86cbbd'; g.fillRect(0, 0, 512, 490);
   const R = pgRng(7); const cols = ['#ffd0e4', '#fff1a8', '#c7e6ff', '#e4d4ff', '#ffd9b8', '#c9f0c4'];
@@ -5019,8 +5019,7 @@ const PG = { x0: -48, x1: -36, z0: 5.5, z1: 17 };
   g.fillStyle = 'rgba(255,255,255,.55)'; for (let i = 0; i < 14; i++) { const x = R() * 512, y = R() * 490, a = R() * 6; g.save(); g.translate(x, y); g.rotate(a); g.beginPath(); g.ellipse(0, 6, 9, 8, 0, 0, 7); g.fill(); [[-10, -6], [-3, -11], [4, -11], [11, -6]].forEach(([u, v]) => { g.beginPath(); g.arc(u, v, 3.6, 0, 7); g.fill(); }); g.restore(); }
   for (let i = 0; i < 2500; i++) { g.fillStyle = R() < .5 ? 'rgba(0,0,0,.05)' : 'rgba(255,255,255,.07)'; g.fillRect(R() * 512, R() * 490, 2, 2); }
   const t = new T.CanvasTexture(c); t.anisotropy = 4;
-  const m = new T.Mesh(new T.PlaneGeometry(12, 11.5), new T.MeshLambertMaterial({ map: t })); m.rotation.x = -Math.PI / 2; m.rotation.z = Math.PI; m.position.set(-42, .01, 11.25); S_(m);
-  S_(box(M.gravel('#e8d2a4'), -45, .01, 14.4, 5.8, .03, 4.6)); }
+  const m = new T.Mesh(new T.PlaneGeometry(12, 11.5), new T.MeshLambertMaterial({ map: t })); m.rotation.x = -Math.PI / 2; m.rotation.z = Math.PI; m.position.set(-42, .01, 11.25); S_(m);}
 function pgRng(a) { return () => (a = (a * 1664525 + 1013904223) >>> 0) / 4294967296; }
 function picket(x0, z0, x1, z1, c = '#f6f1e6') {
   const L = Math.hypot(x1 - x0, z1 - z0), n = Math.round(L / .3), ang = Math.atan2(x1 - x0, z1 - z0);
@@ -5055,62 +5054,14 @@ function flagLine(a, b, sag, n) {
     prev = p;
   }
 }
-// swings: a sky blue A-frame with candy seats
-const swings = [];
-{ const g = new T.Group(); g.position.set(-45, 0, 13.5); S_(g);
-  [-2.2, 2.2].forEach(x => { [-1, 1].forEach(s => { const leg = lcyl('#3f9ad8', x, 0, s * .6, .09, 3.1); leg.rotation.x = s * .2; g.add(leg); }); g.add(lsph(.15, '#ffd23f', x, 3.0, 0)); OBST.push([-45 + x, 13.5, .5]); });
-  const bar = lcyl('#3f9ad8', 0, 2.9, 0, .08, 4.6); bar.rotation.z = Math.PI / 2; bar.position.y = 2.95; g.add(bar);
-  // a tire swing in the middle just for looks
-  const tire = new T.Mesh(TOR, mat('#3a3a40')); tire.scale.set(.32, .32, .55); tire.rotation.x = Math.PI / 2; tire.position.set(0, .75, 0); g.add(tire);
-  [-.2, .2].forEach(dx => g.add(bRodPG('#8a8a8a', [dx, 2.95, 0], [dx * .9, .8, 0], .015)));
-  [[-1, '#ff7aa8'], [1, '#5fd0c0']].forEach(([x, c]) => { const p = new T.Group(); p.position.set(-45 + x * 1.4, 2.95, 13.5); p.userData.dyn = 1; town.add(p);
-    p.add(box('#8a8a8a', -.35, -2.4, 0, .03, 2.4, .03), box('#8a8a8a', .35, -2.4, 0, .03, 2.4, .03), box(c, 0, -2.47, 0, .85, .08, .45), box(c, 0, -2.47, -.2, .85, .2, .05));
-    const sw = { x: -45 + x * 1.4, z: 13.5, p, a: 0 }; swings.push(sw); hitBox(p, .9, .6, .9, 0, -2.6, 0, { kind: 'swing', swing: sw }); });
-}
-// the play castle: climb the rainbow ladder, look out from the tower, ride the wavy slide down
-{ const g = new T.Group(); g.position.set(-39, 0, 13); S_(g);
-  const wood = '#f0b84a', dk = '#d48a2a';
-  [[-.6, -1.6], [.6, -1.6], [-.6, -.4], [.6, -.4]].forEach(([x, z]) => g.add(box(wood, x, 0, z, .16, 3.55, .16)));
-  g.add(box(dk, 0, 2.02, -1, 1.36, .12, 1.36));
-  // side walls with round windows
-  [-1, 1].forEach(e => { g.add(box(e < 0 ? '#ff8fb8' : '#7fc8f0', e * .62, 2.14, -1, .06, .7, 1.2)); const ring = new T.Mesh(TOR, mat('#fff7e8')); ring.scale.setScalar(.2); ring.rotation.y = Math.PI / 2; ring.position.set(e * .66, 2.5, -1); g.add(ring); });
-  g.add(box('#ffd23f', 0, 2.75, -1.6, 1.2, .06, .06));
-  // pointy tower roof with a flag
-  const roof = mesh(new T.ConeGeometry(1.15, 1.2, 4), '#e8566e', 0, 4.15, -1); roof.rotation.y = Math.PI / 4; g.add(roof, box(wood, 0, 3.5, -1, 1.4, .1, 1.4));
-  g.add(lcyl('#f6f1e6', 0, 4.7, -1, .025, .8)); { const f = new T.Mesh(new T.CircleGeometry(1, 3), flagM('#ffd23f')); f.scale.set(.32, .24, 1); f.position.set(.26, 5.32, -1); g.add(f); }
-  // rainbow ladder rungs
-  [-.45, .45].forEach(x => g.add(box(wood, x, 0, -1.72, .08, 2.1, .1)));
-  ['#e8453a', '#ff9a3c', '#ffd23f', '#5cc46a', '#4f9ae0', '#9b6ad8'].forEach((c, i) => g.add(box(c, 0, .35 * i + .1, -1.72, .9, .07, .12)));
-  // a telescope and a steering wheel on the deck
-  { const tel = lcyl('#4f6fa8', .45, 2.85, -.5, .07, .55); tel.rotation.x = -1.1; g.add(tel, lsph(.08, '#c9a24a', .45, 2.85, -.5)); const wh = new T.Mesh(TOR, mat('#a0603a')); wh.scale.setScalar(.22); wh.position.set(-.35, 2.65, -.42); g.add(wh, lsph(.06, '#c9a24a', -.35, 2.65, -.42)); }
-  // climbing wall on the side with bright holds
-  { const w = box('#c9b4f0', -.82, 0, -1, .08, 2.15, 1.1); w.rotation.z = -.18; w.position.x = -.98; g.add(w); const R = pgRng(3);
-    for (let i = 0; i < 11; i++) { const y = .25 + R() * 1.8; g.add(lsph(.07, ['#e8453a', '#ffd23f', '#5cc46a', '#4f9ae0', '#ff7aa8'][i % 5], -1.06 + y * .18, y, -1.45 + R() * .9, 1, .8, 1)); } }
-  // the wavy slide
-  const N = 12, P = []; for (let i = 0; i <= N; i++) { const t = i / N; P.push([0, 2.08 * Math.pow(1 - t, 1.25) + Math.sin(t * Math.PI * 2) * .08 * (1 - t) + .08, -.4 + 2.8 * t]); }
-  for (let i = 0; i < N; i++) { const a = P[i], b = P[i + 1], L = Math.hypot(b[1] - a[1], b[2] - a[2]) + .02, ax = Math.atan2(-(b[1] - a[1]), b[2] - a[2]), mid = [0, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2];
-    const bed = mesh(BOX, '#ffd23f', 0, mid[1], mid[2], .8, .06, L); bed.rotation.x = ax; g.add(bed);
-    [-1, 1].forEach(e => { const side = mesh(BOX, '#ff9a3c', e * .42, mid[1] + .1, mid[2], .06, .24, L); side.rotation.x = ax; g.add(side); }); }
-  OBST.push([-39, 12, 1.1], [-39, 13.5, .8], [-39, 14.6, .5], [-39.9, 12, .5]);
-  hitBox(g, 1.7, 2.4, 4.6, 0, 0, .2, { kind: 'play', act: 'slide', x: -39, z: 10.6 });
-}
-// sandbox and seesaw
-S_(box(M.wood('#b07a4a'), -41.6, 0, 8.6, 3, .3, .2)); S_(box(M.wood('#b07a4a'), -41.6, 0, 10.8, 3, .3, .2)); S_(box(M.wood('#b07a4a'), -43.1, 0, 9.7, .2, .3, 2.4)); S_(box(M.wood('#b07a4a'), -40.1, 0, 9.7, .2, .3, 2.4));
-S_(box(M.gravel('#ecd9a8'), -41.6, 0, 9.7, 2.9, .18, 2.2)); S_(lcyl('#c2453a', -42.3, .15, 9.3, .2, .3)); S_(lsph(.3, '#d9a441', -41, .3, 10.1, 1, .5, 1));
-const seesaw = new T.Group(); seesaw.position.set(-46, .45, 8.2); seesaw.userData.dyn = 1; town.add(seesaw);
-seesaw.add(box('#ff8fb8', 0, 0, 0, 3.2, .1, .38), box('#ffd23f', -1.4, .1, 0, .08, .3, .4), box('#ffd23f', 1.4, .1, 0, .08, .3, .4), lcyl('#4f9ae0', -1.15, .1, 0, .03, .35), lcyl('#4f9ae0', 1.15, .1, 0, .03, .35), lsph(.06, '#e8453a', -1.15, .47, 0), lsph(.06, '#e8453a', 1.15, .47, 0));
-S_(box('#4f9ae0', -46, 0, 8.2, .3, .45, .5)); OBST.push([-46, 8.2, .5]);
-hitBox(seesaw, 3.4, 1.2, 1.2, 0, -.3, 0, { kind: 'play', act: 'seesaw', x: -44.3, z: 7.0 });
-// sandbox: tap to dig, and a little sand castle grows
-{ const g = new T.Group(); g.position.set(-41.6, 0, 9.7); S_(g); hitBox(g, 3, .6, 2.6, 0, 0, 0, { kind: 'play', act: 'sand', x: -41.6, z: 7.7 }); }
-const castle = new T.Group(); castle.position.set(-41.6, .18, 10.35); castle.visible = false; town.add(castle);
-{ const sc = '#e8c46a', dk = '#d4a94a';
-  castle.add(box(sc, 0, 0, 0, 1.1, .5, .7), cyl(sc, -.45, 0, 0, .2, .85), cyl(sc, .45, 0, 0, .2, .85), mesh(CONEG, '#d9453a', -.45, .85 + .22, 0, .26, .45, .26), mesh(CONEG, '#d9453a', .45, .85 + .22, 0, .26, .45, .26), mesh(CONEG, dk, 0, .5 + .25, 0, .3, .5, .3), box('#fdf8ee', 0, .98, 0, .03, .35, .03), box('#4f78c4', .12, 1.2, 0, .22, .13, .02)); }
+// v31.1 (Demi): the merry-go-round is the whole playground now, so the swings, play castle, sandbox, seesaw, hopscotch
+// and spring riders are gone. These stay empty so the old ride code in c2.js has nothing to move.
+const swings = [], SPRINGS = [], HOP_Z = [], seesaw = new T.Group(), castle = new T.Group();
 // merry-go-round (v31, Demi: one kids ride all together): a little carousel with six animals that bob up and down
 // under a striped canopy. It turns slowly all the time, timed by the clock so every iPad sees the same spot; tap it to
 // hop on the nearest free animal, tap it again (or walk away) to hop off. Riders share their seat in presence `mg`.
-const MGR = { x: -38.3, z: 7.85, R: 1.28, n: 6, w: .3, seats: [] };
-const mgr = new T.Group(); mgr.position.set(MGR.x, 0, MGR.z); mgr.userData.dyn = 1; town.add(mgr);
+const MGR = { x: -42, z: 11.6, s: 1.3, R: 1.28, n: 6, w: .3, seats: [] }; // s: drawn a bit bigger now that it fills the playground
+const mgr = new T.Group(); mgr.position.set(MGR.x, 0, MGR.z); mgr.scale.setScalar(MGR.s); mgr.userData.dyn = 1; town.add(mgr);
 function mgrAnimal(kind, col) { // each animal faces +z (the way the ride turns); its saddle top is at y = 0
   const g = new T.Group(), dk = shade(col, .8), GOLD = '#e8c45a';
   if (kind === 'horse') {
@@ -5139,7 +5090,7 @@ function mgrAnimal(kind, col) { // each animal faces +z (the way the ride turns)
 }
 { const ROT = new T.Group(); ROT.userData.dyn = 1; mgr.add(ROT); MGR.rot = ROT;
   // the deck: a round platform with painted boards and a gold rim, on a step that does not turn
-  S_(lcyl('#e9dcc0', MGR.x, 0, MGR.z, 1.95, .08));
+  S_(lcyl('#e9dcc0', MGR.x, 0, MGR.z, 1.95 * MGR.s, .08));
   ROT.add(lcyl('#f6efe2', 0, .08, 0, 1.75, .16), lcyl('#e8c45a', 0, .05, 0, 1.78, .06));
   ['#f7c6d6', '#c6e2f7', '#d6f0c8', '#fff0b0', '#e2d0f5', '#ffd8bc'].forEach((c, i) => { const sg = new T.Mesh(new T.CylinderGeometry(1.7, 1.7, .02, 10, 1, false, i / 6 * Math.PI * 2, Math.PI / 3), mat(c)); sg.position.y = .25; ROT.add(sg); });
   // the middle column: painted panels with a mirror band and twinkly bulbs
@@ -5156,12 +5107,12 @@ function mgrAnimal(kind, col) { // each animal faces +z (the way the ride turns)
   for (let i = 0; i < 24; i++) { const a = (i + .5) / 24 * Math.PI * 2, sc = lsph(.17, i % 2 ? '#f7d36a' : '#fffaf0', Math.sin(a) * 2.06, 2.52, Math.cos(a) * 2.06, 1, .8, .15); sc.rotation.y = a; ROT.add(sc, lsph(.045, glow('#fff1c8'), Math.sin(a + .13) * 2.1, 2.66, Math.cos(a + .13) * 2.1)); }
   ROT.add(lsph(.12, '#e8c45a', 0, 3.62, 0), lcyl('#e8c45a', 0, 3.6, 0, .02, .55));
   const flag = box('#e2483d', .17, 4.02, 0, .32, .2, .02); ROT.add(flag);
-  hitBox(mgr, 4, 2.6, 4, 0, 0, 0, { kind: 'play', act: 'mgr', x: MGR.x, z: MGR.z + 2.4 }); OBST.push([MGR.x, MGR.z, 1.95]); }
+  hitBox(mgr, 4, 2.6, 4, 0, 0, 0, { kind: 'play', act: 'mgr', x: MGR.x, z: MGR.z - 2.4 * MGR.s }); OBST.push([MGR.x, MGR.z, 1.95 * MGR.s]); }
 let mgrW = 0;
 function mgrAngle() { return (Date.now() / 1000 % 6283) * MGR.w; }
 function mgrSeat(i, out) { // where seat i is in town right now, and which way its animal faces
-  const s = MGR.seats[i], a = s.a + MGR.rot.rotation.y, y = s.ani.position.y;
-  return Object.assign(out || {}, { x: MGR.x + Math.sin(a) * MGR.R, z: MGR.z + Math.cos(a) * MGR.R, y, ry: a + Math.PI / 2 });
+  const s = MGR.seats[i], a = s.a + MGR.rot.rotation.y, y = s.ani.position.y * MGR.s, R = MGR.R * MGR.s;
+  return Object.assign(out || {}, { x: MGR.x + Math.sin(a) * R, z: MGR.z + Math.cos(a) * R, y, ry: a + Math.PI / 2 });
 }
 function mgrTick() {
   const ang = mgrAngle(), tt = Date.now() / 1000; MGR.rot.rotation.y = ang;
@@ -5179,28 +5130,10 @@ function mgrPick() { // the free animal closest to me
   if (mode !== 'town') return;
   for (const o of others.values()) if (o.mg != null && o.loc === 'town' && o.cat && o.cat.parent === town) { const p = mgrSeat(o.mg); o.cat.position.set(p.x, p.y - .2, p.z); o.cat.rotation.y = p.ry; animCat(o.cat, false, t, true); o.x = o.tx = p.x; o.z = o.tz = p.z; } }; }
 { const _fs = friendSignals; friendSignals = function (o, pr) { o.mg = typeof pr.mg === 'number' ? clamp(pr.mg | 0, 0, MGR.n - 1) : null; return _fs(o, pr); }; }
-// hopscotch: tap to hop along the squares
-const HOP_Z = [15.4, 14.6, 13.8, 13, 12.2, 11.4];
-{ const cols = ['#ffd0e4', '#d0ecff', '#fff3b0', '#d4f5d0', '#ead6ff', '#ffe0c0'];
-  HOP_Z.forEach((z, i) => { S_(box(cols[i], -37.1, 0, z, .72, .03, .72)); const p = new T.Mesh(new T.PlaneGeometry(.5, .5), new T.MeshBasicMaterial({ map: textTex(String(i + 1), 128, 128, cols[i], '#c8643c'), transparent: false })); p.rotation.x = -Math.PI / 2; p.position.set(-37.1, .05, z); S_(p); });
-  const hg = new T.Group(); hg.position.set(-37.1, 0, 13.4); S_(hg); hitBox(hg, .9, .3, 5, 0, 0, 0, { kind: 'play', act: 'hop', x: -37.1, z: 16.2 }); }
-bench(-37, 9, -Math.PI / 2, { deed: 1 });
+// benches around the ride for kitties waiting their turn
+bench(-37, 9, -Math.PI / 2, { deed: 1 }); bench(-37, 14.2, -Math.PI / 2, { deed: 1 }); bench(-47, 9, Math.PI / 2, { deed: 1 }); bench(-47, 14.2, Math.PI / 2, { deed: 1 }); bench(-42, 16.4, Math.PI, { deed: 1 });
 { const s = new T.Mesh(new T.PlaneGeometry(2.6, .56), new T.MeshBasicMaterial({ map: textTex('Playground', 512, 110, '#fdf8ee', '#c8643c', '#d9a441') })); s.position.set(-42, 3.3, 5.5); s.rotation.y = Math.PI; S_(s); const bk = box('#d9a441', -42, 3.0, 5.62, 2.72, .62, .06); S_(bk); }
-// spring riders: a kitty and a fish that rock when you hop on
-const SPRINGS = [];
-[[-46.9, 10.9, 'kitty'], [-44.7, 10.9, 'fish']].forEach(([x, z, k], i) => {
-  S_(cyl('#8a8a95', x, 0, z, .3, .05));
-  for (let j = 0; j < 5; j++) { const r = new T.Mesh(TOR, mat('#c9c9d2')); r.scale.set(.13, .13, .13); r.rotation.x = Math.PI / 2; r.position.set(x, .1 + j * .08, z); S_(r); }
-  const g = new T.Group(); g.position.set(x, .5, z); g.userData.dyn = 1; town.add(g);
-  if (k === 'kitty') { g.add(lsph(.3, '#ff9a3c', 0, .15, 0, 1.4, .85, .9), lsph(.22, '#ff9a3c', .42, .38, 0), mesh(CONE, '#ff9a3c', .42, .62, .12, .07, .14, .07), mesh(CONE, '#ff9a3c', .42, .62, -.12, .07, .14, .07), lsph(.04, '#2a2a2a', .6, .42, .08), lsph(.04, '#2a2a2a', .6, .42, -.08), lsph(.035, '#ff7aa8', .63, .36, 0));
-    const tl = lcyl('#ff9a3c', -.42, .2, 0, .05, .4); tl.rotation.z = .6; g.add(tl); }
-  else { g.add(lsph(.3, '#4f9ae0', 0, .15, 0, 1.5, .8, .75), lsph(.04, '#2a2a2a', .36, .25, .14), lsph(.04, '#2a2a2a', .36, .25, -.14)); const tl = mesh(CONE, '#ffd23f', -.5, .15, 0, .22, .3, .08); tl.rotation.z = Math.PI / 2; g.add(tl); const fn = mesh(CONE, '#ffd23f', -.05, .45, 0, .15, .2, .05); g.add(fn); }
-  g.add(lcyl('#e8453a', .22, .3, 0, .025, .32), box('#e8453a', .22, .6, 0, .04, .04, .34));
-  OBST.push([x, z, .45]); SPRINGS.push({ i, g, x, z });
-  hitBox(g, 1.1, 1, .8, 0, -.5, 0, { kind: 'play', act: 'spring' + i, x, z: z - 1.0 });
-});
 flagLine([-47.8, 1.45, 5.6], [-43.7, 1.45, 5.6], .25, 9); flagLine([-40.3, 1.45, 5.6], [-36.2, 1.45, 5.6], .25, 9);
-flagLine([-39, 3.6, 12.4], [-47.8, 1.45, 17], .5, 14); flagLine([-39, 3.6, 12.4], [-36.2, 1.45, 17], .4, 8);
 [[-47, 16.2], [-37, 16.2]].forEach(([x, z]) => planeTree(x, z, .8));
 
 /* ---------- bus stops ---------- */
