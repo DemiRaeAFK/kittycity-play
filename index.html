@@ -464,21 +464,23 @@ h1 small{display:block;font-size:.32em;color:var(--lav);text-shadow:none;letter-
   function NetRoom(name) {
     const hostId = PRE + String(name).replace(/[^A-Za-z0-9_-]/g, '_');
     const me = rid();
-    let mine = {}, peer = null, host = null, conns = new Map(), roster = new Map(), handlers = [], gone = false, lastHeard = 0, sendT = 0, timer = null;
+    let mine = {}, peer = null, host = null, conns = new Map(), roster = new Map(), handlers = [], gone = false, lastHeard = 0, sendT = 0, timer = null, bcastT = 0, hostRid = '';
     const deliver = () => {
       const peers = [{ peer: me, by: null, isMe: true, sameTab: true, kind: 'viewer', guest: false, presence: mine, updatedAt: Date.now() }];
       for (const [k, v] of roster) if (k !== me) peers.push({ peer: k, by: null, isMe: false, sameTab: false, kind: 'viewer', guest: false, presence: v.p, updatedAt: v.t });
       for (const h of handlers) try { h.fn({ peers }); } catch (e) { console.error(e); }
     };
-    const rosterMsg = () => ({ t: 'r', peers: [[me, mine]].concat([...roster].filter(([k]) => k !== me).map(([k, v]) => [k, v.p])) });
+    const rosterMsg = () => ({ t: 'r', h: me, peers: [[me, mine]].concat([...roster].filter(([k]) => k !== me).map(([k, v]) => [k, v.p])) });
     const broadcast = () => { const m = rosterMsg(); for (const c of conns.values()) if (c.open) try { c.send(m); } catch (e) {} };
+    // the host sends the list after every kitty's message, but at most about twelve times a second: with four kitties that is a third of the messages, and each iPad has far less to unpack
+    const broadcastSoon = () => { if (!bcastT) bcastT = setTimeout(() => { bcastT = 0; if (host === 'me') broadcast(); }, 80); };
     const push = () => { if (host === 'me') broadcast(); else if (host && host.open) try { host.send({ t: 'p', id: me, p: mine }); } catch (e) {} };
     function becomeHost() {
-      host = 'me'; roster = new Map(roster); conns = new Map();
+      host = 'me'; roster = new Map([...roster].filter(([k]) => k !== hostRid).map(([k, v]) => [k, { p: v.p, t: Date.now() }])); conns = new Map(); // kitties we already saw stay (they join the new host in a moment); the old host is gone
       peer.on('connection', c => {
         c.on('data', m => {
           if (!m || typeof m !== 'object') return;
-          if (m.t === 'p' && typeof m.id === 'string') { const fresh = !roster.has(m.id); c._id = m.id; conns.set(m.id, c); roster.set(m.id, { p: m.p || {}, t: Date.now() }); deliver(); if (fresh) broadcast(); else broadcast(); }
+          if (m.t === 'p' && typeof m.id === 'string') { c._id = m.id; conns.set(m.id, c); roster.set(m.id, { p: m.p || {}, t: Date.now() }); deliver(); broadcastSoon(); }
         });
         c.on('close', () => { if (c._id && conns.get(c._id) === c) { conns.delete(c._id); roster.delete(c._id); deliver(); broadcast(); } });
       });
@@ -497,7 +499,7 @@ h1 small{display:block;font-size:.32em;color:var(--lav);text-shadow:none;letter-
         c.on('open', () => { host = c; lastHeard = Date.now(); push(); });
         c.on('data', m => {
           if (!m || m.t !== 'r' || !Array.isArray(m.peers)) return;
-          lastHeard = Date.now(); roster = new Map(m.peers.filter(x => Array.isArray(x) && typeof x[0] === 'string').map(([k, p]) => [k, { p: p || {}, t: Date.now() }])); deliver();
+          lastHeard = Date.now(); hostRid = typeof m.h === 'string' ? m.h : hostRid; roster = new Map(m.peers.filter(x => Array.isArray(x) && typeof x[0] === 'string').map(([k, p]) => [k, { p: p || {}, t: Date.now() }])); deliver();
         });
         c.on('close', () => { if (host === c) retry(); });
       });
@@ -517,13 +519,21 @@ h1 small{display:block;font-size:.32em;color:var(--lav);text-shadow:none;letter-
     function retry() {
       if (gone || retry.busy) return; retry.busy = true; host = null;
       try { peer && peer.destroy(); } catch (e) {}
-      roster = new Map(); deliver();
+      // a hiccup in the connection must not make every kitty in town vanish and come back: only the old host (probably gone) leaves the list now, the others stay until the next list or a few seconds pass
+      if (hostRid && roster.delete(hostRid)) deliver();
       setTimeout(() => { retry.busy = false; claim(); }, 400 + Math.random() * 1600);
     }
     timer = setInterval(() => {
       if (gone) return;
-      if (host === 'me') { broadcast(); rejoin(); }
-      else if (host && host.open) { push(); if (Date.now() - lastHeard > 7000) retry(); }
+      const now = Date.now();
+      if (host === 'me') {
+        // an iPad that went to sleep may not close its connection for a long while: a kitty silent for 7 seconds is not in town any more
+        let cut = false; for (const [k, v] of roster) if (now - v.t > 7000) { roster.delete(k); cut = true; }
+        if (cut) deliver();
+        broadcast(); rejoin();
+      }
+      else if (host && host.open) { push(); if (now - lastHeard > 7000) retry(); }
+      else if (roster.size && now - lastHeard > 9000) { roster = new Map(); deliver(); } // no host for a long while: nobody we saw can be trusted
     }, 2000);
     // back from the background: check in at once instead of waiting for the next tick
     const wake = () => { if (document.hidden || gone) return; if (host === 'me') rejoin(); else if (host && Date.now() - lastHeard > 7000) retry(); };
@@ -614,11 +624,15 @@ let headShake = 0;
 
 /* ================= sound + voice ================= */
 let ac;
+// iPad Safari can leave the sound 'interrupted' (the microphone opens, a call comes in, another app): any state but 'running' is woken on the next tap
+const acWake = () => { if (ac && ac.state !== 'running') try { ac.resume().catch(() => {}); } catch (e) {} };
+['touchend', 'pointerup', 'click'].forEach(ev => document.addEventListener(ev, acWake, true));
+document.addEventListener('visibilitychange', () => { if (!document.hidden) acWake(); });
 function tone(f, d = .12, type = 'sine', v = .14, slideTo) {
   if (!save.opts.sound) return;
   try {
     ac = ac || new (window.AudioContext || window.webkitAudioContext)();
-    if (ac.state === 'suspended') ac.resume();
+    acWake();
     const o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime;
     o.type = type; o.frequency.setValueAtTime(f, t);
     if (slideTo) { o.frequency.linearRampToValueAtTime(slideTo[0], t + d * .45); o.frequency.linearRampToValueAtTime(slideTo[1], t + d); }
@@ -1709,7 +1723,7 @@ function standPose(c, t) {
   const th = (y, k) => { for (let i = 1; i < TH.length; i++) if (y >= TH[i][0] || i === TH.length - 1) { const a = TH[i - 1], b = TH[i], t = Math.min(1, Math.max(0, (a[0] - y) / (a[0] - b[0]))); return a[k] + (b[k] - a[k]) * t; } };
   function legSleeve(B, yEnd, fn, grow) { (B.userData.legs || []).forEach((lg, i) => { if (i < 2) return; const m = surf(10, 24, (u, v) => { const y = .1 + (yEnd - .1) * u, a = v * Math.PI * 2, r = th(y, 1) + (grow == null ? .022 : grow); return [Math.cos(a) * r, y, th(y, 2) + Math.sin(a) * r * 1.05]; }, fn); lg.add(m); }); }
   const stripe = (v, n, w) => Math.abs(Math.sin(v * Math.PI * n)) < w;
-  const rep = (list, add) => { Object.entries(add).forEach(([slot, items]) => items.forEach(o => { OUT[slot] = OUT[slot] || []; o.slot = slot; OUT[slot].push(o); OUT_BY_ID[o.id] = o; })); };
+  const rep = (list, add) => { Object.entries(add).forEach(([slot, items]) => items.forEach(o => { OUT[slot] = OUT[slot] || []; o.slot = slot; const k = OUT[slot].findIndex(x => x.id === o.id); if (k >= 0) OUT[slot][k] = o; else OUT[slot].push(o); OUT_BY_ID[o.id] = o; })); };
 
   const body = [
     // --- tutu and dresses ---
@@ -2000,6 +2014,15 @@ function standPose(c, t) {
   const flatStar = (r, c, x, y, z) => { const sh = new T.Shape(); for (let k = 0; k < 10; k++) { const a = -Math.PI / 2 + k * Math.PI / 5, rr = k % 2 ? r * .45 : r; k ? sh.lineTo(Math.cos(a) * rr, Math.sin(a) * rr) : sh.moveTo(Math.cos(a) * rr, Math.sin(a) * rr); } const m = new T.Mesh(new T.ShapeGeometry(sh), lit(c)); m.position.set(x, y, z); m.rotation.x = -Math.PI / 2; return m; };
   const flatTri = (w, h, c, x, y, z) => { const sh = new T.Shape(); sh.moveTo(-w / 2, 0); sh.lineTo(w / 2, 0); sh.lineTo(0, h); const m = new T.Mesh(new T.ShapeGeometry(sh), lit(c)); m.position.set(x, y, z); m.rotation.x = -Math.PI / 2; return m; };
   const flatFlower = (r, c, c2, x, y, z) => { const g = new T.Group(); for (let k = 0; k < 7; k++) { const a = k / 7 * Math.PI * 2; const p = ball(r * .5, k % 2 ? c : c2, Math.cos(a) * r * .55, Math.sin(a) * r * .55, 0, 1, 1.6, .15); p.rotation.z = a - Math.PI / 2; g.add(p); } g.add(ball(r * .25, '#ffe066', 0, 0, .01)); g.position.set(x, y, z); g.rotation.x = -Math.PI / 2; return g; };
+  /* ---- superhero cape: a billowing dome that follows the back, covers the rump and flanks, gold hem ---- */
+  const heroCape = (B, c1, c2, trim) => { const F = SKF.cur = B.userData.fit, z0 = .2, sm = x => x * x * (3 - 2 * x);
+    add(B, surf(30, 40, (u, v) => { const z = z0 - u * (F.L + z0), t = Math.max(-1, Math.min(.98, z / F.L)), A = 1.55 + 1.1 * sm(u), a = (v - .5) * 2 * A,
+        m = (.05 + .1 * u * u) * (.6 + .4 * Math.sqrt(Math.max(0, 1 - t * t))) + .02 * Math.sin(v * Math.PI * 6) * u;
+      return [Math.sin(a) * (F.rx(t) + m), F.cy + Math.cos(a) * (F.ry(t) + m) - .05 * sm(u) * Math.abs(Math.sin(a)), z]; },
+      (u, v) => Math.abs(v - .5) > .47 ? C(trim) : u < .06 ? C(c2) : mixc(C(c1), C(c2), u * .55 + Math.abs(v - .5) * .5)));
+    add(B, ball(.1, c2, 0, F.cy - .06, -F.L + .02, 1.1, 1.3, .9));
+    add(B, tor(trim, .2, .03, 0, F.cy + F.ry(.5) * .6, .22, Math.PI / 2 - .5, 0, 0), ball(.04, trim, 0, F.cy + F.ry(.5) * .5 - .08, .3));
+  };
   /* ---- pop star: cropped yellow jacket, white top, denim shorts, red belt, silver chain, very long purple braid ---- */
   const LONGPATH = [[0, .85, .12], [0, .83, 0], [0, .82, -.12], [0, .8, -.26], [0, .75, -.4], [0, .66, -.5], [0, .52, -.58], [0, .38, -.64], [0, .24, -.68], [0, .12, -.7], [0, .05, -.72], [.03, .035, -.84], [.1, .03, -.96], [.2, .03, -1.04]];
   const POPY = '#f4c21f', POPD = '#1c1d26', DENIM = '#27324a';
@@ -2064,6 +2087,7 @@ function standPose(c, t) {
       B.add(pathTube(path, t => .04 + .15 * Math.sin(Math.min(1, t * 3) * Math.PI / 2) * (1 - t * .62) + (t < .08 ? .02 : 0), (t, a) => { const s = Math.sin(a * 5 + t * 18) * .5 + .5; const base = mixc(C('#c9558a'), C('#f98ec0'), s * .6 + .15); return t > .75 ? mixc(base, C('#b79af0'), (t - .75) * 3) : base; }, 46, 16));
       add(B, tor('#ffd84a', .06, .016, 0, .96, -.02, Math.PI / 2 - .5, 0, 0)); } },
   ];
+  rep(null, { back: [{ id: 'cape', name: 'Superhero cape', price: 40, b: (a, _) => heroCape(a.parent || _, '#e2483d', '#b3262e', '#ffd84a') }] });
   rep(null, { body: body4, neck: neck4, hair: hair4 });
   rep(null, { body: body3, hat: hat3, face: face3, back: back3 });
   rep(null, { body: body2, hat: hat2, back: back2, earring, hair });
@@ -9443,7 +9467,7 @@ function note(f, d, type, v, when, filt) {
 }
 function startBand() {
   if (bandT || !save.opts.sound) return;
-  try { ac = ac || new (window.AudioContext || window.webkitAudioContext)(); if (ac.state === 'suspended') ac.resume(); } catch (e) { return; }
+  try { ac = ac || new (window.AudioContext || window.webkitAudioContext)(); acWake(); } catch (e) { return; }
   bandGain = ac.createGain(); bandGain.gain.value = 0; bandGain.connect(ac.destination);
   const E = .17;
   bandT = setInterval(() => {
@@ -10793,10 +10817,10 @@ function pcHost() {
 }
 /* ================= voice chat: friends in the same town talk through the iPad microphone =================
    Website build only (needs PeerJS and a microphone). A grown-up turns it on in Settings (answer the grown-ups gate, then allow the
-   microphone). After that a microphone button shows next to the speech button: hold it to talk, or tap it to talk for a few
-   seconds. Only friends (people on the player's friends list, and who list them back) can talk, and only while they are
-   close: within NEAR steps in the street, or anywhere in the same shop, house or bus. A friend who is farther away is not
-   heard, and our microphone is not even sent to them. Calls are direct audio calls (PeerJS media calls on a Peer of our
+   microphone). After that a microphone button shows next to the speech button: hold it to talk (you are only heard
+   while the button is down). Only friends (people on the player's friends list, and who list them back) can talk, and they hear each other
+   wherever they are in the town (street, shop, house or bus): distance does not matter. Someone who is not a friend is not
+   called, not heard, and is not sent our microphone. Calls are direct audio calls (PeerJS media calls on a Peer of our
    own, the same free matchmaking as the town itself). Presence carries two small fields: vp (my call id) and vt (1 while my
    button is down, which draws the speaking badge on my cat). In the Claude artifact build there is no PeerJS, so this whole
    file does nothing. Hooks: it wraps onPeers, refreshSocial, drawSettings and friendMenu (each only if it exists) and adds
@@ -10804,10 +10828,10 @@ function pcHost() {
 (() => {
 if (typeof Peer !== 'function' || typeof RTCPeerConnection !== 'function' || !(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)) return;
 const OPTS = window.__NET_OPTS || {};
-const TAP_MS = 5000;        // a quick tap on the button keeps the microphone open this long (0 = hold only)
 const HOLD_MAX_MS = 45000;  // safety: a held button lets go by itself after this long
-const GONE_MS = 8000;       // a friend missing from the town this long loses their call
-const NEAR = 9, FAR = 12;   // street: a friend within NEAR steps is heard, and stays heard until they pass FAR (so the sound does not flicker)
+const GONE_MS = 20000;      // a friend missing from the town this long loses their call
+const FLAP_MS = 12000;      // a friend whose presence blinks out (the room changing host, a reconnect) keeps their call and sound this long
+const SILENT = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA'; // a clip with no sound, to start audio elements in a tap
 const VP_RE = /^kcv-[a-z0-9]{12}$/;
 { const st = document.createElement('style'); st.textContent = `
 #mic{position:absolute;left:calc(50% + 42px);bottom:calc(12px + env(safe-area-inset-bottom,0px));touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
@@ -10825,23 +10849,18 @@ const VP_RE = /^kcv-[a-z0-9]{12}$/;
 #grown .vcnote{width:100%;text-align:center;font:700 18px var(--display);color:var(--ink);line-height:1.3}
 `; document.head.append(st); }
 
-const vc = { stream: null, track: null, near: new Set(), peer: null, id: '', ready: false, busy: false, calls: new Map(), early: new Map(), gone: new Map(), fails: new Map(), next: new Map(),
-  talking: false, pressing: false, holdT: 0, latchT: 0, capT: 0, tmute: new Set(), autoTried: null, err: '' };
-window.__kcVoice = vc; // handle for tests (inRange is added below)
+const vc = { stream: null, track: null, heard: new Set(), pool: [], peer: null, id: '', ready: false, busy: false, calls: new Map(), early: new Map(), gone: new Map(), fails: new Map(), next: new Map(),
+  talking: false, pressing: false, capT: 0, tmute: new Set(), autoTried: null, autoAt: 0, err: '' };
+window.__kcVoice = vc; // handle for tests
 const pref = () => save.opts.chat === true;      // a grown-up turned voice chat on for this iPad
 const live = () => !!vc.stream && vc.ready;      // microphone open and our call id registered
 const byVp = vp => { for (const o of others.values()) if (o.vp === vp) return o; return null; };
 // a friend is anyone on the player's friends list. The list used to carry two grown-up approval flags (me, them): if a record still has them, both must be set.
 const friendOf = o => { const f = o.k && save.friends && save.friends[o.k]; return !!f && !f.sent && (('me' in f || 'them' in f) ? !!(f.me && f.them) : true); };
 const muted = o => !!save.opts.chatMuteAll || (!!o.k && (save.opts.chatMuted || []).includes(o.k)) || vc.tmute.has(o.peer);
-// same room (shop, house, bus), or in the street within NEAR steps; a friend already near stays near until FAR
-const inRange = o => {
-  if (o.loc !== me.loc) return false;
-  if (me.loc !== 'town') return true;
-  return Math.hypot(o.tx - me.x, o.tz - me.z) < (vc.near.has(o.vp) ? FAR : NEAR);
-};
-vc.inRange = inRange;
-const audible = o => !!o && vc.near.has(o.vp) && !muted(o);
+const audible = o => !!o && vc.heard.has(o.vp) && !muted(o);
+// the badge and the glow mean "you are hearing them": there is a call carrying their sound and it is playing
+const hearing = o => { if (!audible(o)) return false; const r = vc.calls.get(o.vp); return !!r && r.got && ((!!r.a && !r.a.paused) || (!!r.g && r.g.gain.value > 0 && Date.now() - (r.heardAt || 0) < 3000)); };
 const publish = () => pushPresence(true, { vp: vc.ready ? vc.id : '', vt: vc.talking ? 1 : 0 });
 
 /* ---- our own call id (a second Peer, so the town room code stays untouched) ---- */
@@ -10875,10 +10894,10 @@ function dial(vp) {
 }
 function wire(c) {
   const old = vc.calls.get(c.peer); if (old && old.c !== c) drop(old);
-  const r = { c, vp: c.peer, t0: Date.now(), got: false, a: null, sender: null, open: null };
+  const r = { c, vp: c.peer, t0: Date.now(), got: false, t1: 0, s: null, a: null, g: null, sender: null, open: null };
   vc.calls.set(c.peer, r);
-  applyProximity(); // a friend who is far away gets nothing from the very first moment
-  c.on('stream', s => { r.got = true; vc.fails.delete(r.vp); play(r, s); });
+  applyHearing(); // a call to someone who is not a friend (any more) gets nothing from the very first moment
+  c.on('stream', s => { r.got = true; r.t1 = Date.now(); vc.fails.delete(r.vp); play(r, s); });
   c.on('close', () => { if (vc.calls.get(r.vp) === r) { vc.calls.delete(r.vp); stopAudio(r); if (r.got) vc.next.set(r.vp, Date.now() + 1500); else fail(r.vp); } });
   c.on('error', () => { fail(r.vp); drop(r); });
   c.on('iceStateChanged', st => { if (st === 'failed') { fail(r.vp); drop(r); } });
@@ -10896,31 +10915,82 @@ function sync() {
     else { const t = vc.gone.get(vp) || now; vc.gone.set(vp, t); if (now - t > GONE_MS) { vc.gone.delete(vp); drop(r); } }
   }
   for (const [vp] of want) if (!vc.calls.has(vp) && vc.id < vp && now >= (vc.next.get(vp) || 0)) dial(vp);
-  applyProximity();
+  applyHearing();
 }
 
 /* ---- what we hear, and who hears us ---- */
-function play(r, s) {
-  stopAudio(r);
-  const a = r.a = document.createElement('audio'); a.autoplay = true; a.setAttribute('playsinline', ''); a.srcObject = s; a.muted = true; document.body.append(a);
-  applyProximity(); a.play().catch(() => {});
-}
-function stopAudio(r) { if (r.a) { r.a.srcObject = null; r.a.remove(); r.a = null; } }
-// Who is near is worked out ten times a second. A friend who is not near (or not in this town any more) is not played, and our
-// microphone track is taken off the call to them, so far-away friends are sent nothing at all.
-function applyProximity() {
-  const next = new Set();
-  for (const o of others.values()) if (o.vp && friendOf(o) && inRange(o)) next.add(o.vp);
-  vc.near = next;
-  for (const [vp, r] of vc.calls) {
-    const o = byVp(vp), near = next.has(vp);
-    if (r.a) r.a.muted = !audible(o);
-    if (!r.sender) try { r.sender = r.c.peerConnection.getSenders().find(x => x.track && x.track.kind === 'audio') || null; } catch (e) {}
-    if (r.sender && r.open !== near) { r.open = near; r.sender.replaceTrack(near ? vc.track : null).catch(() => { r.open = null; }); }
+// Safari plays sound only from an audio element that a finger lift (a tap) has started, and does not count the first touch of a
+// press (pointerdown). So a few elements are started in a tap on a silent clip ahead of time (a primed element may play later without
+// a tap), the calls borrow them, and anything that gets paused is started again at the next finger lift (unlock below).
+function prime() {
+  if (!pref()) return;
+  const want = Math.min(8, Math.max(3, vc.calls.size + 2));
+  while (vc.pool.length < want) {
+    const a = document.createElement('audio'); a.setAttribute('playsinline', ''); a.src = SILENT; a.__primed = true; document.body.append(a);
+    try { a.play().catch(() => { a.__primed = false; }); } catch (e) {}
+    vc.pool.push(a);
   }
 }
-// Safari only starts sound after a tap, and the game is tapped all the time
-document.addEventListener('pointerdown', () => { for (const r of vc.calls.values()) if (r.a && r.a.paused) r.a.play().catch(() => {}); }, true);
+function kick(r, force) {
+  const a = r.a, now = Date.now();
+  if (!a || !a.srcObject || !(a.paused || a.ended) || (!force && now - (r.kickAt || 0) < 1000)) return;
+  r.kickAt = now;
+  try { a.play().catch(() => {}); } catch (e) {}
+}
+function play(r, s) {
+  stopAudio(r);
+  const a = r.a = vc.pool.pop() || document.createElement('audio'); a.setAttribute('playsinline', ''); a.autoplay = true; a.muted = true; a.srcObject = s; if (!a.isConnected) document.body.append(a);
+  if (!a.__ev) { a.__ev = 1; ['playing', 'pause'].forEach(ev => a.addEventListener(ev, () => { try { applyHearing(); } catch (e) {} })); } // the backup sound below steps in or out at once
+  r.s = s; applyHearing(); kick(r, true);
+}
+function stopAudio(r) {
+  webOff(r);
+  const a = r.a; if (!a) return; r.a = null; a.srcObject = null; a.muted = false;
+  if (a.__primed && vc.pool.length < 8) vc.pool.push(a); else a.remove();
+}
+// Backup sound. If Safari keeps the speaker element paused (nothing has been tapped yet) while a friend should be heard, the same stream plays through
+// the game's own AudioContext instead (it is already running for the music), and steps out as soon as the speaker element plays. It is only built when it
+// is needed, and a muted element holds the stream (always allowed, and Chromium only feeds Web Audio then).
+function webOn(r) {
+  if (r.g || r.webBad || !r.s) return;
+  try {
+    ac = ac || new (window.AudioContext || window.webkitAudioContext)(); wakeAudio();
+    const w = r.w = document.createElement('audio'); w.muted = true; w.setAttribute('playsinline', ''); w.srcObject = r.s; document.body.append(w); w.play().catch(() => {});
+    r.g = ac.createGain(); r.g.gain.value = 0; r.src = ac.createMediaStreamSource(r.s); r.src.connect(r.g); r.g.connect(ac.destination);
+    r.an = ac.createAnalyser(); r.an.fftSize = 16384; r.src.connect(r.an); // lets tests see sound arriving
+  } catch (e) { webOff(r); r.webBad = true; }
+}
+function webOff(r) {
+  try { r.src && r.src.disconnect(); r.g && r.g.disconnect(); r.an && r.an.disconnect(); } catch (e) {}
+  r.src = r.g = r.an = null;
+  if (r.w) { r.w.srcObject = null; r.w.remove(); r.w = null; }
+}
+// how loud a friend is on the backup route right now, 0 to 1 (tests use it)
+const level = r => { if (!r.an) return 0; const d = r.buf || (r.buf = new Uint8Array(r.an.fftSize)); r.an.getByteTimeDomainData(d); let m = 0; for (const x of d) m = Math.max(m, Math.abs(x - 128)); return m / 128; };
+vc.level = vp => { const r = vc.calls.get(vp); return r ? level(r) : 0; };
+// Who is heard is worked out four times a second: every friend who is in this town, wherever they are in it. Anyone else on a
+// call (no longer a friend, or no longer in the town) is not played, and our microphone track is taken off the call to them.
+function applyHearing() {
+  const now = Date.now(), next = new Set();
+  for (const o of others.values()) if (o.vp && friendOf(o)) next.add(o.vp);
+  vc.heard = next;
+  for (const [vp, r] of vc.calls) {
+    const o = byVp(vp);
+    if (o) r.seen = now; else if (now - (r.seen || r.t0) < FLAP_MS) continue; // presence blinked out: leave the sound as it is
+    const hear = next.has(vp);
+    if (r.a) { const m = !audible(o); if (r.a.muted !== m) r.a.muted = m; if (!m) kick(r); }
+    const blocked = !!r.a && r.a.paused && r.got && audible(o); // the speaker cannot start: the backup route plays instead
+    if (blocked && !r.g && now - r.t1 > 1500) webOn(r);
+    if (r.g) { r.g.gain.value = blocked ? 1 : 0; if (level(r) > .02) r.heardAt = now; } // the badge only counts sound that really arrives
+    if (!r.sender) try { r.sender = r.c.peerConnection.getSenders().find(x => x.track && x.track.kind === 'audio') || null; } catch (e) {}
+    if (r.sender && r.open !== hear) { r.open = hear; r.sender.replaceTrack(hear ? vc.track : null).catch(() => { r.open = null; }); }
+  }
+}
+// iOS leaves the game's own AudioContext 'interrupted' (not just 'suspended') when the microphone opens
+function wakeAudio() { try { if (typeof ac !== 'undefined' && ac && (ac.state === 'suspended' || ac.state === 'interrupted')) ac.resume().catch(() => {}); } catch (e) {} }
+// A finger lift is what Safari counts as a tap: start the sound elements that are paused, get the next ones ready, wake the game's audio.
+function unlock() { try { if (!pref()) return; prime(); for (const r of vc.calls.values()) kick(r, true); wakeAudio(); } catch (e) {} }
+['pointerup', 'touchend', 'click', 'keydown'].forEach(ev => document.addEventListener(ev, unlock, true));
 
 /* ---- our microphone ---- */
 async function goLive() {
@@ -10932,7 +11002,8 @@ async function goLive() {
     s.getAudioTracks().forEach(t => { t.enabled = false; }); // closed until the button is down
     if (!pref()) { s.getTracks().forEach(t => t.stop()); return false; }
     vc.stream = s; vc.track = s.getAudioTracks()[0] || null; vc.err = '';
-    s.getAudioTracks().forEach(t => t.addEventListener('ended', () => { if (vc.stream === s) sleep(); })); // another app took the microphone
+    s.getAudioTracks().forEach(t => t.addEventListener('ended', () => { if (vc.stream === s) { sleep(); vc.autoTried = null; } })); // another app took the microphone (or the app was in the background): try to get it back at once
+    wakeAudio();
     startPeer(); refreshUi();
     return true;
   } catch (e) { vc.err = (e && e.name) || 'error'; return false; }
@@ -10943,7 +11014,7 @@ function sleep() {
   setTalking(false); const had = vc.ready;
   stopPeer();
   if (vc.stream) { vc.stream.getTracks().forEach(t => t.stop()); vc.stream = null; vc.track = null; }
-  vc.near = new Set();
+  vc.heard = new Set();
   if (had) publish(); else pushPresence(false, { vp: '', vt: 0 });
   refreshUi();
 }
@@ -10965,15 +11036,17 @@ mic.addEventListener('contextmenu', e => e.preventDefault());
 mic.addEventListener('pointerdown', e => {
   e.preventDefault(); e.stopPropagation();
   try { mic.setPointerCapture(e.pointerId); } catch (x) {}
-  if (!vc.stream) { if (pref()) goLive(); return; } // first press after a restart asks the iPad for the microphone again
-  vc.pressing = true; vc.holdT = performance.now(); clearTimeout(vc.latchT); setTalking(true);
+  vc.pressing = true;
+  if (!vc.stream) { if (pref()) reopen(); return; } // first press after the microphone was lost: it reopens (the iPad may ask) and then talks
+  setTalking(true);
 });
 const letGo = () => {
-  if (!vc.pressing) return; vc.pressing = false;
-  if (performance.now() - vc.holdT < 300 && TAP_MS > 0) { clearTimeout(vc.latchT); vc.latchT = setTimeout(() => setTalking(false), TAP_MS); } else setTalking(false);
+  if (!vc.pressing) return; vc.pressing = false; setTalking(false);
+  if (!vc.stream && pref() && !vc.busy) reopen(); // the microphone is still not back: ask again now that the finger is up (a tap); the next press talks
 };
+function reopen() { goLive().then(ok => { if (ok && vc.pressing) setTalking(true); }); }
 ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(ev => mic.addEventListener(ev, letGo));
-document.addEventListener('visibilitychange', () => { if (document.hidden) { vc.pressing = false; clearTimeout(vc.latchT); setTalking(false); } });
+document.addEventListener('visibilitychange', () => { if (document.hidden) { vc.pressing = false; setTalking(false); } else { vc.autoTried = null; wakeAudio(); } });
 
 /* ---- speaking badge over the talking cat, and in the friend chips ---- */
 function badge(o, on) {
@@ -10983,18 +11056,18 @@ function badge(o, on) {
 }
 function marks() {
   badge(meObj, vc.talking);
-  for (const o of others.values()) badge(o, !!o.vt && live() && audible(o));
+  for (const o of others.values()) badge(o, !!o.vt && live() && hearing(o));
 }
 function chips() {
   const cs = document.querySelectorAll('#friends .fchip'), list = [...others.values()];
   cs.forEach((c, i) => {
     const o = list[i], mu = !!o && live() && friendOf(o) && muted(o);
-    c.classList.toggle('vtalk', !!o && live() && !!o.vt && audible(o)); c.classList.toggle('vmute', mu);
+    c.classList.toggle('vtalk', !!o && live() && !!o.vt && hearing(o)); c.classList.toggle('vmute', mu);
     const mi = c.querySelector('.vmi'); if (mu && !mi) c.append(h('span', 'vmi', artSvg('🔇'))); else if (!mu && mi) mi.remove();
   });
 }
 // the button only shows while a friend is in the town (nobody else could hear it)
-function refreshUi() { mic.hidden = !(pref() && troom && [...others.values()].some(friendOf)); marks(); chips(); }
+function refreshUi() { mic.hidden = !(pref() && troom && (vc.talking || [...others.values()].some(friendOf))); marks(); chips(); }
 
 /* ---- grown-up gate (parentGate in c1.js), then the microphone is allowed ---- */
 function askGrownup() {
@@ -11004,7 +11077,7 @@ function askGrownup() {
 }
 function consent(problem) {
   const p = $('#grown'); p.textContent = ''; p.append(h('div', 'ttl', '🎤 Talk with friends'));
-  const t = h('div', 'vcnote'); t.textContent = problem || 'Only friends can hear this kitty, and only when they are close by in the game. They hear while the microphone button is held. Nothing is recorded or saved. The iPad will ask to use the microphone: tap Allow.'; p.append(t);
+  const t = h('div', 'vcnote'); t.textContent = problem || 'Only friends can hear this kitty, wherever they are in the town. They hear while the microphone button is held. Nothing is recorded or saved. The iPad will ask to use the microphone: tap Allow.'; p.append(t);
   const ok = btn('', '✅ Turn on');
   ok.onclick = async () => {
     save.opts.chat = true; persist();
@@ -11016,18 +11089,18 @@ function consent(problem) {
 }
 
 /* ---- hooks into the game (each one only if that function still exists, so a reworked friends screen cannot break the page) ---- */
-const toggleMuteKey = k => { const l = save.opts.chatMuted || (save.opts.chatMuted = []), i = l.indexOf(k); if (i >= 0) l.splice(i, 1); else l.push(k); save.opts.chatMuted = l.slice(-30); persist(); applyProximity(); marks(); chips(); };
+const toggleMuteKey = k => { const l = save.opts.chatMuted || (save.opts.chatMuted = []), i = l.indexOf(k); if (i >= 0) l.splice(i, 1); else l.push(k); save.opts.chatMuted = l.slice(-30); persist(); applyHearing(); marks(); chips(); };
 const toggleMute = o => {
   if (o.k) return toggleMuteKey(o.k);
   if (vc.tmute.has(o.peer)) vc.tmute.delete(o.peer); else vc.tmute.add(o.peer);
-  applyProximity(); marks(); chips();
+  applyHearing(); marks(); chips();
 };
-window.kcVoice = { on: pref, muted, toggleMute, talking: o => !!o.vt && live() && audible(o) };
+window.kcVoice = { on: pref, muted, toggleMute, talking: o => !!o.vt && live() && hearing(o) };
 if (typeof onPeers === 'function') { const _onPeers = onPeers;
   onPeers = function (ch) {
     _onPeers.apply(this, arguments);
     for (const p of ch.peers) { const o = others.get(p.peer); if (!o || p.sameTab) continue; const pr = p.presence || {}; o.vp = typeof pr.vp === 'string' && VP_RE.test(pr.vp) ? pr.vp : ''; o.vt = pr.vt === 1; }
-    sync(); applyProximity(); marks(); chips();
+    sync(); applyHearing(); marks(); chips();
   }; }
 if (typeof refreshSocial === 'function') { const _refresh = refreshSocial; refreshSocial = function () { _refresh.apply(this, arguments); try { chips(); } catch (e) {} }; }
 if (typeof drawSettings === 'function') { const _settings = drawSettings;
@@ -11039,7 +11112,7 @@ if (typeof drawSettings === 'function') { const _settings = drawSettings;
     add(talk);
     if (pref()) {
       const mu = btn('', '🔇 Mute friends'); mu.setAttribute('aria-pressed', String(!!save.opts.chatMuteAll));
-      mu.onclick = () => { save.opts.chatMuteAll = !save.opts.chatMuteAll; persist(); sfx.tap(); applyProximity(); marks(); chips(); drawSettings(); };
+      mu.onclick = () => { save.opts.chatMuteAll = !save.opts.chatMuteAll; persist(); sfx.tap(); applyHearing(); marks(); chips(); drawSettings(); };
       add(mu);
     }
   }; }
@@ -11063,13 +11136,13 @@ if (typeof drawFriendActs === 'function') { const _acts = drawFriendActs;
   }; }
 
 /* ---- upkeep ---- */
-setInterval(() => { try { applyProximity(); marks(); } catch (e) {} }, 250); // walking closer or away changes who is heard
+setInterval(() => { try { applyHearing(); for (const r of vc.calls.values()) if (r.got) kick(r); marks(); } catch (e) {} }, 250); // a friend arriving, leaving or being unfriended changes who is heard; a paused speaker is started again
 setInterval(() => {
   if (!troom) { if (vc.stream) sleep(); } // left the town: microphone off
   else if (pref() && !vc.stream && !vc.busy && vc.autoTried !== troom) {
     // back in a town with voice chat on: reopen the microphone by itself only if the iPad already allows it, otherwise the first press asks
     vc.autoTried = troom;
-    try { navigator.permissions.query({ name: 'microphone' }).then(st => { if (st.state === 'granted' && pref() && troom) goLive(); }, () => {}); } catch (e) {}
+    try { navigator.permissions.query({ name: 'microphone' }).then(st => { if (st.state === 'granted' && pref() && troom) goLive().then(ok => { if (!ok) setTimeout(() => { if (vc.autoTried === troom) vc.autoTried = null; }, 5000); }); }, () => {}); } catch (e) {}
   }
   if (live()) sync();
   refreshUi();
@@ -22255,7 +22328,7 @@ function fiGo(id, src, tgt, dt, t) { let S = fiStreams.get(id); if (!S) fiStream
 
 // a little white noise "shhhh" for the hose (only while someone near you sprays) and a whoosh for a window going out
 let fiNoiseBuf = null, fiSprayNode = null;
-function fiAudio() { try { ac = ac || new (window.AudioContext || window.webkitAudioContext)(); if (ac.state === 'suspended') ac.resume(); if (!fiNoiseBuf) { fiNoiseBuf = ac.createBuffer(1, ac.sampleRate * 1.5, ac.sampleRate); const d = fiNoiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; } return ac; } catch (e) { return null; } }
+function fiAudio() { try { ac = ac || new (window.AudioContext || window.webkitAudioContext)(); acWake(); if (!fiNoiseBuf) { fiNoiseBuf = ac.createBuffer(1, ac.sampleRate * 1.5, ac.sampleRate); const d = fiNoiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; } return ac; } catch (e) { return null; } }
 function fiWhoosh(vol = .3, dur = .5) { if (!fiSound() || !fiAudio()) return; const s = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain(), t = ac.currentTime; s.buffer = fiNoiseBuf; f.type = 'bandpass'; f.frequency.setValueAtTime(900, t); f.frequency.exponentialRampToValueAtTime(3200, t + dur); g.gain.setValueAtTime(vol * .4, t); g.gain.exponentialRampToValueAtTime(.001, t + dur); s.connect(f).connect(g).connect(ac.destination); s.start(t); s.stop(t + dur); }
 function fiSprayHiss(on) {
   if (!fiSound() || !fiAudio()) on = false;
