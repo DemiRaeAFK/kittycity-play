@@ -12289,6 +12289,7 @@ cat.items.forEach(f => {
       wallet.textContent = '🪙 ' + save.coins; pv.style.visibility = sel ? '' : 'hidden'; buy.hidden = have.hidden = !sel; if (!sel) return;
       const g = buildFurn(sel.id); const holder = new T.Group(); holder.add(g); setPreview(holder, 3, 5.5, .6);
       have.textContent = '🏠 ' + (save.furn[sel.id] || 0);
+      if (furnForever(sel.id)) have.hidden = true;
       buy.disabled = sel.price > save.coins; buy.textContent = sel.price > save.coins ? '🪙 ' + sel.price + ' (need more coins)' : 'Buy for 🪙 ' + sel.price;
     }
     buy.onclick = () => {
@@ -27479,6 +27480,8 @@ $('#house-cam').onclick = () => { save.opts.hclose = save.opts.hclose ? 0 : 1; p
 $('#go-home').onclick = () => { sfx.tap(); if (mode === 'bus') return; enterHouse(myPeer); };
 $('#deco').onclick = () => { deco = !deco; held = null; decoPick = null; ghost.clear(); $('#tray').hidden = !deco; $('#hud-bot').hidden = deco; if (deco) { drawTray(); speak('Pick something, then tap the floor or the yard.'); } sfx.tap(); };
 function available(id) { return (save.furn[id] || 0) - save.house.filter(it => it.i === id).length; }
+// the wall mirror and the mirror chest come free and never run out (kept at 9), so the tray and the shop show no number for them
+function furnForever(id) { return id === 'wallmirror' || id === 'mirrorchest'; }
 function drawTray() {
   const t = $('#tray'); t.textContent = '';
   if (held != null) {
@@ -27489,7 +27492,7 @@ function drawTray() {
   }
   FURN.forEach(f => {
     const n = available(f.id); if ((save.furn[f.id] || 0) <= 0) return;
-    const b = btn('titem', furnIcon(f) + `<b>${n}</b>`, f.id); b.disabled = n <= 0; b.setAttribute('aria-pressed', String(decoPick === f.id));
+    const b = btn('titem', furnIcon(f) + (furnForever(f.id) ? '' : `<b>${n}</b>`), f.id); b.disabled = n <= 0; b.setAttribute('aria-pressed', String(decoPick === f.id));
     b.onclick = () => { decoPick = f.id; held = null; sfx.tap(); drawTray(); }; t.append(b);
   });
   if (!Object.values(save.furn).some(v => v > 0)) t.append(h('span', 'pill', '🛋️ ➡️ Home Store'));
