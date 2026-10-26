@@ -28471,20 +28471,7 @@ function petStep(dt, t) {
     };
     const seen = { B: [], L: [], R: [], F: [] };
     items.forEach(it => { if (it.i !== 'roomwindow') return; wallPiece(it, WIN, seen); const [w, ax] = WALL_OF[(it.r | 0) & 3]; seen[w].push([ax === 'x' ? it.x : it.z, .9, 'win']); });
-    items.forEach(it => {
-      const f = FURN_BY_ID[it.i]; if (!f || f.door || it.i === 'roomwindow') return;
-      if (Math.abs(it.x) > 5.1 || Math.abs(it.z) > 5.1) return;   // a garden piece out in the yard (the pool) is not in the room: the keep-clear rules must not nudge it
-      if (f.wall) wallPiece(it, f, seen);
-      else {
-        const odd = (it.r | 0) & 1, hx = ((f.fp && f.fp[odd ? 1 : 0]) || .5), hz = ((f.fp && f.fp[odd ? 0 : 1]) || .5);
-        const keep = (typeof KC_ROOM_KEEP !== 'undefined' && KC_ROOM_KEEP[room]) || [];
-        const hit = (x, z) => keep.some(([x0, x1, z0, z1]) => x + hx > x0 && x - hx < x1 && z + hz > z0 && z - hz < z1) || ['L', 'R'].some(w => S[w].some(sp => sp[2] === 'door' && Math.abs(z - sp[0]) < hz + (sp[3] || .9) && (w === 'L' ? x - hx < -3.2 : x + hx > 3.2))) || S.B.some(sp => sp[2] === 'door' && Math.abs(x - sp[0]) < hx + sp[1] && z - hz < -3.4);
-        if (hit(it.x, it.z)) {
-          let done = false;
-          for (let k = 1; k <= 14 && !done; k++) for (const sg of [1, -1]) { const z = it.z + sg * k * .5, x = it.x + sg * k * .5; if (Math.abs(z) <= 4.5 && !hit(it.x, z)) { it.z = z; done = ch = true; break; } if (Math.abs(x) <= 4.5 && !hit(x, it.z)) { it.x = x; done = ch = true; break; } }
-        }
-      }
-    });
+    // only the windows are kept clear of each other and of the doors. Nothing else is ever moved for the player (v36.4, Demi: she arranged her castle kitchen and it came back in disarray): a counter beside a door used to be pushed half a room away and the push was saved
     return ch;
   };
 
