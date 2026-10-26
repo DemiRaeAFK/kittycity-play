@@ -526,7 +526,7 @@ h1 small{display:block;font-size:.32em;color:var(--lav);text-shadow:none;letter-
     let mine = {}, peer = null, host = null, conns = new Map(), roster = new Map(), handlers = [], gone = false, lastHeard = 0, sendT = 0, timer = null, bcastT = 0, hostRid = '';
     // the attempt number lets late calls from an attempt that was dropped be ignored; fails counts attempts in a row that never reached a host (or became one)
     let gen = 0, fails = 0, everUp = false, retryT = null, deadT = null, lastState = 'connecting'; const stateFns = [];
-    const CONNECT_MS = 12000;   // an attempt with no host (or no hosting of its own) by then is dropped and tried again
+    const CONNECT_MS = 60000;   // an attempt with no host (or no hosting of its own) by then is dropped and tried again. It was 12 s in v36.3, and a slow iPad (the town takes seconds to draw) kept dropping attempts that were about to work, so friends never met; 60 s is a real dead end
     const state = () => gone ? 'closed' : host ? 'connected' : fails >= 3 ? 'offline' : everUp ? 'reconnecting' : 'connecting';
     const note = () => { const s = state(); if (s === lastState) return; lastState = s; for (const f of stateFns) try { f(s); } catch (e) { console.error(e); } };
     const up = () => { clearTimeout(deadT); fails = 0; everUp = true; note(); };
