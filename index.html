@@ -38546,7 +38546,7 @@ const KC_ROOMS = [
   { id: 'living', name: 'Living room', e: '🛋️', tab: 'Living room' },
   { id: 'kitchen', name: 'Kitchen', e: '🍳', tab: 'Kitchen' },
   { id: 'bedroom', name: 'Bedroom', e: '🛏️', tab: 'Bedroom' },
-  { id: 'hallway', name: 'Upstairs hall', e: '🏠', tab: 'Decor' },
+  { id: 'hallway', name: 'Hallway', e: '🏠', tab: 'Decor' },
   { id: 'bathroom', name: 'Bathroom', e: '🛁', tab: 'Bathroom' },
   { id: 'playroom', name: 'Playroom', e: '🧸', tab: 'Play' },
   { id: 'partyroom', name: 'Party room', e: '🎈', tab: 'Decor' },
@@ -38614,6 +38614,7 @@ const KC_STARTER_ROOMS = {
   ],
 };
 let kcRoom = 'living';
+let kcHeld = 'living';   // which of MY rooms save.house holds right now. kcRoom is the room on screen, and a visit shows a friend's room there while save.house keeps my own list (v36.5.1: toJSON and resetLiving used kcRoom, so visiting a friend from my kitchen wrote the kitchen into the living room)
 function kcRoomOf() { return kcRoom; }
 function kcPartyTick(t) { }                             // replaced by the install block below (called every frame inside a house)
 function kcGoRoom(id, quick) { return id; }            // replaced by the install block below (kept here so the game can call it any time)
@@ -38907,12 +38908,18 @@ function kcRoomName(id) { return (KC_ROOMS.find(r => r.id === id) || KC_ROOMS[0]
 
   /* ----- going between rooms ----- */
   if (!save.rooms || typeof save.rooms !== 'object') save.rooms = {};
+  // v36.5.1: a house hurt by the old visit bug has a living room that is the very same list as another room (the visit saved that room's list as the living room). The living list kept in save.rooms.living
+  // was written when she last walked out of the living room, so it is her living room as she left it: put it back. Nothing is lost, the other room keeps its own list.
+  try {
+    const rl = save.rooms.living, hj = Array.isArray(save.house) && save.house.length ? JSON.stringify(save.house) : '';
+    if (hj && Array.isArray(rl) && rl.length && hj !== JSON.stringify(rl) && Object.keys(save.rooms).some(k => k !== 'living' && JSON.stringify(save.rooms[k]) === hj)) { save.house = rl.map(it => Object.assign({}, it)); persist(); }
+  } catch (e) {}
   Object.defineProperty(save, 'toJSON', { enumerable: false, configurable: true, writable: true, value() {
-    const o = Object.assign({}, this); if (kcRoom !== 'living' && this.rooms && !visitingHouse()) { o.house = this.rooms.living || []; o.rooms = Object.assign({}, this.rooms, { [kcRoom]: this.house }); } return o;
+    const o = Object.assign({}, this); if (kcHeld !== 'living' && this.rooms) { o.house = this.rooms.living || []; o.rooms = Object.assign({}, this.rooms, { [kcHeld]: this.house }); } return o;
   } });
   // every room except the one in presence's h, for a visitor to walk through (see pushPresence)
   window.kcPackRooms = () => { const o = {}; KC_ROOMS.forEach(r => { if (r.id === 'backyard' || r.id === kcRoom) return; const a = roomItems(r.id); if (a && a.length) o[r.id] = a.slice(0, 52).map(it => [FURN_BY_ID[it.i] ? FURN_BY_ID[it.i].i : 0, Math.round(it.x * 2), Math.round(it.z * 2), it.r | 0]); }); return o; };
-  const roomItems = id => id === 'living' ? (kcRoom === 'living' ? save.house : save.rooms.living) : (kcRoom === id ? save.house : save.rooms[id]);
+  const roomItems = id => id === 'living' ? (kcHeld === 'living' ? save.house : save.rooms.living) : (kcHeld === id ? save.house : save.rooms[id]);
   available = function (id) { if (furnForever(id)) return 99; let used = 0; KC_ROOMS.forEach(r => { const a = roomItems(r.id); if (a && r.id !== 'backyard') used += a.filter(it => it.i === id).length; }); return (save.furn[id] || 0) - used; };
   // houses that already have the old, spread-out bathroom: each starter piece that is still near where it was first put moves to its new place (once; a piece that was moved by hand stays where it is)
   const OLD_BATH = { toilet: [-4.1, -4.2], washbasin: [-2.4, -4.4], bathmirror: [-2.4, -4.85], towelrack: [-.5, -4.85], bathtub: [3, -4.2], bathmat: [3, -2.8], hamper: [-4.3, -2.4], medcab: [.9, -4.85] };
@@ -38939,7 +38946,7 @@ function kcRoomName(id) { return (KC_ROOMS.find(r => r.id === id) || KC_ROOMS[0]
   window.kcFixCounts = kcFixCounts;
   // put the player's own house list back to the living room without drawing anything (used when entering or leaving the house)
   // a visitor's room is the friend's: nothing of mine is in it, so only the name goes back
-  function resetLiving() { if (kcRoom === 'living') return; if (visitingHouse()) { kcRoom = 'living'; return; } save.rooms[kcRoom] = save.house; save.house = save.rooms.living || []; kcRoom = 'living'; }
+  function resetLiving() { if (kcHeld !== 'living') { save.rooms[kcHeld] = save.house; save.house = save.rooms.living || []; kcHeld = 'living'; } kcRoom = 'living'; }
   window.kcResetLiving = resetLiving;   // restore() in c2.js calls it first: Leave town can happen in a side room, and toJSON would then write the backup's living room into that room
   window.kcRedrawDoors = () => { if (!lastHS) return; doorG.clear(); dressTrim(lastHS, kcRoom); (KC_ROOM_DOORS[kcRoom] || []).forEach(d => addDoor(d, HOUSE_STYLES[lastHS[0]])); };
   function showRoom(hs) {
@@ -38970,7 +38977,7 @@ function kcRoomName(id) { return (KC_ROOMS.find(r => r.id === id) || KC_ROOMS[0]
     if (visitingHouse()) return kcVisitGo(id, quick);
     const from = kcRoom, go = () => {
       if (!save.rooms.living && from === 'living') save.rooms.living = save.house;
-      save.rooms[kcRoom] = save.house; kcRoom = id;
+      save.rooms[kcHeld] = save.house; kcRoom = kcHeld = id;
       if (id === 'living') save.house = save.rooms.living; else { if (!save.rooms[id]) save.rooms[id] = starterRoom(id); save.house = save.rooms[id]; }
       if (id === 'bathroom') kcTidyBath(save.house);
       held = null; ghost.clear(); applyHouseInterior(save.hs); renderHouse(save.house);
@@ -38985,12 +38992,26 @@ function kcRoomName(id) { return (KC_ROOMS.find(r => r.id === id) || KC_ROOMS[0]
   // the room's shell and doors follow every redraw of the interior (style change, entering the house)
   const origInterior4 = applyHouseInterior;
   applyHouseInterior = function (hs) { kcSyncDoors(hs); origInterior4(hs); showRoom(hs); dressYard(hs); dressPatio(hs); };
+  // v36.5.1 (Demi: "if i walk to a door, my kitty needs to walk to it before entering"): a tap on a door sends the kitty to the mat in front of it, and the door opens when she is there
+  function kcDoorWalk(to) {
+    if (deco) return;
+    const d = (KC_ROOM_DOORS[kcRoom] || []).find(q => q.to === to); if (!d) return kcGoRoom(to);
+    const side = d.wall === 'L' ? -1 : 1, x = d.stairs ? 4.2 : side * (HS - 1.25), z = d.stairs ? (d.down ? d.z - 1.2 : -.7) : d.z, q = houseConstrain(x, z);
+    standUp(); me.tx = q[0]; me.tz = q[1]; me.go = { kind: 'door', to, x: q[0], z: q[1] };
+  }
+  const walkTick = kcPartyTick;
+  kcPartyTick = function (t) {
+    walkTick(t); const g = me.go;
+    if (!g || g.kind !== 'door') return;
+    if (joyVec) { me.go = null; return; }   // the stick takes over
+    if (Math.hypot(me.x - g.x, me.z - g.z) < .4) { me.go = null; kcGoRoom(g.to); }
+  };
   // tapping a door (walking mode only)
   const origTap = houseTap;
   houseTap = function () {
     if (!deco && doorG.children.length && me.houseOwner) {   // a visitor walks through the friend's doors (kcVisitGo), never into the visitor's own rooms
       const hs = ray.intersectObjects(doorG.children, true);
-      if (hs.length) { let o = hs[0].object; while (o && !o.userData.to) o = o.parent; if (o) return kcGoRoom(o.userData.to); }
+      if (hs.length) { let o = hs[0].object; while (o && !o.userData.to) o = o.parent; if (o) return kcDoorWalk(o.userData.to); }
     }
     return origTap();
   };
@@ -39005,7 +39026,7 @@ function kcRoomName(id) { return (KC_ROOMS.find(r => r.id === id) || KC_ROOMS[0]
     row2.append(b);
   };
   const origEnter = enterHouse;
-  enterHouse = function (owner) { if (owner === myPeer) resetLiving(); return origEnter(owner); };
+  enterHouse = function (owner) { resetLiving(); return origEnter(owner); };   // every house opens in its living room; a visit from my kitchen must not leave the kitchen's list in save.house for the living room
   const origLeave = leaveHouse;
   leaveHouse = function () { resetLiving(); return origLeave(); };
 })();
@@ -47228,7 +47249,7 @@ function peopleIcon(list) {
   const key = [two, faceKey(save.look), two ? faceKey(lk(other)) : ''].join('|');
   if (key === ppKey && ic.querySelector('svg g')) return;
   const head = (l, x, y, s) => { let h = ''; try { h = kcrCatHead(l).svg; } catch (e) { return ''; } return '<g transform="translate(' + x + ' ' + y + ') scale(' + s + ')">' + h + '</g>'; };
-  const inner = two ? head(save.look, -6, 17, .66) + head(lk(other), 40, 17, .66) : head(save.look, 2.5, 3, .95);   // the picture box is only 1.2 em wide, the faces may spill out of it
+  const inner = two ? head(save.look, -4, 18, .6) + head(lk(other), 46, 18, .6) : head(save.look, 2.5, 3, .95);   // the picture box is only 1.2 em wide, the faces may spill out of it
   if (!inner) return;
   ppKey = key; ic.innerHTML = '<svg viewBox="0 0 100 100" width="100" height="100" stroke-linejoin="round" stroke-linecap="round">' + inner + '</svg><i>👥</i>';
 }
@@ -48361,7 +48382,8 @@ const JBC = { x: 3.95, z: -4.38, ry: 0, sc: 1.3, ring: { x: 3.95, z: -3.0 } };
    - nothing to sync: every kitty in a house hears the tune of that house on their own device, so no presence key is needed
    Changes nothing in the game files: renderHouse and KCG.hushMusic are wrapped, nothing else. */
 (function installHouseMusic() {
-  const GAIN = .38, H = { h: null, id: '', pos: 0, rec: null, held: false };
+  const GAIN = .13,   // v36.5.1 (Demi: "the music in the house is way too loud"): was .38
+     H = { h: null, id: '', pos: 0, rec: null, held: false };
   const origHush = (window.KCG && KCG.hushMusic) || (() => false);
   const inHouse = () => mode === 'house';
 
@@ -53356,6 +53378,7 @@ function arrive(go) {
   else if (go.kind === 'filler') { me.ry = go.shop.out + Math.PI; say(meLab(), '🔒', true); speak('This shop is closed.'); }
   else if (go.kind === 'res') { me.ry = go.shop.out + Math.PI; say(meLab(), go.shop.name === 'Town Hall' ? '🏛️' : '🏡', true); 0; }
   else if (go.kind === 'house') enterHouse(go.owner);
+  else if (go.kind === 'door') kcGoRoom(go.to);
   else if (go.kind === 'bench') { const b = go.bench; me.sit = b; satAt = nowT; me.x = me.tx = b.seat.x; me.z = me.tz = b.seat.z; me.ry = b.rot; if (b.stop) speak(busCycle ? 'The bus is on its way!' : 'Sit and wait. The bus is coming!'); }
   else if (go.kind === 'play') { standUp(); me.act = { kind: go.act, t0: nowT }; sfx.good(); }
   else if (go.kind === 'plot') { me.ry = -Math.PI / 2; openPlot(go.i); }
