@@ -542,7 +542,15 @@ h1 small{display:block;font-size:.32em;color:var(--lav);text-shadow:none;letter-
    out; if the host leaves, the others race to take over. Same calls the game already uses: presence, onPeers, join, leave. */
 (function () {
   if (window.claude && window.claude.use) return;
-  const OPTS = window.__NET_OPTS || {};
+  const OPTS = window.__NET_OPTS = window.__NET_OPTS || {};   // voice.js reads the same object, so a call and the town use the same relays
+  // Two iPads on different Wi-Fi routers often cannot reach each other directly and need a relay (TURN). PeerJS's own list has one relay on the UDP port 3478 only, which many routers block, and a
+  // relay that is busy drops the link: the friend was thrown out of the town again and again (Demi, 27 Oct). So the list is spelled out, with the same free relays as before plus a second free
+  // relay that also answers on the web ports 80 and 443, over TCP and with TLS, which get through nearly every router. Only the encrypted traffic passes a relay. Tests with a local server skip this.
+  if (!OPTS.config && OPTS.host !== 'localhost') OPTS.config = { sdpSemantics: 'unified-plan', iceServers: [
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: ['turn:eu-0.turn.peerjs.com:3478', 'turn:us-0.turn.peerjs.com:3478'], username: 'peerjs', credential: 'peerjsp' },
+    { urls: ['turn:openrelay.metered.ca:80', 'turn:openrelay.metered.ca:443', 'turn:openrelay.metered.ca:443?transport=tcp', 'turns:openrelay.metered.ca:443?transport=tcp'], username: 'openrelayproject', credential: 'openrelayproject' },
+  ] };
   let PRE = 'kittycity-v1-';
   const rid = () => Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 6);
   function NetRoom(name) {
@@ -551,7 +559,8 @@ h1 small{display:block;font-size:.32em;color:var(--lav);text-shadow:none;letter-
     let mine = {}, peer = null, host = null, conns = new Map(), roster = new Map(), handlers = [], gone = false, lastHeard = 0, sendT = 0, timer = null, bcastT = 0, hostRid = '';
     // the attempt number lets late calls from an attempt that was dropped be ignored; fails counts attempts in a row that never reached a host (or became one)
     let gen = 0, fails = 0, everUp = false, retryT = null, deadT = null, lastState = 'connecting'; const stateFns = [];
-    const CONNECT_MS = 60000;   // an attempt with no host (or no hosting of its own) by then is dropped and tried again. It was 12 s in v36.3, and a slow iPad (the town takes seconds to draw) kept dropping attempts that were about to work, so friends never met; 60 s is a real dead end
+    const SILENT_MS = 15000;   // silence before a kitty (or the host) is given up on. It was 7 s; a friend on another router goes through a busy relay and a slow iPad can go quiet for longer than that
+  const CONNECT_MS = 60000;   // an attempt with no host (or no hosting of its own) by then is dropped and tried again. It was 12 s in v36.3, and a slow iPad (the town takes seconds to draw) kept dropping attempts that were about to work, so friends never met; 60 s is a real dead end
     const state = () => gone ? 'closed' : host ? 'connected' : fails >= 3 ? 'offline' : everUp ? 'reconnecting' : 'connecting';
     const note = () => { const s = state(); if (s === lastState) return; lastState = s; for (const f of stateFns) try { f(s); } catch (e) { console.error(e); } };
     const up = () => { clearTimeout(deadT); fails = 0; everUp = true; note(); };
@@ -622,16 +631,16 @@ h1 small{display:block;font-size:.32em;color:var(--lav);text-shadow:none;letter-
       if (gone) return;
       const now = Date.now();
       if (host === 'me') {
-        // an iPad that went to sleep may not close its connection for a long while: a kitty silent for 7 seconds is not in town any more
-        let cut = false; for (const [k, v] of roster) if (now - v.t > 7000) { roster.delete(k); cut = true; }
+        // an iPad that went to sleep may not close its connection for a long while: a kitty silent for 15 seconds is not in town any more
+        let cut = false; for (const [k, v] of roster) if (now - v.t > SILENT_MS) { roster.delete(k); cut = true; }
         if (cut) deliver();
         broadcast(); rejoin();
       }
-      else if (host && host.open) { push(); if (now - lastHeard > 7000) retry(); }
+      else if (host && host.open) { push(); if (now - lastHeard > SILENT_MS) retry(); }
       else if (roster.size && now - lastHeard > 9000) { roster = new Map(); deliver(); } // no host for a long while: nobody we saw can be trusted
     }, 2000);
     // back from the background: check in at once instead of waiting for the next tick
-    const wake = () => { if (document.hidden || gone) return; if (host === 'me') rejoin(); else if (host && Date.now() - lastHeard > 7000) retry(); };
+    const wake = () => { if (document.hidden || gone) return; if (host === 'me') rejoin(); else if (host && Date.now() - lastHeard > SILENT_MS) retry(); };
     document.addEventListener('visibilitychange', wake);
     if (OPTS.host === 'localhost') (window.__nets = window.__nets || []).push({ get peer() { return peer; }, get host() { return host; }, name });
     claim();
@@ -8633,11 +8642,13 @@ const RK = (() => {
     [-1, 1].forEach(s => g.add(box(ch, s * .42, by - .06, -.02, .035, .07, .04)));
     for (let i = 0; i < 5; i++) { const x = -.4 + i * .2; g.add(fzLathe(ch, [[.001, 0], [.035, 0], [.04, .02], [.025, .035], [.001, .035]], x, by + .0, .045, 12).rotateX(Math.PI / 2), mesh(SPH, RK.lacquer('#fff3d0'), x, by + .025, .08, .05, .05, .05)); gp.userData = {}; }
   });
+  // realism-plants.js later replaces RK.leaf with the plant leaf, so the gilt leaves are made here (this threw "g.add is not a function" and no room with the Provincial mirror could be drawn)
+  const gleaf = (m, x, y, z, ang, L, W) => { const o = mesh(SPH, m, x, y, z, W / 2, L / 2, .008); o.rotation.z = ang; return o; };
   upMirror('fpmirror', (g, art) => {
     const cy = 1.75, gold = RK.gold(), gp = RK.frame(g, { shape: 'oval', w: .92, h: 1.22, prof: 'gilt', fw: .095, dep: .08, art, bevel: .03, hang: 'none', noWeave: true, cy });
     RK.crest(g, 0, cy + .61, .0, 1.1);
     // a laurel of little gilt leaves climbing both sides, with berries
-    for (let k = 0; k < 9; k++) [-1, 1].forEach(s => { const t = -1.45 + k * .2, a = .56 + .04, b = .74 + .04, x = Math.sin(-t) * s * 0 + s * Math.cos(t) * (.46 + .05), y = Math.sin(t) * (.61 + .05); const tan = Math.atan2(Math.cos(t) * (.61 + .05), -Math.sin(t) * (.46 + .05) * s) ; g.add(RK.leaf(gold, x, cy + y, .06, tan * 1 - Math.PI / 2 + (s > 0 ? 0 : 0) + (k % 2 ? .6 : -.6) * s, .13, .055)); if (k % 3 === 1) g.add(mesh(SPH, RK.glaze('#e9588a'), x + s * .02, cy + y, .07, .02, .02, .02)); });
+    for (let k = 0; k < 9; k++) [-1, 1].forEach(s => { const t = -1.45 + k * .2, a = .56 + .04, b = .74 + .04, x = Math.sin(-t) * s * 0 + s * Math.cos(t) * (.46 + .05), y = Math.sin(t) * (.61 + .05); const tan = Math.atan2(Math.cos(t) * (.61 + .05), -Math.sin(t) * (.46 + .05) * s) ; g.add(gleaf(gold, x, cy + y, .06, tan * 1 - Math.PI / 2 + (s > 0 ? 0 : 0) + (k % 2 ? .6 : -.6) * s, .13, .055)); if (k % 3 === 1) g.add(mesh(SPH, RK.glaze('#e9588a'), x + s * .02, cy + y, .07, .02, .02, .02)); });
     g.add(mesh(SPH, gold, 0, cy - .66, .06, .06, .05, .04), mesh(SPH, RK.glaze('#e9588a'), 0, cy + .67, .09, .028, .028, .02));
   });
   // ---------- the sets' own pictures ----------
@@ -21852,7 +21863,7 @@ const viewLoc = () => me.loc === 'bus' || me.loc === 'car' ? 'town' : me.loc;
 let room = null, troom = null, townCode = '', myPeer = 'me';
 const others = new Map();
 let lastSent = 0, lastKey = '', extraP = {};
-const houseCompact = () => save.house.slice(0, 52).map(it => [FURN_BY_ID[it.i] ? FURN_BY_ID[it.i].i : 0, Math.round(it.x * 2), Math.round(it.z * 2), it.r | 0]);
+const houseCompact = () => save.house.slice(0, 100).map(it => [FURN_BY_ID[it.i] ? FURN_BY_ID[it.i].i : 0, Math.round(it.x * 2), Math.round(it.z * 2), it.r | 0]);
 // lash and shape came later: -1 means "never picked", which keeps the original kitten lashes
 const lookArr = l => [l.fur, l.eye, l.hat, l.neck, l.face, l.back, l.pat | 0, l.ear | 0, l.tail | 0, l.body || '', l.lash == null ? -1 : l.lash | 0, l.shape | 0, l.hair || '', l.earring || ''];
 function pushPresence(force, extra) {
@@ -21866,6 +21877,7 @@ function pushPresence(force, extra) {
   if (!force && !extra && (now - lastSent < 100 || key === lastKey)) return;
   lastSent = now; lastKey = key;
   const p = Object.assign({ n: save.name, k: save.kid, a: lookArr(lookNow()), x, z, r, w: walking, l: me.loc, s: me.sit || me.swing ? 1 : 0, bu: me.bus, se: me.seat, mi: mission && mission.joined ? [mission.seed, mission.t0, mission.type] : null, h: houseCompact(), hs: save.hs, pe: save.pet || '', hr: (() => { try { const r = kcRoomOf(); return r !== 'living' ? r : undefined; } catch (e) { return undefined; } })(), hn: (() => { try { return visitingHouse() ? 'living' : kcRoomOf(); } catch (e) { return 'living'; } })(), mt: me.truck ? 1 : 0, rf: mode === 'roof' ? 1 : 0, lf: deed && deed.follow && mode === 'town' ? [Math.round(deed.follow.x * 10) / 10, Math.round(deed.follow.z * 10) / 10, lookArr(deed.look)] : null }, extraP);
+  if (p.h.length > 20 && JSON.stringify(p).length > 3900) { p.h = p.h.slice(); while (p.h.length > 20 && JSON.stringify(p).length > 3900) p.h.length = Math.max(20, p.h.length - 6); }   // a big garden: the newest pieces (the yard's) are the first to stay home
   if (visN && !visitingHouse() && window.kcPackRooms) { const hq = kcPackRooms(); p.hq = hq; for (const id of Object.keys(hq).reverse()) { if (JSON.stringify(p).length <= 3900) break; delete hq[id]; } if (!Object.keys(hq).length) delete p.hq; }   // a visitor can walk through all of my rooms: the rooms I am not in travel too, only while someone is in my house, and they leave first when presence gets near 4 KiB
   troom.presence(p).catch(() => {});
 }
@@ -21880,7 +21892,7 @@ const visitingHouse = () => mode === 'house' && !!me.houseOwner && me.houseOwner
 const hostRoomItems = (o, id) => id === (o.hn || 'living') ? (o.house || []) : ((o.rooms && o.rooms[id]) || []);
 function parseHouse(hh) {
   if (!Array.isArray(hh)) return [];
-  return hh.slice(0, 52).filter(Array.isArray).map(([i, x, z, r]) => ({ i: (FURN[i | 0] || FURN[0]).id, x: clamp((x | 0) / 2, -7, 7), z: clamp((z | 0) / 2, -16.4, 4.5), r: (r | 0) % 4 }));
+  return hh.slice(0, 100).filter(Array.isArray).map(([i, x, z, r]) => ({ i: (FURN[i | 0] || FURN[0]).id, x: clamp((x | 0) / 2, -16.5, 16.5), z: clamp((z | 0) / 2, -29.5, 4.5), r: (r | 0) % 4 }));
 }
 const numArr = (a, n) => Array.isArray(a) && a.length === n && a.every(v => typeof v === 'number' && isFinite(v)) ? a : null;
 function onPeers(ch) {
@@ -23355,7 +23367,7 @@ const GAMES = {
         b.setAttribute('aria-pressed', String(by === k));
         b.onclick = () => { if (by === k) return; by = k; list = l; cat = list[0]; sel = cat.items[0] || null; sfx.tap(); speak(n); draw(); }; how.append(b);
       });
-      list.forEach(c => { const t = btn('tool', c.e, c.name); t.style.cssText += ';flex:1 1 0;min-width:52px;max-width:78px;height:68px;padding:0;font-size:32px'; t.setAttribute('aria-pressed', String(c === cat)); t.onclick = () => { cat = c; sel = c.items[0] || null; sfx.tap(); speak(c.name); draw(); }; tabs.append(t); });
+      list.forEach(c => { const t = btn('tool', c.e, c.name); t.style.cssText += ';flex:1 1 0;min-width:44px;max-width:78px;height:68px;padding:0;font-size:32px'; t.setAttribute('aria-pressed', String(c === cat)); t.onclick = () => { cat = c; sel = c.items[0] || null; sfx.tap(); speak(c.name); draw(); }; tabs.append(t); });
       cat.items.forEach(f => {
         const b = btn('tool', furnIcon(f) + `<span class="price">🪙${f.price}</span>`, f.id); b.setAttribute('aria-pressed', String(f === sel));
         b.onclick = () => { sel = f; sfx.tap(); draw(); }; grid.append(b);
@@ -24758,12 +24770,30 @@ KCG.level = () => KCG.age() >= 6 ? 2 : 1;
     if (o.hat === 'bellhop') s += `<path d="M24 22L28 6h44l4 16Z" fill="#c9372f" ${S(3.5)}/><path d="M26 22h48" stroke="#f6c93a" stroke-width="5"/><circle cx="50" cy="14" r="4" fill="#f6c93a"/>`;
     return s;
   };
+  // the princess crown, the police cap and the fire fighter's helmet, on the 100 x 100 head grid; the front shows the badge, the back shows the same hat from behind
+  const jobHat = (o, front) => {
+    const S = KCG.S, hc = o.hc || '#ffd23f'; let s = '';
+    if (o.hat === 'crown') {
+      s += `<path d="M31 29L28 8L41 19L50 3L59 19L72 8L69 29Z" fill="${hc}" ${S(3.5)}/><path d="M31 25H69" stroke="${sh(hc, -.3)}" stroke-width="4" stroke-linecap="round"/>`;
+      s += `<circle cx="28" cy="8" r="3.4" fill="#ff6f91" ${S(2)}/><circle cx="50" cy="3.5" r="3.8" fill="#6fc8e8" ${S(2)}/><circle cx="72" cy="8" r="3.4" fill="#ff6f91" ${S(2)}/>`;
+      if (front) s += `<circle cx="50" cy="19" r="3.4" fill="#fff" ${S(2)}/>`;
+    }
+    if (o.hat === 'police') {
+      s += `<path d="M25 29L28 9Q50 1 72 9L75 29Z" fill="${hc}" ${S(3.5)}/><path d="M24 29H76V35H24Z" fill="${sh(hc, -.3)}" ${S(3)}/>`;
+      if (front) s += `<path d="M30 36H70Q74 36 74 40Q50 46 26 40Q26 36 30 36Z" fill="#2a2630" ${S(3)}/><path d="M50 11l2.6 5.2 5.8.8-4.2 4 1 5.8-5.2-2.8-5.2 2.8 1-5.8-4.2-4 5.8-.8Z" fill="#ffd23f" ${S(2.2)}/>`;
+    }
+    if (o.hat === 'fire') {
+      s += `<path d="M21 31C21 4 79 4 79 31Z" fill="${hc}" ${S(3.5)}/><path d="M44 8Q50 0 56 8V20H44Z" fill="${sh(hc, -.25)}" ${S(3)}/>`;
+      s += front ? `<path d="M16 31H84Q82 40 50 40Q18 40 16 31Z" fill="${sh(hc, -.2)}" ${S(3)}/><path d="M42 19H58V28Q58 34 50 37Q42 34 42 28Z" fill="#ffd23f" ${S(2.6)}/><path d="M46 25H54M50 22V29" stroke="#c9372f" stroke-width="2.4" stroke-linecap="round"/>` : `<path d="M16 31H84Q86 42 50 44Q14 42 16 31Z" fill="${sh(hc, -.2)}" ${S(3)}/>`;
+    }
+    return s;
+  };
   const headBack = o => {
     const fur = o.fur, S = KCG.S, dark = sh(fur, -.22);
     const ear = sx => `<path d="M${50 + sx * 31} 46 L${50 + sx * 38} 10 Q${50 + sx * 20} 12 ${50 + sx * 8} 26Z" fill="${fur}" ${S(3.5)}/>`;
     let s = ear(-1) + ear(1) + `<ellipse cx="50" cy="58" rx="38" ry="31" fill="${fur}" ${S(3.5)}/>`;
     if (o.stripes) s += `<path d="M50 30v12M40 31l2.5 10M60 31l-2.5 10" stroke="${dark}" stroke-width="3.4" stroke-linecap="round"/>`;
-    s += `<path d="M30 46Q38 38 48 38" stroke="#fff" stroke-width="4" stroke-linecap="round" fill="none" opacity=".45"/>` + hatBack(o);
+    s += `<path d="M30 46Q38 38 48 38" stroke="#fff" stroke-width="4" stroke-linecap="round" fill="none" opacity=".45"/>` + hatBack(o) + jobHat(o, false);
     return s;
   };
   // o: { fur, muz, eye, shirt, bow, hat, capc, glasses, stripes }, front true or false
@@ -24779,7 +24809,7 @@ KCG.level = () => KCG.age() >= 6 ? 2 : 1;
     if (front) s += `<path d="M-6 -17Q0 -13 6 -17" stroke="#fff" stroke-width="2" fill="none" opacity=".6" stroke-linecap="round"/>`;
     s += `<ellipse cx="-11.5" cy="-13" rx="3.6" ry="4.4" fill="${fur}" stroke="${K2}" stroke-width="2.2"/><ellipse cx="11.5" cy="-13" rx="3.6" ry="4.4" fill="${fur}" stroke="${K2}" stroke-width="2.2"/>`;
     // head: from the shared cat face (front) or the back of the head
-    s += `<g transform="translate(-17.6 -49.6) scale(.352)" class="mc-head">${front ? KCG.catParts(Object.assign({ happy: true }, o)) : headBack(o)}</g>`;
+    s += `<g transform="translate(-17.6 -49.6) scale(.352)" class="mc-head">${front ? KCG.catParts(Object.assign({ happy: true }, o)) + jobHat(o, true) : headBack(o)}</g>`;
     return s;
   };
   const kit = (o, rot) => kitty(o, rot < 2);
@@ -24796,10 +24826,15 @@ KCG.level = () => KCG.age() >= 6 ? 2 : 1;
   const BV = '-52 -92 104 104', GV = '-50 -94 100 104', VV = '-36 -34 72 52', KV = '-24 -56 48 60';
   // a kitty can be painted in her fur, her shirt and her bow (or cap)
   const kitDef = base => {
-    const acc = base.bow || (base.hat === 'cap' ? base.capc : null), parts = { fur: base.fur, shirt: base.shirt || '#ff6f91' }; if (acc) parts.acc = acc;
-    const look = c => { const o = Object.assign({}, base); if (c.fur) o.fur = c.fur; if (c.shirt) o.shirt = c.shirt; if (c.acc) { if (base.bow) o.bow = c.acc; else if (base.hat === 'cap') o.capc = c.acc; } return o; };
+    const acc = base.bow || (base.hat === 'cap' ? base.capc : null) || base.hc, parts = { fur: base.fur, shirt: base.shirt || '#ff6f91' }; if (acc) parts.acc = acc;
+    const look = c => { const o = Object.assign({}, base); if (c.fur) o.fur = c.fur; if (c.shirt) o.shirt = c.shirt; if (c.acc) { if (base.bow) o.bow = c.acc; else if (base.hat === 'cap') o.capc = c.acc; else if (base.hc) o.hc = c.acc; } return o; };
     return { parts, look };
   };
+  const JOBS = [
+    { id: 'kp', name: 'Princess kitty', o: { fur: FUR_SET[3][0], muz: FUR_SET[3][1], eye: FUR_SET[3][2], shirt: '#ff8fc0', hat: 'crown', hc: '#ffd23f' } },
+    { id: 'kc', name: 'Police kitty', o: { fur: FUR_SET[1][0], muz: FUR_SET[1][1], eye: FUR_SET[1][2], shirt: '#3f6fd8', hat: 'police', hc: '#3a4f9a' } },
+    { id: 'kf', name: 'Fire fighter kitty', o: { fur: FUR_SET[2][0], muz: FUR_SET[2][1], eye: FUR_SET[2][2], shirt: '#ffd23f', hat: 'fire', hc: '#e8483c' } },
+  ];
   const KIDS = [
     { id: 'k1', name: 'Kitty', o: { fur: FUR_SET[0][0], muz: FUR_SET[0][1], eye: FUR_SET[0][2], shirt: '#ff6f91', bow: '#ff6f91' } },
     { id: 'k2', name: 'Kitty', o: { fur: FUR_SET[1][0], muz: FUR_SET[1][1], eye: FUR_SET[1][2], shirt: '#5cb8e8', stripes: 1, glasses: 1 } },
@@ -24823,14 +24858,17 @@ KCG.level = () => KCG.age() >= 6 ? 2 : 1;
     mk('ice', 'b', 'Ice cream shop', (r, c) => iceShop(c), '-52 -100 104 112', { parts: { wall: '#ffd0e0', roof: '#ff8fb8', awn: '#ff6f9f', door: '#6fc8e8', scoop: '#ff9fc4' } }),
     mk('tree', 'g', 'Tree', (r, c) => roundTree(c), GV, { parts: { leaves: '#5cc05a', trunk: '#9a6a3c' } }),
     mk('pine', 'g', 'Pine tree', (r, c) => pineTree(c), '-34 -94 68 104', { parts: { leaves: '#37a05a', trunk: '#8a5a3c' } }),
-    mk('blos', 'g', 'Pink tree', (r, c) => blossomTree(c), GV, { parts: { leaves: '#ffb3cf', trunk: '#8a5a3c' } }),
+    // blank, the pink tree is the round tree, so it is off the shelf (old: kept for saved cities)
+    mk('blos', 'g', 'Pink tree', (r, c) => blossomTree(c), GV, { parts: { leaves: '#ffb3cf', trunk: '#8a5a3c' }, old: true }),
     mk('bush', 'g', 'Bush', (r, c) => bush(c), '-40 -36 80 48', { parts: { leaves: '#5cc05a', flowers: '#ff6f91' } }),
     mk('bed', 'g', 'Flowers', (r, c) => flowerBed(c), '-52 -50 104 70', { parts: { petals: null, rim: '#cfc6b6' } }),
     mk('fount', 'g', 'Fountain', (r, c) => fountain(c), '-52 -76 104 90', { parts: { stone: '#cfc9d8', water: '#7fd0f2' } }),
     mk('pond', 'g', 'Pond', (r, c) => pond(c), '-52 -40 104 66', { parts: { water: '#59bfe8', rim: '#a89878' } }),
     mk('lamp', 'g', 'Lamp', (r, c) => lamp(c), '-26 -102 52 112', { parts: { post: '#6f6f7c', glass: '#fff0a0' } }),
-    ...['car', 'car2', 'taxi', 'police', 'bus', 'fire', 'amb', 'mail'].map((k, i) => mk('v_' + k, 'v', ['Car', 'Car', 'Taxi', 'Police car', 'School bus', 'Fire truck', 'Ambulance', 'Mail truck'][i], (rot, c) => vehicle(k, rot & 1 ? 'v' : 'u', rot < 2 ? 1 : -1, c), VV, { parts: VPARTS[k], speed: { bus: .62, fire: .78, amb: .78, mail: .7 }[k] || .85, kind: k, len: 2 * VEH[k].L * 1.22 })),
-    ...KIDS.map(k => { const kd = kitDef(k.o); return mk(k.id, 'k', k.name, (rot, c) => kit(kd.look(c), rot), KV, { look: k.o, parts: kd.parts }); }),
+    // blank, the second car and the taxi look like the first car, so they are not on the shelf any more (old: kept only so a saved city that has one still shows it)
+    ...['car', 'car2', 'taxi', 'police', 'bus', 'fire', 'amb', 'mail'].map((k, i) => mk('v_' + k, 'v', ['Car', 'Car', 'Taxi', 'Police car', 'School bus', 'Fire truck', 'Ambulance', 'Mail truck'][i], (rot, c) => vehicle(k, rot & 1 ? 'v' : 'u', rot < 2 ? 1 : -1, c), VV, { parts: VPARTS[k], speed: { bus: .62, fire: .78, amb: .78, mail: .7 }[k] || .85, kind: k, len: 2 * VEH[k].L * 1.22, old: k === 'car2' || k === 'taxi' })),
+    ...JOBS.map(k => { const kd = kitDef(k.o); return mk(k.id, 'k', k.name, (rot, c) => kit(kd.look(c), rot), KV, { look: k.o, parts: kd.parts }); }),
+    ...KIDS.map(k => { const kd = kitDef(k.o); return mk(k.id, 'k', k.name, (rot, c) => kit(kd.look(c), rot), KV, { look: k.o, parts: kd.parts, old: true }); }),
   ];
 
   /* the same picture with every paintable part marked (data-p="roof"), so a finger on the picture tells which part it touched.
@@ -24864,25 +24902,29 @@ KCG.level = () => KCG.age() >= 6 ? 2 : 1;
    Plug in: kcg-icons.js, kcg-core.js, then minicity-art.js, then this file, after colornum.js (and after school.js when that one lands). Test handle: root.__mc. */
 (() => {
   const A = KCG.mcArt, K = KCG.ink, DEFS = A.items, DEF = A.byId, sh = KCG.shade;
-  const W = 960, H = 600, N = 13, ROADS = [0, 6, 12], HX = 44, HY = 22, OX = 508, OY = 62, SL = 14;
+  const W = 960, H = 600, N = 31, RU = [9, 21], RV = [11, 19], HX = 44, HY = 22, OX = 508, OY = 62, SL = 14;   // a 31 by 31 map; one ring street, a rectangle: streets on the columns RU and the rows RV
   const DIRS = [[1, 0], [0, 1], [-1, 0], [0, -1]];                 // rot 0 to 3: drives to the lower right, lower left, upper left, upper right
-  const roadT = (c, r) => c >= 0 && c < N && r >= 0 && r < N && (ROADS.includes(c) || ROADS.includes(r));
-  const grassT = (c, r) => c >= 0 && c < N && r >= 0 && r < N && !ROADS.includes(c) && !ROADS.includes(r);
-  const isNodeT = (c, r) => ROADS.includes(c) && ROADS.includes(r);
-  const GAP = ROADS[1] - ROADS[0], RW = .62;                           // a street every GAP tiles; a one-way street is a single lane, RW of a tile wide
-  const cntR = k => Math.ceil(k / GAP), isRd = k => ((k % GAP) + GAP) % GAP === 0;
-  const wp = u => { const k = Math.floor(u); return u - (1 - RW) * (cntR(k) + (isRd(k) ? u - k : 0)); };   // tile numbers to board tiles: street tiles are narrower
-  const unwp = w => { let lo = -60, hi = 80; for (let i = 0; i < 34; i++) { const m = (lo + hi) / 2; if (wp(m) < w) lo = m; else hi = m; } return (lo + hi) / 2; };
-  const BX = (u, v) => OX + (wp(u) - wp(v)) * HX, BY = (u, v) => OY + (wp(u) + wp(v)) * HY;     // board pixels (the board is drawn once at its own size)
-  const WN = wp(N);
-  // one-way streets, all going round the town the same way: the outer ring clockwise, the middle streets the same way as their neighbours
-  const rowRot = r => r === ROADS[ROADS.length - 1] ? 2 : 0, colRot = c => c === ROADS[0] ? 3 : 1;
+  const isRU = c => RU.includes(c), isRV = r => RV.includes(r);
+  const roadT = (c, r) => c >= 0 && c < N && r >= 0 && r < N && (isRU(c) || isRV(r));
+  const grassT = (c, r) => c >= 0 && c < N && r >= 0 && r < N && !isRU(c) && !isRV(r);
+  const isNodeT = (c, r) => isRU(c) && isRV(r);
+  const RW = .62;                                                  // a one-way street is a single lane, RW of a tile wide
+  const mkWarp = roads => {                                        // tile numbers to board tiles: street tiles are narrower
+    const w = u => { const k = Math.floor(u); return u - (1 - RW) * (roads.filter(x => x < k).length + (roads.includes(k) ? u - k : 0)); };
+    const un = x => { let lo = -20, hi = N + 20; for (let i = 0; i < 34; i++) { const m = (lo + hi) / 2; if (w(m) < x) lo = m; else hi = m; } return (lo + hi) / 2; };
+    return [w, un];
+  };
+  const [wu, unu] = mkWarp(RU), [wv, unv] = mkWarp(RV);
+  const BX = (u, v) => OX + (wu(u) - wv(v)) * HX, BY = (u, v) => OY + (wu(u) + wv(v)) * HY;     // board pixels (the board is drawn once at its own size)
+  const WN = wu(N);                                                // both axes have two streets, so the map is square on the screen
+  // one-way streets going round the ring clockwise
+  const rowRot = r => r === RV[RV.length - 1] ? 2 : 0, colRot = c => c === RU[0] ? 3 : 1;
   const cam = { z: 1, x: 0, y: 0 };                                                              // the view: stage pixels = cam + z * board pixels
-  const ZOOM = 1.5, VIEW = { l: 104, r: 800, t: 58, b: 474 }, BOX = { l: OX - WN * HX - 90, r: OX + WN * HX + 90, t: OY - 50, b: OY + WN * 2 * HY + 40 };
-  const WHOLE = { z: .8, x: 480 - .8 * OX, y: 290 - .8 * (OY + WN * HY) };                  // the whole town in the middle of the screen
-  const HOME = [508, 192];                                                                      // where the closer view starts: over the first houses
+  const ZOOM = 1.5, VIEW = { l: 104, r: 800, t: 58, b: 474 }, BOX = { l: OX - WN * HX - 40, r: OX + WN * HX + 40, t: OY - 30, b: OY + WN * 2 * HY + 30 };
+  const WHOLE = { z: .9, x: 500 - .9 * OX, y: 270 - .9 * (OY + WN * HY) };                    // the whole map, with the ring street in the middle of the screen; the ground fills every corner of it
+  const HOME = [BX(13.4, 17.6), BY(13.4, 17.6) - 30];                                                   // where the closer view starts: over the first house
   const SX = (u, v) => cam.x + cam.z * BX(u, v), SY = (u, v) => cam.y + cam.z * BY(u, v);
-  const toUV = (x, y) => { const a = ((x - cam.x) / cam.z - OX) / HX, b = ((y - cam.y) / cam.z - OY) / HY; return [unwp((a + b) / 2), unwp((b - a) / 2)]; };
+  const toUV = (x, y) => { const a = ((x - cam.x) / cam.z - OX) / HX, b = ((y - cam.y) / cam.z - OY) / HY; return [unu((a + b) / 2), unv((b - a) / 2)]; };
   const clampCam = () => {                                                                       // close up, the town may not be dragged out of the view; whole, it stays put
     if (cam.z <= 1.001) { cam.x = WHOLE.x; cam.y = WHOLE.y; return; }
     cam.x = clamp(cam.x, VIEW.r - BOX.r * cam.z, VIEW.l - BOX.l * cam.z); cam.y = clamp(cam.y, VIEW.b - BOX.b * cam.z, VIEW.t - BOX.t * cam.z);
@@ -24915,59 +24957,66 @@ KCG.level = () => KCG.age() >= 6 ? 2 : 1;
     if (grassT(c + 1, r)) link(gk(c, r), gk(c + 1, r), { need: [c + ',' + r, (c + 1) + ',' + r] });
     if (grassT(c, r + 1)) link(gk(c, r), gk(c, r + 1), { need: [c + ',' + r, c + ',' + (r + 1)] });
   }
-  const CROSS = [];                                                  // the zebra crossings: a road tile next to a crossing of roads, with a lot on each side
+  const CC = [RU[0] + 1, (RU[0] + RU[1]) >> 1, RU[1] - 1], CR = [RV[0] + 1, (RV[0] + RV[1]) >> 1, RV[1] - 1];     // zebra crossings: at both ends of a street and in the middle
+  const AC = [RU[0] + 3, RU[1] - 3], AR = [RV[0] + 2, RV[1] - 2];                                                  // and a white arrow in between
+  const crossU = (c, r) => isRV(r) && !isRU(c) && CC.includes(c), crossV = (c, r) => isRU(c) && !isRV(r) && CR.includes(r);
+  const CROSS = [];                                                  // the zebra crossings: a road tile with a lot on each side
   for (let c = 0; c < N; c++) for (let r = 0; r < N; r++) {
-    if (!roadT(c, r) || isNodeT(c, r)) continue;
-    if (ROADS.includes(r) && (ROADS.includes(c - 1) || ROADS.includes(c + 1)) && grassT(c, r - 1) && grassT(c, r + 1)) { CROSS.push({ c, r, ax: 'u' }); link(sk(c, r - 1, 's'), sk(c, r + 1, 'n'), { cross: [c + .5, r + .5] }); }
-    if (ROADS.includes(c) && (ROADS.includes(r - 1) || ROADS.includes(r + 1)) && grassT(c - 1, r) && grassT(c + 1, r)) { CROSS.push({ c, r, ax: 'v' }); link(sk(c - 1, r, 'e'), sk(c + 1, r, 'w'), { cross: [c + .5, r + .5] }); }
+    if (crossU(c, r) && grassT(c, r - 1) && grassT(c, r + 1)) { CROSS.push({ c, r, ax: 'u' }); link(sk(c, r - 1, 's'), sk(c, r + 1, 'n'), { cross: [c + .5, r + .5] }); }
+    if (crossV(c, r) && grassT(c - 1, r) && grassT(c + 1, r)) { CROSS.push({ c, r, ax: 'v' }); link(sk(c - 1, r, 'e'), sk(c + 1, r, 'w'), { cross: [c + .5, r + .5] }); }
   }
   const isCross = (c, r) => CROSS.some(x => x.c === c && x.r === r);
-  const hasNodeAt = (c, r) => ROADS.includes(c) && ROADS.includes(r);
+  const nxt = (c, r, k) => {                                         // the next crossing of streets from (c, r) in direction k, or null
+    const d = DIRS[k], a = d[0] ? (d[0] > 0 ? RU.find(x => x > c) : [...RU].reverse().find(x => x < c)) : c, b = d[1] ? (d[1] > 0 ? RV.find(x => x > r) : [...RV].reverse().find(x => x < r)) : r;
+    return a == null || b == null ? null : [a, b];
+  };
   const okRots = (c, r) => {
-    if (!isNodeT(c, r)) return ROADS.includes(r) ? [rowRot(r)] : [colRot(c)];
-    const o = [rowRot(r), colRot(c)].filter(k => hasNodeAt(c + DIRS[k][0] * GAP, r + DIRS[k][1] * GAP));      // a crossing: the ways out that lead somewhere
+    if (!isNodeT(c, r)) return isRV(r) ? [rowRot(r)] : [colRot(c)];
+    const o = [rowRot(r), colRot(c)].filter(k => nxt(c, r, k));      // a corner: the way out that leads somewhere
     return o.length ? o : [rowRot(r)];
   };
 
-  /* ---------- the ground: grass, roads, sidewalks and zebra crossings, drawn once and filling the whole screen ----------
-     The town you play in is the 13 by 13 middle. The same streets go on past it (EXT tiles on every side) under a thin white haze, so the ground never ends in the air. */
+  /* ---------- the ground: grass, the ring street, sidewalks and zebra crossings, drawn once ----------
+     The whole map is the town: grass everywhere, with one one-way ring street in a rectangle. A thin haze and a dotted line show where the map ends (past the edge of the screen). The tiles are
+     joined into a few long paths (one per color) so the browser has a handful of shapes to draw, not thousands. */
   const GP = (u, v) => [BX(u, v), BY(u, v)];
   const f1 = n => Math.round(n * 10) / 10;
   const pp = a => a.map(p => f1(p[0]) + ',' + f1(p[1])).join(' ');
-  const tq = (c, r, u0, u1, v0, v1, fill, ex = '') => `<polygon points="${pp([GP(c + u0, r + v0), GP(c + u1, r + v0), GP(c + u1, r + v1), GP(c + u0, r + v1)])}" fill="${fill}" ${ex}/>`;
+  const qd = (c, r, u0, u1, v0, v1) => 'M' + pp([GP(c + u0, r + v0), GP(c + u1, r + v0), GP(c + u1, r + v1), GP(c + u0, r + v1)]).replace(/ /g, 'L') + 'Z';
   const hash = (a, b) => ((a * 73856093) ^ (b * 19349663)) >>> 0;
-  const EXT = 7;
-  const xr = isRd;                                                               // a street every sixth tile, the same all the way out
-  const xRoad = (c, r) => xr(c) || xr(r), xGrass = (c, r) => !xRoad(c, r), xNode = (c, r) => xr(c) && xr(r);
-  const xCross = (c, r) => xRoad(c, r) && !xNode(c, r) && ((xr(r) && (xr(c - 1) || xr(c + 1)) && xGrass(c, r - 1) && xGrass(c, r + 1)) || (xr(c) && (xr(r - 1) || xr(r + 1)) && xGrass(c - 1, r) && xGrass(c + 1, r)));
+  const EXT = 3;
   const boardSvg = () => {
-    let s = '';
-    const L = GP(0, N), B = GP(N, N), R = GP(N, 0), T = GP(0, 0);
+    const P = {}, add = (k, d) => { P[k] = (P[k] || '') + d; };
+    let arrows = '';
     for (let c = -EXT; c < N + EXT; c++) for (let r = -EXT; r < N + EXT; r++) {
-      if (xGrass(c, r)) {
-        s += tq(c, r, 0, 1, 0, 1, (c + r) % 2 ? '#96dc58' : '#8ed250');
-        for (const [a, b, q] of [[0, -1, [0, 1, 0, .2]], [0, 1, [0, 1, .8, 1]], [-1, 0, [0, .2, 0, 1]], [1, 0, [.8, 1, 0, 1]]]) if (xRoad(c + a, r + b)) {
-          s += tq(c, r, q[0], q[1], q[2], q[3], '#f6f2e8');
+      if (!roadT(c, r)) {
+        add((c + r) % 2 ? 'gb' : 'ga', qd(c, r, 0, 1, 0, 1));
+        for (const [a, b, q] of [[0, -1, [0, 1, 0, .2]], [0, 1, [0, 1, .8, 1]], [-1, 0, [0, .2, 0, 1]], [1, 0, [.8, 1, 0, 1]]]) if (roadT(c + a, r + b)) {
+          add('walk', qd(c, r, q[0], q[1], q[2], q[3]));
           const e = b === -1 ? [[0, .2], [1, .2]] : b === 1 ? [[0, .8], [1, .8]] : a === -1 ? [[.2, 0], [.2, 1]] : [[.8, 0], [.8, 1]];
-          s += `<path d="M${pp([GP(c + e[0][0], r + e[0][1])])}L${pp([GP(c + e[1][0], r + e[1][1])])}" stroke="#d6cfbe" stroke-width="1.6"/>`;
+          add('edge', 'M' + pp([GP(c + e[0][0], r + e[0][1])]) + 'L' + pp([GP(c + e[1][0], r + e[1][1])]));
         }
-        const hv = hash(c, r); if (hv % 3 === 0) { const g = GP(c + .3 + (hv % 5) * .08, r + .6 + (hv % 7) * .04); s += `<path d="M${f1(g[0])} ${f1(g[1])}l-2 -5M${f1(g[0])} ${f1(g[1])}l1 -6M${f1(g[0])} ${f1(g[1])}l4 -4" stroke="#6fb23a" stroke-width="2" stroke-linecap="round" fill="none"/>`; }
+        const hv = hash(c, r); if (hv % 3 === 0) { const g = GP(c + .3 + (hv % 5) * .08, r + .6 + (hv % 7) * .04); add('tuft', `M${f1(g[0])} ${f1(g[1])}l-2 -5M${f1(g[0])} ${f1(g[1])}l1 -6M${f1(g[0])} ${f1(g[1])}l4 -4`); }
       } else {
-        s += tq(c, r, 0, 1, 0, 1, (c + r) % 2 ? '#8f909e' : '#8b8c9a');
-        if (!xNode(c, r)) {
-          // one-way: no line down the middle; a white arrow in the middle of each stretch of the streets you play on
-          if (c >= 0 && c < N && r >= 0 && r < N && !xCross(c, r) && (xr(r) ? c % GAP === GAP / 2 : r % GAP === GAP / 2)) {
-            const alongU = xr(r), fwd = (alongU ? rowRot(r) : colRot(c)) < 2;
-            const a0 = fwd ? .2 : .8, a1 = fwd ? .85 : .15, hd = fwd ? .52 : .48, P2 = (x, y) => alongU ? [GP(c + x, r + y)] : [GP(c + y, r + x)];
-            const pts = [[a0, .45], [hd, .45], [hd, .3], [a1, .5], [hd, .7], [hd, .55], [a0, .55]].map(q => P2(q[0], q[1])[0]);
-            s += `<polygon points="${pp(pts)}" fill="#fffdf4" fill-opacity=".95" stroke="#fffdf4" stroke-width="1.2" stroke-linejoin="round"/>`;
-          }
-          if (!xCross(c, r)) { const lines = xr(r) ? [[0, 1, .02, .05], [0, 1, .95, .98]] : [[.02, .05, 0, 1], [.95, .98, 0, 1]]; lines.forEach(l => { s += tq(c, r, l[0], l[1], l[2], l[3], '#a9aab8'); }); }
+        add((c + r) % 2 ? 'ra' : 'rb', qd(c, r, 0, 1, 0, 1));
+        if (isNodeT(c, r)) continue;
+        const alongU = isRV(r);       // the street runs along u on a row of the ring, along v on a column
+        const cross = alongU ? crossU(c, r) : crossV(c, r);
+        // one-way: no line down the middle; a white arrow in the middle of each long stretch
+        if (!cross && (alongU ? AC.includes(c) : AR.includes(r))) {
+          const fwd = (alongU ? rowRot(r) : colRot(c)) < 2;
+          const a0 = fwd ? .2 : .8, a1 = fwd ? .85 : .15, hd = fwd ? .52 : .48, P2 = (x, y) => alongU ? GP(c + x, r + y) : GP(c + y, r + x);
+          arrows += `<polygon points="${pp([[a0, .45], [hd, .45], [hd, .3], [a1, .5], [hd, .7], [hd, .55], [a0, .55]].map(q => P2(q[0], q[1])))}" fill="#fffdf4" fill-opacity=".95" stroke="#fffdf4" stroke-width="1.2" stroke-linejoin="round"/>`;
         }
+        if (!cross) (alongU ? [[0, 1, .02, .05], [0, 1, .95, .98]] : [[.02, .05, 0, 1], [.95, .98, 0, 1]]).forEach(l => add('curb', qd(c, r, l[0], l[1], l[2], l[3])));
+        else for (let k = 0; k < 6; k++) { const a = .1 + k * .15; add('zeb', alongU ? qd(c, r, .2, .8, a, a + .085) : qd(c, r, a, a + .085, .2, .8)); }
       }
-      if (xCross(c, r)) { const along = xr(r) ? 'u' : 'v'; for (let k = 0; k < 6; k++) { const a = .1 + k * .15; s += along === 'u' ? tq(c, r, .2, .8, a, a + .085, '#fffdf4') : tq(c, r, a, a + .085, .2, .8, '#fffdf4'); } }
     }
-    // a thin white haze over everything past the town, and a dotted line where the town ends
+    const T = GP(0, 0), R = GP(N, 0), B = GP(N, N), L = GP(0, N), pth = (k, f, ex = '') => P[k] ? `<path d="${P[k]}" fill="${f}" ${ex}/>` : '';
+    let s = `<polygon points="${pp([GP(-EXT, -EXT), GP(N + EXT, -EXT), GP(N + EXT, N + EXT), GP(-EXT, N + EXT)])}" fill="#92d654"/>` + pth('ga', '#8ed250') + pth('gb', '#96dc58') + pth('walk', '#f6f2e8')
+      + (P.edge ? `<path d="${P.edge}" stroke="#d6cfbe" stroke-width="1.6" fill="none"/>` : '') + pth('ra', '#8f909e') + pth('rb', '#8b8c9a') + pth('curb', '#a9aab8') + pth('zeb', '#fffdf4') + arrows
+      + (P.tuft ? `<path d="${P.tuft}" stroke="#6fb23a" stroke-width="2" stroke-linecap="round" fill="none"/>` : '');
+    // a thin white haze past the edge of the map, and a dotted line where it ends
     s += `<path d="M-3000 -3000H4000V4000H-3000Z M${pp([T, R, B, L])}Z" fill="#fffdf4" fill-opacity=".42" fill-rule="evenodd"/>`;
     s += `<polygon points="${pp([T, R, B, L])}" fill="none" stroke="${K}" stroke-opacity=".55" stroke-width="3.5" stroke-linejoin="round" stroke-dasharray="2 9" stroke-linecap="round"/>`;
     return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" class="kcg-abs mc-board" style="left:0;top:0;z-index:1;pointer-events:none;overflow:visible">${s}</svg>`;
@@ -25075,7 +25124,7 @@ KCG.level = () => KCG.age() >= 6 ? 2 : 1;
   };
   const thumb = (d, px) => { const k = d.id + ':t'; const m = d.vb.split(' ').map(Number), sc = Math.min(px / m[2], px / m[3]); return `<svg viewBox="${d.vb}" width="${Math.round(m[2] * sc)}" height="${Math.round(m[3] * sc)}">${d.svg(0)}</svg>`; };
   const CATS = [['b', 'Houses and shops'], ['g', 'Trees and gardens'], ['v', 'Vehicles'], ['k', 'Kitties']];
-  const TABPIC = { b: 'cot1', g: 'tree', v: 'v_car', k: 'k1' };
+  const TABPIC = { b: 'cot1', g: 'tree', v: 'v_car', k: 'kp' };
   const SAY = { b: 'Houses and shops', g: 'Trees and gardens', v: 'Cars and trucks', k: 'Kitties' };
 
   // my own kitty: her fur, eyes and a bow, as the first kitty in the tray
@@ -25095,11 +25144,12 @@ KCG.level = () => KCG.age() >= 6 ? 2 : 1;
     const boardEl = st.querySelector('.mc-board'); Object.assign(cam, WHOLE); st.style.setProperty('--z', WHOLE.z);
     const hl = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); hl.setAttribute('viewBox', `0 0 ${W} ${H}`); hl.setAttribute('width', W); hl.setAttribute('height', H); hl.setAttribute('class', 'kcg-abs mc-hl'); hl.style.cssText = 'left:0;top:0;z-index:5;pointer-events:none'; st.append(hl);
     meDef();
-    const kitList = () => [DEF.me].concat(DEFS.filter(d => d.cat === 'k'));
-    const listOf = c => c === 'k' ? kitList() : DEFS.filter(d => d.cat === c);
+    const kitList = () => [DEF.me].concat(DEFS.filter(d => d.cat === 'k' && !d.old));       // my own kitty, then princess, police and fire fighter (the older kitties only stay for saved cities)
+    const listOf = c => c === 'k' ? kitList() : DEFS.filter(d => d.cat === c && !d.old);
 
     /* ----- state ----- */
     let mode = 'build', cat = 'b', hand = null, sel = null, uid = 0, placed = 0, went = false, ended = false;
+    let occVer = 0;                                                  // changes whenever a piece is added, moved or put away
     const items = [], occ = new Map(), vocc = new Map();        // occ: lot tile -> item, vocc: road tile -> vehicle
     let sim = null, saveT = 0;
 
@@ -25140,7 +25190,7 @@ KCG.level = () => KCG.age() >= 6 ? 2 : 1;
       if (d.cat === 'v') { const dr = DIRS[it.rot], o = lane(dr); return [it.c + .5 + o[0], it.r + .5 + o[1]]; }
       return d.cat === 'b' ? [it.c + 1, it.r + 1] : [it.c + .5, it.r + .5];
     };
-    const zOf = (u, v) => 20 + Math.round((u + v) * 14);
+    const zOf = (u, v) => 20 + Math.round((u + v) * 4.5);     // pieces stay below the buttons (z 310 and up), also at the far corner of the big map
     const put = (el, u, v) => { const k = el._k || 1; el.style.transform = `translate(${f1(SX(u, v) - SPR.ax * k * cam.z)}px,${f1(SY(u, v) - SPR.ay * k * cam.z)}px)`; el.style.zIndex = zOf(u, v); };
     const setLook = it => { const e = it.el; e.querySelector('.mc-bob').innerHTML = svgFor(it.d, it.rot, it.col); e.querySelector('.mc-fl').classList.toggle('f', flipOf(it.d, it.rot)); };
     const mkSpr = (d, rot, extra = '') => {
@@ -25156,15 +25206,16 @@ KCG.level = () => KCG.age() >= 6 ? 2 : 1;
       st.append(it.el); const [u, v] = homeOf(it); put(it.el, u, v);
       if (d.cat === 'b' || d.cat === 'g') cellsOf(d, it.c, it.r).forEach(q => occ.set(q[0] + ',' + q[1], it)); if (d.cat === 'v') vocc.set(it.c + ',' + it.r, it);
       it.el.addEventListener('pointerdown', e => spriteDown(it, e));
-      items.push(it); if (o.pop) setTimeout(() => it.el.classList.remove('pop'), 420);
+      items.push(it); occVer++; if (o.pop) setTimeout(() => it.el.classList.remove('pop'), 420);
       return it;
     };
     const removeItem = (it, anim) => {
-      const i = items.indexOf(it); if (i < 0) return; items.splice(i, 1);
+      const i = items.indexOf(it); if (i < 0) return; items.splice(i, 1); occVer++;
       if (it.d.cat === 'b' || it.d.cat === 'g') cellsOf(it.d, it.c, it.r).forEach(q => occ.delete(q[0] + ',' + q[1])); if (it.d.cat === 'v') vocc.delete(it.c + ',' + it.r);
       if (anim) { it.el.classList.add('gone'); setTimeout(() => it.el.remove(), 260); } else it.el.remove();
     };
     const moveItem = (it, t) => {
+      occVer++;
       if (it.d.cat === 'b' || it.d.cat === 'g') { cellsOf(it.d, it.c, it.r).forEach(q => occ.delete(q[0] + ',' + q[1])); it.c = t.c; it.r = t.r; cellsOf(it.d, it.c, it.r).forEach(q => occ.set(q[0] + ',' + q[1], it)); }
       else if (it.d.cat === 'v') { vocc.delete(it.c + ',' + it.r); it.c = t.c; it.r = t.r; vocc.set(it.c + ',' + it.r, it); const ok = okRots(it.c, it.r); if (!ok.includes(it.rot)) { it.rot = ok[0]; setLook(it); } }
       else it.node = t.node;
@@ -25172,12 +25223,30 @@ KCG.level = () => KCG.age() >= 6 ? 2 : 1;
     };
     const encCol = it => { const o = {}; if (it.col) for (const k in it.col) { const n = PAL.indexOf(it.col[k]); if (n >= 0 && it.d.parts && k in it.d.parts) o[k] = n; } return Object.keys(o).length ? o : null; };
     const decCol = (d, o) => { const c = {}; if (o && typeof o === 'object') for (const k in o) if (d.parts && k in d.parts && PAL[o[k] | 0]) c[k] = PAL[o[k] | 0]; return Object.keys(c).length ? c : null; };
-    const keep = () => { clearTimeout(saveT); saveT = setTimeout(() => { try { save.mini = { v: 1, zo: nearNow() ? 0 : 1, it: items.map(i => { const r = [i.d.id, i.d.cat === 'k' ? i.node : i.c, i.d.cat === 'k' ? 0 : i.r, i.rot], c = encCol(i); if (c) r.push(c); return r; }) }; persist(); } catch (e) {} }, 300); };
-    const STARTER = [['cot1', 2, 2, 0], ['tree', 4, 1, 0], ['v_car', 3, 6, 0], ['k1', sk(4, 5, 's'), 0, 1]];
+    const keep = () => { clearTimeout(saveT); saveT = setTimeout(() => { try { save.mini = { v: 2, zo: nearNow() ? 0 : 1, it: items.map(i => { const r = [i.d.id, i.d.cat === 'k' ? i.node : i.c, i.d.cat === 'k' ? 0 : i.r, i.rot], c = encCol(i); if (c) r.push(c); return r; }) }; persist(); } catch (e) {} }, 300); };
+    const STARTER = [['cot1', 12, 15, 0], ['tree', 16, 15, 0], ['v_car', 11, 19, 0], ['me', sk(14, 18, 's'), 0, 1]];
+    const MAXP = 200, OLD_OFF = 9;     // most pieces kept; a city saved on the old 13 by 13 map (v 1) is moved to the middle of the new one
+    const spotNear = (d, c, r) => {      // the free spot closest to (c, r) for a piece that is being moved over
+      let best = null, bd = 1e9;
+      for (let cc = 0; cc < N; cc++) for (let rr = 0; rr < N; rr++) {
+        if (!(d.cat === 'v' ? (roadT(cc, rr) && !vocc.has(cc + ',' + rr)) : d.cat === 'b' ? blockFree(cc, rr) : tileFree(cc, rr))) continue;
+        const dd = Math.hypot(cc - c, rr - r); if (dd < bd) { bd = dd; best = [cc, rr]; }
+      }
+      return best;
+    };
+    const nodeNear = (u, v) => {
+      let best = null, bd = 1e9;
+      for (const k in NODE) { const n = NODE[k]; if (nodeOcc(k) || (n.g && !tileFree(n.c, n.r))) continue; const dd = Math.hypot(n.u - u, n.v - v); if (dd < bd) { bd = dd; best = k; } }
+      return best;
+    };
     const load = () => {
-      const m = typeof save !== 'undefined' && save.mini && Array.isArray(save.mini.it) ? save.mini.it : STARTER;
-      m.slice(0, 80).forEach(([id, a, b, rot, cc]) => {
+      const have = typeof save !== 'undefined' && save.mini && Array.isArray(save.mini.it), old = have && save.mini.v !== 2, m = have ? save.mini.it : STARTER;
+      m.slice(0, MAXP).forEach(([id, a, b, rot, cc]) => {
         const d = DEF[id]; if (!d) return; const o = { col: decCol(d, cc) };
+        if (old) {                         // moved over from the small map: each piece goes to the free spot nearest to where it stood
+          if (d.cat === 'k') { const q = /^([gs])(\d+),(\d+)([nsew])?$/.exec(String(a)); if (!q) return; const n = nodeNear(+q[2] + OLD_OFF + .5, +q[3] + OLD_OFF + .5); if (n) addItem(d, n, 0, rot, o); return; }
+          const s2 = spotNear(d, (a | 0) + OLD_OFF, (b | 0) + OLD_OFF); if (s2) addItem(d, s2[0], s2[1], rot, o); return;
+        }
         if (d.cat === 'k') { if (!NODE[a] || nodeOcc(a) || (NODE[a].g && !tileFree(NODE[a].c, NODE[a].r))) return; addItem(d, a, 0, rot, o); return; }
         if (d.cat === 'v') { if (!roadT(a, b) || vocc.has(a + ',' + b)) return; addItem(d, a, b, rot, o); return; }
         if (!spotFree(d, a, b)) return; addItem(d, a, b, rot, o);
@@ -25185,22 +25254,28 @@ KCG.level = () => KCG.age() >= 6 ? 2 : 1;
     };
 
     /* ----- the highlight: the spot it would go to, and the free spots while a piece is in the hand ----- */
-    const hlSet = (d, t, x, y) => {
-      let s = '';
-      if (d && mode === 'build') {
-        if (d.cat === 'k') { for (const k in NODE) { const n = NODE[k]; if (n.g && !tileFree(n.c, n.r)) continue; if (nodeOcc(k)) continue; s += `<circle cx="${f1(BX(n.u, n.v))}" cy="${f1(BY(n.u, n.v))}" r="${n.g ? 5 : 3.4}" fill="#fff" opacity=".55"/>`; } }
-        else for (let c = 0; c < N; c++) for (let r = 0; r < N; r++) {
-          if (d.cat === 'v' ? (roadT(c, r) && !vocc.has(c + ',' + r)) : d.cat === 'b' ? [[c, r], [c - 1, r], [c, r - 1], [c - 1, r - 1]].some(q => blockFree(q[0], q[1])) : tileFree(c, r)) s += `<polygon points="${pp([GP(c + .3, r + .3), GP(c + .7, r + .3), GP(c + .7, r + .7), GP(c + .3, r + .7)])}" fill="#fff" opacity=".42"/>`;
-        }
+    const G = () => document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    const hlF = G(), hlT = G(); hl.append(hlF, hlT); let hlKey = '';
+    const freeLayer = d => {                // every free spot for this kind of piece, as one shape
+      const kt = new Set(items.filter(i => i.d.cat === 'k').map(i => i.node)), tf = (c, r) => grassT(c, r) && !occ.has(c + ',' + r) && !kt.has(gk(c, r)), bf = (c, r) => tf(c, r) && tf(c + 1, r) && tf(c, r + 1) && tf(c + 1, r + 1);
+      let p = '';
+      if (d.cat === 'k') { for (const k in NODE) { const n = NODE[k]; if (n.g && !tf(n.c, n.r)) continue; if (kt.has(k)) continue; const x = f1(BX(n.u, n.v)), y = f1(BY(n.u, n.v)), q = n.g ? 5 : 3.4; p += `M${f1(x - q)} ${y}a${q} ${q} 0 1 0 ${f1(2 * q)} 0a${q} ${q} 0 1 0 ${f1(-2 * q)} 0Z`; } return `<path d="${p}" fill="#fff" opacity=".55"/>`; }
+      for (let c = 0; c < N; c++) for (let r = 0; r < N; r++) {
+        if (d.cat === 'v' ? (roadT(c, r) && !vocc.has(c + ',' + r)) : d.cat === 'b' ? (bf(c, r) || bf(c - 1, r) || bf(c, r - 1) || bf(c - 1, r - 1)) : tf(c, r)) p += qd(c, r, .36, .64, .36, .64);
       }
+      return `<path d="${p}" fill="#fff" opacity=".4"/>`;
+    };
+    const hlSet = (d, t) => {
+      if (d && mode === 'build') { const key = d.id + '|' + occVer; if (key !== hlKey) { hlKey = key; hlF.innerHTML = freeLayer(d); } } else if (hlKey) { hlKey = ''; hlF.innerHTML = ''; }
+      let s = '';
       if (t) {
         const col = t.ok ? '#fff' : '#ff6f6f';
         if (d.cat === 'k' && t.ok) { const n = NODE[t.node]; s += `<ellipse cx="${f1(BX(n.u, n.v))}" cy="${f1(BY(n.u, n.v))}" rx="15" ry="8" fill="${col}" opacity=".6" stroke="${K}" stroke-width="2.5"/>`; }
         else { const w = d.cat === 'b' ? 2 : 1; s += `<polygon points="${pp([GP(t.c, t.r), GP(t.c + w, t.r), GP(t.c + w, t.r + w), GP(t.c, t.r + w)])}" fill="${col}" fill-opacity="${t.ok ? .5 : .35}" stroke="${t.ok ? K : '#d33'}" stroke-width="3" stroke-dasharray="${t.ok ? '0' : '6 5'}" stroke-linejoin="round"/>`; }
       }
-      hl.innerHTML = s;
+      hlT.innerHTML = s;
     };
-    const unhl = () => { hl.innerHTML = ''; };
+    const unhl = () => { hlKey = ''; hlF.innerHTML = ''; hlT.innerHTML = ''; };
 
     /* ----- tray and tabs ----- */
     const ui = (cls, css, html) => { const e = h('div', 'mc-ui ' + cls, html); e.style.cssText += ';' + css; st.append(e); return e; };
@@ -25462,7 +25537,6 @@ KCG.level = () => KCG.age() >= 6 ? 2 : 1;
       const nodeId = (nc, nr) => nc + ',' + nr, nodeC = (nc, nr) => [nc + .5, nr + .5];
       const entryOf = (nc, nr, d) => { const o = lane(d); return [nc + .5 - d[0] * .5 + o[0], nr + .5 - d[1] * .5 + o[1]]; };
       const exitOf = (nc, nr, d) => { const o = lane(d); return [nc + .5 + d[0] * .5 + o[0], nr + .5 + d[1] * .5 + o[1]]; };
-      const hasNode = (nc, nr) => ROADS.includes(nc) && ROADS.includes(nr);
       const dist = (a, b) => Math.hypot(b[0] - a[0], b[1] - a[1]);
       const lineP = (a, b, extra) => Object.assign({ t: 'e', a, b, len: Math.max(.01, dist(a, b)) }, extra);
       // the piece that goes through a crossing from the way in to the way out (a curve when she turns)
@@ -25475,9 +25549,9 @@ KCG.level = () => KCG.age() >= 6 ? 2 : 1;
       };
       const exitsAt = (nc, nr) => okRots(nc, nr).map(k => DIRS[k]);     // one-way streets: from a crossing a car may only leave the way the street points
       const extend = v => {   // add the next crossing and the road after it
-        const e = v.end, opts = exitsAt(e.nc, e.nr).filter(d => hasNode(e.nc + d[0] * GAP, e.nr + d[1] * GAP));
+        const e = v.end, opts = exitsAt(e.nc, e.nr).filter(d => nxt(e.nc, e.nr, DIRS.indexOf(d)));
         const dout = opts.length ? (Math.random() < .55 && opts.includes(e.din) ? e.din : opts[rand(opts.length)]) : [-e.din[0], -e.din[1]];
-        const nc = e.nc + dout[0] * GAP, nr = e.nr + dout[1] * GAP;
+        const [nc, nr] = nxt(e.nc, e.nr, DIRS.indexOf(dout));
         v.pieces.push(nodeP(e.nc, e.nr, e.din, dout));
         v.pieces.push(lineP(exitOf(e.nc, e.nr, dout), entryOf(nc, nr, dout), { to: nodeId(nc, nr) }));
         v.end = { nc, nr, din: dout };
@@ -25488,11 +25562,11 @@ KCG.level = () => KCG.age() >= 6 ? 2 : 1;
         let nc, nr;
         if (isNodeT(c, r)) {
           if (!exitsAt(c, r).includes(d)) { rot = okRots(c, r)[0]; d = DIRS[rot]; }
-          nc = c + d[0] * GAP; nr = r + d[1] * GAP;
+          [nc, nr] = nxt(c, r, rot);
           v.pieces.push(lineP([c + .5 + lane(d)[0], r + .5 + lane(d)[1]], exitOf(c, r, d), { to: null }));
           v.pieces.push(lineP(exitOf(c, r, d), entryOf(nc, nr, d), { to: nodeId(nc, nr) }));
         } else {
-          nc = d[0] ? (d[0] > 0 ? ROADS.find(x => x > c) : [...ROADS].reverse().find(x => x < c)) : c; nr = d[1] ? (d[1] > 0 ? ROADS.find(x => x > r) : [...ROADS].reverse().find(x => x < r)) : r;
+          [nc, nr] = nxt(c, r, rot);
           const p0 = [c + .5 + lane(d)[0], r + .5 + lane(d)[1]];
           v.pieces.push(lineP(p0, entryOf(nc, nr, d), { to: nodeId(nc, nr) }));
         }
@@ -25567,7 +25641,7 @@ KCG.level = () => KCG.age() >= 6 ? 2 : 1;
     showCat('b'); load(); tabEls.b.classList.add('on');
     if (!(typeof save !== 'undefined' && save.mini && save.mini.zo)) { flyTo(ZOOM, HOME[0], HOME[1], true); paintZoom(); }
     const intro = () => { if (ended) return; goBtn.classList.add('mc-pulse'); };
-    root.__mc = { cam, ZOOM, PAL, openPaint, toggleZoom, flyTo, applyCam, paint: (it, part, i) => { it.col = Object.assign({}, it.col, { [part]: PAL[i] }); setLook(it); keep(); }, get mode() { return mode; }, get items() { return items; }, get sim() { return sim; }, get placed() { return placed; }, get ended() { return ended; }, get hand() { return hand; }, get sel() { return sel; }, start: startGo, stop: stopGo, cat: showCat, finish: finishGame, target, place: (id, c, r, rot) => { const d = DEF[id], t = d.cat === 'k' ? { node: c } : { c, r }; return place(d, Object.assign({ ok: 1 }, t)); }, select, eligible, NODE, CROSS, S, DEF, deselect, ask, askClear, removeItem, blockFree, cellsOf, SX, SY };
+    root.__mc = { cam, ZOOM, PAL, openPaint, toggleZoom, flyTo, applyCam, paint: (it, part, i) => { it.col = Object.assign({}, it.col, { [part]: PAL[i] }); setLook(it); keep(); }, get mode() { return mode; }, get items() { return items; }, get sim() { return sim; }, get placed() { return placed; }, get ended() { return ended; }, get hand() { return hand; }, get sel() { return sel; }, start: startGo, stop: stopGo, cat: showCat, finish: finishGame, target, place: (id, c, r, rot) => { const d = DEF[id], t = d.cat === 'k' ? { node: c } : { c, r }; return place(d, Object.assign({ ok: 1 }, t)); }, select, eligible, NODE, CROSS, S, DEF, deselect, ask, askClear, removeItem, blockFree, cellsOf, SX, SY, N, RU, RV, WHOLE, HOME, nxt, spotNear };
     if (typeof save === 'undefined' || !save.mini) setTimeout(intro, 600);
   };
 
@@ -32533,7 +32607,8 @@ ${T.css || ''}`; st.append(css);
    Age (Demi 2026-10-25: "difficulty set by the child selecting their age upon creating a cat"): the build thread's KCG.level() is 1 for ages 4 to 6 and 2 for
    ages 7 and 8 (KCG.age() is the age picked when the kitty was made). Level 1 is the game as approved. Level 2: about 40% quicker, 6 scoops on every cone,
    one more flavour, the golden ring only shows after 6 seconds without a catch, 5 extra coins. Nothing about the level is shown on screen and nothing can
-   be lost at any age (at least 2 stars). Without KCG.level (an older build) every kitty plays level 1.
+   be lost at any age (at least 2 stars), except that at level 2 (Demi 2026-10-27) a wrong scoop caught on a stack makes that stack wobble, more each time, and the
+   third wrong scoop on one cone tips it over and ends the game (still 2 stars); three hearts at the top left count what is left (Demi 2026-10-27). Without KCG.level (an older build) every kitty plays level 1.
    The shop's Back button (top left of the shop) is the Quit.
    Plug in: after kcg-icons.js and kcg-core.js, replaces GAMES.icecream. Pictures are drawn here (ice-* icons) and the parlor is one big drawing, no emoji. */
 (() => {
@@ -32721,11 +32796,14 @@ ${T.css || ''}`; st.append(css);
     };
     const jobs = Array.from({ length: N }, (_, i) => { const pool = flav.slice(0, 3 + EXTRA + i); return { pool, f: makeOrder(pool), cat: KCG.guest(1 + i * 2 + rand(2)), shirt: SHIRTS[(i + rand(2)) % 4] }; });
     let n = 0, job = null, tw = null, ticket = null, state = 'idle', k = 0, right = 0, wrong = 0;
-    let hold = false, intro = -1, touched = false, target = 388, cx = 388, vx = 0, ang = 0, angV = 0, jig = 0, spawnT = 0, since = 0, scoops = [], lastNeed = 0, clock = 0;
+    let strikes = 0, wob = 0, wobTo = 0, LIMIT = 3, hold = false, intro = -1, touched = false, target = 388, cx = 388, vx = 0, ang = 0, angV = 0, jig = 0, spawnT = 0, since = 0, scoops = [], lastNeed = 0, clock = 0;
     const scoopY = j => RIM - 16 - j * PITCH;
     const offs = [];
 
     /* a soft cream spot that follows the wanted scoop and keeps the busy wall quiet right behind it (above the wall, under the cone and the cat) */
+    /* level 2: three hearts at the top left count the wrong scoops this cone can still take; one pops with each, a new cone starts with three again */
+    const hearts = []; if (TOP) { const bar = h('div', 'kcg-abs'); bar.style.cssText += 'left:14px;top:8px;z-index:9;pointer-events:none;display:flex;gap:2px;padding:4px 12px 5px;background:#fffdf4;border:4px solid #5a3a28;border-radius:999px;box-shadow:0 4px 0 rgba(0,0,0,.18)'; for (let i = 0; i < 3; i++) { const e = h('div', 'icc-heart', KCG.ico('heart', 40)); e.style.cssText += 'line-height:0'; bar.append(e); hearts.push(e); } st.append(bar); }
+    const showLives = (lost = -1) => hearts.forEach((e, i) => { const on = i < 3 - strikes; e.classList.toggle('off', !on); e.style.opacity = on ? 1 : .28; e.style.filter = on ? 'none' : 'grayscale(1)'; if (i === lost) e.animate([{ transform: 'scale(1.6)' }, { transform: 'scale(.7)' }, { transform: 'scale(1)' }], { duration: 450 }); });
     const calm = h('div', 'kcg-abs icc-calm'); calm.style.cssText += 'left:0;top:0;z-index:2;pointer-events:none'; st.append(calm);
     /* the front layer: window frame, awning and sill over the customer */
     const front = h('div', 'kcg-abs', frontArt()); front.style.cssText += 'z-index:6;pointer-events:none'; st.append(front);
@@ -32757,7 +32835,7 @@ ${T.css || ''}`; st.append(css);
 
     /* ---------- one customer after another ---------- */
     const startJob = () => {
-      job = jobs[n]; ticket = makeTicket(job); const uid = ++uidc; k = 0; offs.length = 0; since = 0; spawnT = 1.2; lastNeed = clock;
+      job = jobs[n]; strikes = 0; wob = wobTo = 0; showLives(); ticket = makeTicket(job); const uid = ++uidc; k = 0; offs.length = 0; since = 0; spawnT = 1.2; lastNeed = clock;
       tw = h('div', 'kcg-abs'); tw.style.cssText += `left:0;top:0;width:0;height:0;transform-origin:0px ${HOLD}px;z-index:1`; tw.insertAdjacentHTML('beforeend', coneArt(uid)); cone.append(tw);
       st.append(ticket);
       showCat(job, false); catEl.animate([{ transform: 'translateY(150px)' }, { transform: 'none' }], { duration: 520, easing: 'ease-out' });
@@ -32766,7 +32844,8 @@ ${T.css || ''}`; st.append(css);
       state = 'enter'; sfx.tap(); ticket.next(0); if (!n) L.later(700, () => { if (!touched) intro = 0; });
       L.later(n ? 900 : 1500, () => { state = 'play'; since = 0; });
     };
-    const lean = () => Math.sin((ang + jig * Math.sin(clock * 15)) * Math.PI / 180);
+    const sway = () => wob * Math.sin(clock * 4.2);   // the slow sway of a stack that has caught wrong scoops (level 2)
+    const lean = () => Math.sin((ang + sway() + jig * Math.sin(clock * 15)) * Math.PI / 180);
     const topX = () => cx + (k ? offs[k - 1] : 0) + lean() * (HOLD - scoopY(Math.max(0, k - 1)));
     const jiggle = a => { jig = Math.min(5, jig + a); };
 
@@ -32779,10 +32858,19 @@ ${T.css || ''}`; st.append(css);
       const s = { f, x, y: -SP * .6, el, ph: Math.random() * 6, out: false, passed: false, w: false }; st.append(el); scoops.push(s); return true;
     };
     const place = s => { s.el.style.transform = `translate(${s.x - SP / 2}px,${s.y - SP * .44}px) rotate(${Math.sin(clock * 2.2 + s.ph) * 6}deg)`; };
+    const topple = () => {   // the third wrong scoop: the stack tips over and the game ends (the kitty still gets 2 stars)
+      state = 'over'; const t = tw, dir = ang + sway() >= 0 ? 1 : -1, a0 = ang + sway(); tw = null; scoops.filter(q => !q.out).forEach(poof);
+      const lay = `translate(${dir * 70}px,${COUNTER - HOLD - 26}px) rotate(${dir * 100}deg)`;
+      t.animate([{ transform: `rotate(${a0}deg)` }, { transform: `rotate(${dir * 16}deg)`, offset: .3 }, { transform: lay, offset: .85 }, { transform: lay }], { duration: 1100, easing: 'ease-in', fill: 'forwards' });
+      tone(300, .5, 'sine', .1, [520, 110]); L.later(850, () => KCG.snd.thud());
+      catEl.animate([{ transform: 'none' }, { transform: 'translateX(-6px)' }, { transform: 'translateX(6px)' }, { transform: 'translateX(-3px)' }, { transform: 'none' }], { duration: 500, delay: 700 });
+      L.later(2000, () => KCG.finish(L, done, 2, 'Oh no! The ice cream fell over!', 0));
+    };
+    const strike = () => { strikes++; showLives(3 - strikes); wobTo = [0, 3.5, 8][Math.min(strikes, 2)]; jiggle(4); if (strikes >= LIMIT) topple(); };   // level 2: more wobble each time
     const bounce = (s, dx) => {   // the wrong flavour: boing, up and away to the side and down to the counter
       s.out = true; s.el.classList.remove('icc-want'); const dir = s.x > 520 ? -1 : s.x < 260 ? 1 : (Math.sign(dx) || (Math.random() < .5 ? -1 : 1)), x0 = s.x, y0 = s.y, tf = (x, y, r, sc = 1) => `translate(${x - SP / 2}px,${y - SP * .44}px) rotate(${r}deg) scale(${sc})`;
       s.el.animate([{ transform: tf(x0, y0, 0) }, { transform: tf(x0 + dir * 70, y0 - 84, dir * 50), offset: .34, easing: 'ease-in' }, { transform: tf(x0 + dir * 150, COUNTER - 30, dir * 140), offset: .82 }, { transform: tf(x0 + dir * 160, COUNTER - 30, dir * 150, .9), opacity: 0 }], { duration: 1200, easing: 'ease-out', fill: 'forwards' }).onfinish = () => s.el.remove();
-      tone(360, .26, 'sine', .08, [560, 190]); jiggle(2.4); ticket.no(); wrong++;
+      tone(360, .26, 'sine', .08, [560, 190]); jiggle(2.4); ticket.no(); wrong++; if (TOP && k > 0) strike();
       KCG.burst(S0, x0, y0 + 10, ['sparkle'], 3, 30, 14);
     };
     const land = (s, dx) => {   // the right flavour sticks on the top of the tower
@@ -32827,12 +32915,12 @@ ${T.css || ''}`; st.append(css);
 
     /* ---------- the loop ---------- */
     L.loop((dt, t) => {
-      clock = t; const prev = cx;
+      clock = t; const prev = cx; wob += (wobTo - wob) * Math.min(1, dt * 3);
       if (key) target = clamp(cx + key * 220, X0, X1);
       if (intro >= 0) { intro += dt; target = 388 + 110 * Math.sin(intro * 4.2) * Math.min(1, (1.5 - intro) * 2); if (intro > 1.5 || touched) intro = -1; }
       cx = clamp(cx + clamp((target - cx) * 7, -MAXV, MAXV) * dt, X0, X1); vx = (cx - prev) / Math.max(dt, .001);
       angV += ((clamp(-vx * .017, -8, 8) - ang) * 90 - angV * 9) * dt; ang += angV * dt; jig *= Math.exp(-2.4 * dt);
-      cart.style.transform = `translateX(${cx}px)`; if (tw) tw.style.transform = `rotate(${ang + jig * Math.sin(t * 15)}deg)`;
+      cart.style.transform = `translateX(${cx}px)`; if (tw) tw.style.transform = `rotate(${ang + sway() + jig * Math.sin(t * 15)}deg)`;
       if (state !== 'play') { scoops.forEach(s => { if (!s.out) { s.y += VY[n] * dt; place(s); } }); scoops = scoops.filter(s => !s.out); calm.style.opacity = 0; return; }
       since += dt; spawnT -= dt; if (hold) { spawnT = 3; lastNeed = t; }
       const need = job.f[k], air = scoops.filter(s => !s.out), needAir = air.some(s => s.f === need);
@@ -32856,7 +32944,7 @@ ${T.css || ''}`; st.append(css);
     });
 
     L.later(500, startJob);
-    root.__kcgDbg = { LV, VY, BONUS, serve, set: o => { if ('right' in o) right = o.right; if ('wrong' in o) wrong = o.wrong; if ('n' in o) n = o.n; if ('since' in o) since = o.since; }, get since() { return since; }, get state() { return state; }, get k() { return k; }, get job() { return job; }, get scoops() { return scoops; }, get cx() { return cx; }, get n() { return n; }, get stats() { return { right, wrong }; }, get hold() { return hold; }, set hold(v) { hold = v; }, steer: x => { target = clamp(x, X0, X1); }, spawn, clear: () => { scoops.forEach(s => { s.out = true; s.el.remove(); }); scoops = []; }, jobs, S0, LANES };
+    root.__kcgDbg = { LV, VY, BONUS, get hearts() { return hearts.filter(e => !e.classList.contains('off')).length; }, get strikes() { return strikes; }, get wob() { return wob; }, serve, set: o => { if ('right' in o) right = o.right; if ('wrong' in o) wrong = o.wrong; if ('n' in o) n = o.n; if ('since' in o) since = o.since; if ('limit' in o) LIMIT = o.limit; }, get since() { return since; }, get state() { return state; }, get k() { return k; }, get job() { return job; }, get scoops() { return scoops; }, get cx() { return cx; }, get n() { return n; }, get stats() { return { right, wrong }; }, get hold() { return hold; }, set hold(v) { hold = v; }, steer: x => { target = clamp(x, X0, X1); }, spawn, clear: () => { scoops.forEach(s => { s.out = true; s.el.remove(); }); scoops = []; }, jobs, S0, LANES };
   };
   KCG.lab = KCG.lab || []; KCG.lab.push({ id: 'icecream', name: 'Ice cream', art: 'ice-cone', wall: '#d9f1ee', roof: '#2f7a7a' });
 })();
@@ -38572,11 +38660,11 @@ function kcSyncDoors(hs) {
   const sg = kcStage(hs), D = KC_ROOM_DOORS;
   D.living = [].concat(sg >= 2 ? [{ to: 'kitchen', wall: 'L', z: -3.9 }] : [], sg >= 3 ? [{ to: 'hallway', wall: 'R', z: -2.8, stairs: 1, fixed: 1, hw: 1.6 }] : []);
   D.kitchen = [{ to: 'living', wall: 'R', z: -2.6 }];
-  D.hallway = [{ to: 'bathroom', wall: 'L', z: -2.8 }, { to: 'playroom', wall: 'L', z: 2.4, lock: 5 }, { to: 'bedroom', wall: 'R', z: -2.8, lock: 4 }, { to: 'living', wall: 'R', z: 2.4, stairs: 1, down: 1, fixed: 1, hw: 1.0 }];
+  D.hallway = [{ to: 'bathroom', wall: 'L', z: -2.8 }, { to: 'playroom', wall: 'L', z: 2.4, lock: 5 }, { to: 'bedroom', wall: 'R', z: -2.8, lock: 4 }, { to: 'living', wall: 'R', z: 2.4, stairs: 1, down: 1, fixed: 1, hw: 1.0 }, { to: 'partyroom', wall: 'L', z: -.2, lock: 6 }];   // v36.6 (Demi): the party room (movie room) opens off the Hallway, not through the playroom
   D.bathroom = [{ to: 'hallway', wall: 'R', z: -2.6 }];
   D.bedroom = [{ to: 'hallway', wall: 'L', z: -2.6 }];
-  D.playroom = [{ to: 'hallway', wall: 'R', z: -2.6 }].concat(sg >= 6 ? [{ to: 'partyroom', wall: 'L', z: 2.4 }] : []);
-  D.partyroom = [{ to: 'playroom', wall: 'R', z: -2.6 }];
+  D.playroom = [{ to: 'hallway', wall: 'R', z: -2.6 }];
+  D.partyroom = [{ to: 'hallway', wall: 'R', z: -2.6 }];
 }
 kcSyncDoors(save.hs);
 // the floor areas the playroom's built-in playground uses: furniture placed there is moved out of the way (x0, x1, z0, z1)
@@ -39744,7 +39832,7 @@ function petStep(dt, t) {
     tg.rotation.y = -Math.PI / 2; tg.position.z = HS - .14; g.add(tg);
   }, fp: [.9, .3] };
   if (!FURN_BY_ID.roomwindow) { WIN.i = FURN.length; FURN.push(WIN); FURN_BY_ID.roomwindow = WIN; const tab = FURN_CATS.find(c => c.name === 'Decor'); if (tab) tab.items.push(WIN); }
-  const WIN_SPOT = { living: [[-4.85, 2.3, 1], [4.85, 2.3, 3]], kitchen: [[-4.85, 1.0, 1], [-4.85, -2.6, 1]], bedroom: [[-4.85, 1.4, 1], [4.85, 1.4, 3]], bathroom: [[4.85, 1.4, 3]], hallway: [[-4.85, -.2, 1], [4.85, -.2, 3]], playroom: [[-4.85, .1, 1], [4.85, .2, 3]], partyroom: [] };
+  const WIN_SPOT = { living: [[-4.85, 2.3, 1], [4.85, 2.3, 3]], kitchen: [[-4.85, 1.0, 1], [-4.85, -2.6, 1]], bedroom: [[-4.85, 1.4, 1], [4.85, 1.4, 3]], bathroom: [[4.85, 1.4, 3]], hallway: [[4.85, -.2, 3]], playroom: [[-4.85, .1, 1], [4.85, .2, 3]], partyroom: [] };
   const MAXWIN = 2;
 
   // ---- doors: one invisible, tappable marker per door (ids door_<room>, one per room name) that can slide along the LEFT or RIGHT wall only ----
@@ -39804,7 +39892,12 @@ function petStep(dt, t) {
       if (Math.abs(nv - v) > 1e-6) { it[ax] = nv; ch = true; }
     };
     const seen = { B: [], L: [], R: [], F: [] };
-    items.forEach(it => { if (it.i !== 'roomwindow') return; wallPiece(it, WIN, seen); const [w, ax] = WALL_OF[(it.r | 0) & 3]; seen[w].push([ax === 'x' ? it.x : it.z, .9, 'win']); });
+    for (let k = 0; k < items.length; k++) {
+      const it = items[k]; if (it.i !== 'roomwindow') continue; wallPiece(it, WIN, seen); const [w, ax] = WALL_OF[(it.r | 0) & 3], v = ax === 'x' ? it.x : it.z;
+      // v36.6: a window with no clear place left on its wall (the Hallway's party room door took the middle of the left wall) goes back into the box, it is never left over a door
+      if (S[w].concat(seen[w]).some(sp => Math.abs(v - sp[0]) < ((WIN.fp && WIN.fp[0]) || .6) + sp[1] + .04)) { items.splice(k--, 1); ch = true; continue; }
+      seen[w].push([v, .9, 'win']);
+    }
     // only the windows are kept clear of each other and of the doors. Nothing else is ever moved for the player (v36.4, Demi: she arranged her castle kitchen and it came back in disarray): a counter beside a door used to be pushed half a room away and the push was saved
     return ch;
   };
@@ -40678,8 +40771,10 @@ function famCar(BODY, SEAT) { // faces +z
 FC.cars = FC.park.map((P, i) => {
   const car = famCar(P.body, P.seat); car.position.set(P.x, 0, P.z); car.rotation.y = P.ry; town.add(car);
   const sh = blob(1.5); sh.scale.set(1, 1.8, 1); sh.position.y = .04; car.add(sh); car.traverse(m => m.userData.dyn = 1);
-  hitBox(car, 1.9, 1.4, 3.4, 0, 0, 0, { kind: 'fcar', i });
-  return { g: car, P, ob: OBST.push([P.x, P.z, 1.6]) - 1 };
+  // v36.6 (Demi: "remove the yellow and blue unowned cars"): the two shared cars are gone from the cul-de-sac now that every kitty can have her own from the Car Garage. The entries stay (hidden, no tap, no room taken)
+  // so car numbers 2 and up, a kitty's own car (mycar.js), keep their places in every list and in presence
+  car.visible = false;
+  return { g: car, P, ob: OBST.push([P.x, P.z, 0]) - 1 };
 });
 $('#hud-bot').insertAdjacentHTML('beforeend', '<button class="round" id="car-out" type="button" aria-label="Hop out" hidden>🚪</button>');
 $('#car-out').onclick = () => { sfx.tap(); fcOut(); };
@@ -40764,7 +40859,7 @@ const lemon = { on: false, queue: [], next: 0, pour: 0 };
   g.add(box(dk, 1.45, 0, .25, .5, .45, .4), box('#ffd84a', 1.45, .45, .25, .44, .06, .34));
   OBST.push([LEMON.x, LEMON.z, 1.3]);
   hitBox(g, 2.4, 2.6, 1.4, 0, 0, 0, { kind: 'lemon' });
-  lemon.spot = stationRing(LEMON.x, LEMON.z + 1.6, '🍋', { kind: 'lemon' }); town.add(lemon.spot.g);
+  lemon.spot = stationRing(LEMON.x, LEMON.z + .95, '🍋', { kind: 'lemon' }); town.add(lemon.spot.g);
   lemon.cup = lcyl('#ffe873', 0, 0, 0, .07, .16); lemon.cup.visible = false; town.add(lemon.cup);
 }
 // the kitties wait in a short line in front of the stand, out on the street
@@ -49455,7 +49550,7 @@ Game hooks used: houseTap, kcPartyTick (runs every frame in a house), renderHous
     curItems.forEach((it, idx) => {
       if (it.i !== 'tv') return; const g = furnGroup.children[idx]; if (!g) return;
       const cv = document.createElement('canvas'); cv.width = 128; cv.height = 72; const tx = new T.CanvasTexture(cv);
-      const m = new T.Mesh(new T.PlaneGeometry(1.2, .68), new T.MeshBasicMaterial({ map: tx })); m.position.set(0, FURN_BY_ID.tv.sy || .48, .004); m.userData.dyn = 1; m.visible = false; g.add(m);
+      const m = new T.Mesh(new T.PlaneGeometry(1.2, .68), new T.MeshBasicMaterial({ map: tx })); m.position.set(0, FURN_BY_ID.tv.sy || .48, .004); m.userData.dyn = 1; m.userData.idx = idx; m.visible = false; g.add(m);   // idx: while decorating, a tap on the screen picks the TV up
       tvOverlays.push({ m, cv, tx, it });
     });
   }
@@ -50432,12 +50527,601 @@ Footprints (for the yard) are in `fp` as half-width, half-depth. */
   } });
 
 })();
+/* ================= Home basics 1: everyday pieces for the hallway and the bathroom (Demi, 27 Oct: "need more home decor items and daily life items") =================
+   NEW furniture, added at the END of the list (saves use ids and presence uses the index, so nothing is renumbered). Goes right after detail-pass-21.js, before yard-expansion.js, so it runs after c1thumbs.js (the store tabs) and before halfprice.js (every price is halved there, so the prices below are full prices).
+   Needs realism-kit.js. Adds a Hallway tab to the Home Store (between Bathroom and Play) and puts the new pieces in it:
+   Hallway: coatrack, shoerack, umbrellastand, entrybench (a bench: the kitty sits on it), keyhooks (wall). Decor: wallshelf (wall). Bathroom: bathscale, trashcan, ironingboard, mopbucket, vacuum.
+   No text and no emoji on the pieces, no faces. The laundry basket is the existing hamper, the microwave is the existing kmicro. */
+(function homeBasics1() {
+  // adds a new piece to the end of the list and to its store tab (or, if the id is already there, only replaces its model, so the file can run twice)
+  const add = (id, price, tab, o) => {
+    const c = FURN_CATS.find(c => c.name === tab), f = FURN_BY_ID[id];
+    if (f) return Object.assign(f, { bake: 1 }, o);
+    const n = Object.assign({ id, icon: c ? c.e : '🏠', price, tab, bake: 1 }, o);
+    n.i = FURN.length; FURN.push(n); FURN_BY_ID[id] = n; if (c) c.items.push(n); return n;
+  };
+  // the Hallway tab sits next to the Bathroom tab
+  if (!FURN_CATS.some(c => c.name === 'Hallway')) FURN_CATS.push({ e: '🚪', name: 'Hallway', items: [] });
+  if (!FURN_ROOMS.includes('Hallway')) FURN_ROOMS.splice(FURN_ROOMS.indexOf('Bathroom') + 1, 0, 'Hallway');
+  // the upstairs hall room opens the Hallway tab of the store
+  { const hr = typeof KC_ROOMS !== 'undefined' && KC_ROOMS.find(r => r.id === 'hallway'); if (hr) hr.tab = 'Hallway'; }
+  // the decorating tray's kinds
+  { const kind = (n, re) => { const t = FURN_TYPES.find(t => t[1] === n); if (t) t[2] = new RegExp(t[2].source + '|' + re.source); };
+    kind('Storage', /coatrack|shoerack|umbrellastand|keyhooks/); kind('Bath', /bathscale|trashcan/); }
+  const R = RK, TAU = Math.PI * 2, PI = Math.PI;
+  const SM = new T.SphereGeometry(1, 12, 6), SM2 = new T.SphereGeometry(1, 8, 4);
+  const at = (o, x, y, z) => { o.position.set(x, y, z); return o; };
+  const ball = (g, m, x, y, z, rx, ry = rx, rz = rx) => { const o = at(new T.Mesh(SM, m.isMaterial ? m : R.matte(m)), x, y, z); o.scale.set(rx, ry, rz); g.add(o); return o; };
+  const bead = (g, m, x, y, z, r) => { const o = at(new T.Mesh(SM2, m), x, y, z); o.scale.set(r, r, r); g.add(o); return o; };
+  const rngOf = seed => () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const tex2 = (key, w, h, draw, shine = 0, spec = '#444') => (R.__m = R.__m || {})['t22' + key] || (R.__m['t22' + key] = shine ? new T.MeshPhongMaterial({ map: R.tex('t22' + key, w, h, draw), color: '#ffffff', shininess: shine, specular: spec }) : new T.MeshLambertMaterial({ map: R.tex('t22' + key, w, h, draw) }));
+  // glazed ceramic (a gray highlight, white blows out) and the metals
+  const CER = (c, spec = '#777777') => R.metal(c, 90, spec), CHR = () => R.chrome(), BRS = () => R.brass(), GLD = () => R.gold();
+  const up90 = o => { o.geometry.rotateX(-PI / 2); return o; };          // a ring or plate built flat in x y with height in z: stand it up so z becomes y
+  // wall tiles with grout lines: nx x ny tiles per picture, k pictures per metre
+  const tileMat = (key, base, grout, nx, ny, shine = 40) => tex2('tile' + key, 128, 128, (g, w, h) => {
+    g.fillStyle = grout; g.fillRect(0, 0, w, h); const tw = w / nx, th = h / ny, rr = rngOf(7);
+    for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) { const off = (j % 2 && nx > 1 && key.indexOf('brick') >= 0) ? tw / 2 : 0; g.fillStyle = R.mix(base, rr() < .5 ? '#ffffff' : '#000000', .03 + rr() * .03); g.fillRect(i * tw + 2 + off, j * th + 2, tw - 4, th - 4); g.fillStyle = 'rgba(255,255,255,.35)'; g.fillRect(i * tw + 3 + off, j * th + 3, tw - 6, 2); }
+  }, shine, '#555555');
+  // terry cloth: little loops
+  const terry = (c, k = '') => tex2('terry' + c + k, 96, 96, (g, w, h) => {
+    const rr = rngOf(c.charCodeAt(1) * 13 + c.charCodeAt(3)); g.fillStyle = c; g.fillRect(0, 0, w, h);
+    for (let i = 0; i < 700; i++) { g.strokeStyle = rr() < .5 ? R.lit(c, .22) : R.drk(c, .16); g.globalAlpha = .55; g.lineWidth = 1.1; const x = rr() * w, y = rr() * h, a = rr() * TAU; g.beginPath(); g.arc(x, y, 1.3 + rr() * 1.2, a, a + 3.6); g.stroke(); }
+    g.globalAlpha = 1;
+  });
+  // a box whose picture runs by size (k pictures per metre); y is the bottom
+  const uvBox = (m, x, y, z, w, h, d, k = 1) => {
+    const g = new T.BoxGeometry(w, h, d), p = g.attributes.position, n = g.attributes.normal, uv = g.attributes.uv;
+    for (let i = 0; i < p.count; i++) { const ax = Math.abs(n.getX(i)), ay = Math.abs(n.getY(i)); let u, v; if (ax > .5) { u = p.getZ(i); v = p.getY(i); } else if (ay > .5) { u = p.getX(i); v = p.getZ(i); } else { u = p.getX(i); v = p.getY(i); } uv.setXY(i, u * k, v * k); }
+    return at(new T.Mesh(g, m.isMaterial ? m : R.matte(m)), x, y + h / 2, z);
+  };
+  const U = (g, m, x, y, z, w, h, d, k = 2) => g.add(uvBox(m, x, y, z, w, h, d, k));
+  // a thin trim round the edge of a slab (four strips), open in the middle so a basin can show through: w by d centred at x, z, t wide
+  const trim = (g, m, x, y, z, w, h, d, t = .03) => { U(g, m, x, y, z - d / 2 + t / 2, w, h, t, 1); U(g, m, x, y, z + d / 2 - t / 2, w, h, t, 1); [-1, 1].forEach(k => U(g, m, x + k * (w / 2 - t / 2), y, z, t, h, d - 2 * t, 1)); };
+  // a tub or basin made from a rounded outline swept with a profile (see R.ring); the outline is in x z, centre at the origin
+  const shell = (g, m, prof, outl, o = {}) => { const r = up90(R.ring(prof, outl, m, o)); g.add(r); return r; };
+  const floorPlate = (g, m, outl, d, y) => { const p = up90(R.plate(outl, d, y, m)); g.add(p); return p; };
+  const GOLD = () => R.gold(), INK = () => R.matte('#2a2622'), BOWL = c => R.metal(c, 40, '#444444');
+  // a round knob on the front (+z) face, base at z
+  const knob = (g, m, x, y, z, r = .022) => g.add(fzLathe(m, [[.001, 0], [r * .45, 0], [r * .4, .008], [r * .35, .014], [r * 1.0, .03], [r * .9, .045], [r * .5, .056], [.001, .058]], x, y, z, 10).rotateX(PI / 2));
+  // a bar pull on two little posts
+  const barPull = (g, m, x, y, z, w = .1, r = .007) => { g.add(fzR(mesh(CYL, m, x, y, z + .03, r, w, r), 0, 0, PI / 2)); [-1, 1].forEach(s => g.add(fzR(mesh(CYL, m, x + s * (w / 2 - .012), y, z + .015, r * .9, .03, r * .9), PI / 2, 0, 0))); };
+  // a hinge strap on the outer edge of a door, with a pin
+  const hinge = (g, m, x, y, z) => { g.add(box(m, x, y - .035, z, .016, .07, .01)); bead(g, m, x, y, z + .004, .009); };
+  // a keyhole plate
+  const keyhole = (g, x, y, z) => { g.add(fzR(mesh(CYL, GOLD(), x, y, z, .016, .006, .016), PI / 2, 0, 0), box(INK(), x - .003, y - .014, z + .003, .006, .022, .002)); };
+  // a framed door with raised panels: x centre, y bottom, z front plane, w wide, h tall. o: f frame width, th thickness, mid height of a middle rail, bead (thin moulding round each panel)
+  const door = (g, m, pm, x, y, z, w, h, o = {}) => {
+    const f = o.f || .06, th = o.th || .03, zc = z - th / 2;
+    U(g, m, x - w / 2 + f / 2, y, zc, f, h, th); U(g, m, x + w / 2 - f / 2, y, zc, f, h, th); U(g, m, x, y, zc, w - 2 * f, f, th); U(g, m, x, y + h - f, zc, w - 2 * f, f, th);
+    const rs = o.mid ? [[f, o.mid - f / 2], [o.mid + f / 2, h - f]] : [[f, h - f]];
+    if (o.mid) U(g, m, x, y + o.mid - f / 2, zc, w - 2 * f, f, th);
+    rs.forEach(([a, b]) => {
+      U(g, pm, x, y + a - .006, z - th * .78, w - 2 * f + .012, b - a + .012, th * .4);
+      if (o.bead) { const bw = w - 2 * f - .02, bh = b - a - .02, t = .012; U(g, m, x, y + a + .01, z - th * .5 + .004, bw, t, .008, 1); U(g, m, x, y + b - .01 - t, z - th * .5 + .004, bw, t, .008, 1); U(g, m, x - bw / 2 + t / 2, y + a + .01, z - th * .5 + .004, t, bh, .008, 1); U(g, m, x + bw / 2 - t / 2, y + a + .01, z - th * .5 + .004, t, bh, .008, 1); }
+    });
+  };
+  // a drawer front with a raised panel: x centre, y bottom, z front plane
+  const drawer = (g, m, pm, x, y, z, w, h, o = {}) => {
+    const th = o.th || .03; U(g, m, x, y, z - th / 2, w, h, th); const f = o.f || .035;
+    U(g, pm, x, y + f, z - th / 2 + .004, w - 2 * f, h - 2 * f, th * .9);
+    U(g, m, x, y + f * .6, z + .0015 - th / 2 + .004, w - 2 * f - .02, .008, th * .9 + .004, 1);
+  };
+  const marble = (key, base, vein) => tex2('mb' + key, 256, 256, (g, w, h) => {
+    const rr = rngOf(base.charCodeAt(1) * 7 + 3); g.fillStyle = base; g.fillRect(0, 0, w, h);
+    for (let i = 0; i < 14; i++) { g.strokeStyle = vein; g.globalAlpha = .12 + rr() * .22; g.lineWidth = .8 + rr() * 2; g.beginPath(); let x = rr() * w, y = rr() * h; g.moveTo(x, y); for (let k = 0; k < 6; k++) { x += (rr() - .3) * 60; y += (rr() - .5) * 50; g.lineTo(x, y); } g.stroke(); }
+    g.globalAlpha = 1;
+  }, 60, '#666666');
+  
+  /* ---------- new helpers: appliance bodies, brushed steel, handles, dials ---------- */
+  // a thin frame round an upright rectangle on a front face: x centre, y bottom, z the plane, w by h, t wide, d deep
+  const vframe = (g, m, x, y, z, w, h, t = .02, d = .012) => { U(g, m, x, y, z, w, t, d, 1); U(g, m, x, y + h - t, z, w, t, d, 1); [-1, 1].forEach(k => U(g, m, x + k * (w / 2 - t / 2), y + t, z, t, h - 2 * t, d, 1)); };
+  const GL = c => (typeof glow === 'function' ? glow(c) : R.matte(c));
+  // a rounded box with a soft top edge: base y, centre x z
+  const cube = (g, m, x, y, z, w, h, d, r = .03, bev = .01) => {
+    const outl = R.rect(w, d, r, 5), s = shell(g, m, [[0, 0], [0, h - bev], [bev, h]], outl); s.position.set(x, y, z);
+    const p = floorPlate(g, m, outl, bev, h); p.position.set(x, y, z); return s;
+  };
+  const STEEL = (c = '#a3abb6') => tex2('steel' + c, 128, 128, (g, w, h) => {
+    g.fillStyle = c; g.fillRect(0, 0, w, h); const rr = rngOf(5);
+    for (let i = 0; i < 170; i++) { g.strokeStyle = rr() < .5 ? R.lit(c, .2) : R.drk(c, .16); g.globalAlpha = .35; g.lineWidth = 1; const x = rr() * w; g.beginPath(); g.moveTo(x, 0); g.lineTo(x + (rr() - .5) * 2, h); g.stroke(); }
+    g.globalAlpha = 1;
+  }, 70, '#aaaaaa');
+  const BLACKGLASS = () => R.metal('#14161b', 120, '#ffffff');
+  // a horizontal bar handle on two posts: centre x, y, face at z, len long
+  const hbar = (g, m, x, y, z, len, r = .013) => { g.add(fzAlongX(m, x, y, z + .042, r, len)); [-1, 1].forEach(s => g.add(fzR(mesh(CYL, m, x + s * (len / 2 - .025), y, z + .021, r * .9, .042, r * .9), PI / 2, 0, 0))); };
+  // a vertical bar handle on two posts
+  const vbar = (g, m, x, y, z, len, r = .013) => { g.add(mesh(CYL, m, x, y, z + .042, r, len, r)); [-1, 1].forEach(s => g.add(fzR(mesh(CYL, m, x, y + s * (len / 2 - .03), z + .021, r * .9, .042, r * .9), PI / 2, 0, 0))); };
+  // a round control knob that faces +z, with a white mark
+  const dial = (g, m, x, y, z, r = .03, ang = 0) => { g.add(fzLathe(m, [[.001, 0], [r * .8, 0], [r, .01], [r, .03], [r * .8, .038], [.001, .04]], x, y, z, 14).rotateX(PI / 2)); const t = at(new T.Mesh(new T.BoxGeometry(.005, r * .8, .003), R.matte('#f4f4f0')), x + Math.sin(ang) * r * .45, y + Math.cos(ang) * r * .45, z + .041); t.rotation.z = -ang; g.add(t); };
+  // a little round light
+  const led = (g, c, x, y, z, r = .008) => bead(g, GL(c), x, y, z, r);
+
+  // a superellipse outline (n 2 = an oval, bigger = squarer): w by h, d = how far in
+  const sup = (w, h, n = 2.6, N = 72) => d => { const a = Math.max(w / 2 - d, .001), b = Math.max(h / 2 - d, .001), p = []; for (let i = 0; i < N; i++) { const t = i / N * TAU, c = Math.cos(t), s = Math.sin(t); p.push([a * Math.sign(c) * Math.pow(Math.abs(c), 2 / n), b * Math.sign(s) * Math.pow(Math.abs(s), 2 / n)]); } return p; };
+  // a slab on an outline: base y, thickness h, a small chamfer on the top edge, an optional taper under the edge
+  const slab = (g, m, outl, x, y, z, h, bev = .01, under = 0, tile = 0) => {
+    const prof = under ? [[under, 0], [0, under], [0, h - bev], [bev, h]] : [[0, 0], [0, h - bev], [bev, h]];
+    const s = shell(g, m, prof, outl, { tu: .6, tv: .15 }); s.position.set(x, y, z);
+    const p = up90(R.plate(outl, bev, h, m, 1, tile || undefined)); p.position.set(x, y, z); g.add(p); return s;
+  };
+  // a band that follows an outline, lying flat at height y: inset a to b from the edge, t thick
+  const band = (g, m, outl, x, y, z, a, b, t = .003) => { const s = shell(g, m, [[a, 0], [a, t], [b, t], [b, 0]], outl); s.position.set(x, y, z); return s; };
+  /* ---------- helpers for this pass ---------- */
+  const lathe = (g, m, pts, x, y, z, seg = 18) => g.add(fzLathe(m, pts, x, y, z, seg));
+  const pearl = (g, m, x, y, z, rx, ry = rx, rz = rx) => { const o = at(new T.Mesh(SM2, m.isMaterial ? m : R.matte(m)), x, y, z); o.scale.set(rx, ry, rz); g.add(o); return o; };
+  // a flat leaf: a squashed ball, L long (x), W wide (z), turned ry about y and tilted rz
+  const flat = (g, m, x, y, z, L, W, ry = 0, rz = 0) => { const o = at(new T.Mesh(SM2, m), x, y, z); o.scale.set(L / 2, .004, W / 2); o.rotation.set(0, ry, rz, 'YXZ'); g.add(o); return o; };
+  // water: a clear tinted body with a soft sheen
+  const WATER = (op = .3, c = '#86cde8') => { const k = 'wat22' + c + op; return (R.__m = R.__m || {})[k] || (R.__m[k] = new T.MeshPhongMaterial({ color: c, transparent: true, opacity: op, shininess: 100, specular: '#ffffff', depthWrite: false })); };
+  const CLEAR = (op = .5, c = '#ffffff') => { const k = 'clr22' + c + op; return (R.__m = R.__m || {})[k] || (R.__m[k] = new T.MeshPhongMaterial({ color: c, transparent: true, opacity: op, shininess: 90, specular: '#ffffff', depthWrite: false })); };
+  // lumpy rock: a flattened ball with noisy bumps, base at y
+  const rock = (g, m, x, y, z, rx, ry, rz, seed = 1, nu = 10, nv = 6) => {
+    const rr = rngOf(seed * 97 + 13), ph = [rr() * 6, rr() * 6, rr() * 6];
+    const o = R.surf((u, v) => {
+      const a = u * TAU, t = v * PI * .5 + .08, k = 1 + .16 * Math.sin(a * 3 + ph[0]) * Math.cos(t * 2 + ph[1]) + .1 * Math.sin(a * 5 + ph[2]);
+      return [Math.cos(a) * Math.cos(t) * k, Math.sin(t) * (1 + .1 * Math.sin(a * 2 + ph[1])), Math.sin(a) * Math.cos(t) * k];
+    }, nu, nv, m, {});
+    o.scale.set(rx, ry, rz); o.position.set(x, y, z); g.add(o); return o;
+  };
+  // the flower heads of a flowerbed must be single meshes of the bed itself (garden-water.js lifts them into the "bloom" group): put a group's children straight into g
+  const flatten = (g, grp) => { grp.updateMatrix(); grp.children.slice().forEach(m => { m.applyMatrix4(grp.matrix); g.add(m); }); g.remove(grp); };
+  const lerp = (a, b, t) => a + (b - a) * t;
+
+
+  const Y1 = new T.Vector3(0, 1, 0);
+  const orient = (o, nx, ny, nz) => { o.quaternion.setFromUnitVectors(Y1, new T.Vector3(nx, ny, nz).normalize()); return o; };
+  const WATERD = (op = .45, c = '#a8dcf0') => { const k = 'watd22' + c + op; return (R.__m = R.__m || {})[k] || (R.__m[k] = new T.MeshPhongMaterial({ color: c, transparent: true, opacity: op, shininess: 100, specular: '#ffffff', depthWrite: false, side: T.DoubleSide })); };
+
+
+  /* ---------- helpers for the hallway ---------- */
+  const rod = (g, m, a, b, r = .04, rad = 8) => g.add(fzTube(m, [a, b], r, { seg: 2, rad }));
+  const STRAW = tex2('straw', 64, 64, (c, w, h) => {
+    c.fillStyle = '#d9b873'; c.fillRect(0, 0, w, h); const q = rngOf(3);
+    for (let i = 0; i < w; i += 4) { c.fillStyle = q() < .5 ? '#c9a45f' : '#e6c98a'; c.fillRect(i, 0, 3, h); }
+    for (let j = 0; j < h; j += 4) { c.fillStyle = 'rgba(120,80,30,.22)'; c.fillRect(0, j, w, 1); c.fillStyle = 'rgba(255,240,200,.25)'; c.fillRect(0, j + 2, w, 1); }
+  }, 8, '#333333');
+  // a hanging coat, facing +z, loop at the origin: a puffy body, sleeves, a hood, a placket with buttons and two pockets
+  const coat = (g, cloth, trim, x, y, z, ry, s = 1) => {
+    const q = new T.Group(); q.position.set(x, y, z); q.rotation.y = ry; q.scale.setScalar(s); g.add(q);
+    const dk = R.cloth(R.drk('#c9382f', .25), { kind: 'canvas', k: 'dk' });
+    q.add(fzPuff(cloth, 0, -.8, 0, .4, .68, .11, 4, 6));             // belly
+    q.add(fzPuff(cloth, 0, -.22, 0, .43, .16, .115, 3, 6));          // shoulders
+    q.add(fzPuff(cloth, 0, -.2, -.07, .22, .16, .1, 2.6, 6));        // hood bundle behind the neck
+    q.add(fzPuff(dk, 0, -.1, .0, .2, .05, .1, 3, 6));                // collar
+    [-1, 1].forEach(s2 => {
+      const sl = fzPuff(cloth, s2 * .218, -.78, .004, .09, .6, .1, 4, 6); sl.rotation.z = -s2 * .035; q.add(sl);
+      q.add(fzPuff(dk, s2 * .222, -.78, .004, .098, .035, .108, 3, 5));      // cuff
+      q.add(box(trim, s2 * .1, -.58, .052, .12, .02, .02), box(trim, s2 * .1, -.6, .052, .12, .004, .022));      // pocket flap
+    });
+    q.add(box(dk, 0, -.78, .054, .03, .66, .01));                      // placket
+    for (let i = 0; i < 4; i++) bead(q, trim, 0, -.3 - i * .14, .062, .014);
+    q.add(fzTor(trim, 0, .02, 0, .022, .004, PI / 2 - .4, 0, 0, 6, 12));    // the loop on the peg
+    return q;
+  };
+  // a straw sun hat with a ribbon, crown at the origin and brim a little lower
+  const sunHat = (g, x, y, z, tilt = .1, ry = 0) => {
+    const q = new T.Group(); q.position.set(x, y, z); q.rotation.set(tilt, ry, tilt * .5); g.add(q);
+    q.add(fzLathe(STRAW, [[.1, .004], [.098, .05], [.09, .1], [.06, .128], [.001, .13]], 0, 0, 0, 20));
+    q.add(fzLathe(STRAW, [[.098, -.004], [.17, -.006], [.25, .01], [.282, .028], [.285, .04], [.282, .034], [.25, .012], [.17, 0], [.098, .008]], 0, 0, 0, 24));
+    q.add(fzLathe(R.cloth('#d8453c', { kind: 'weave', k: 'rb' }), [[.1, .018], [.1, .05], [.097, .054], [.097, .015]], 0, 0, 0, 20));
+    q.add(fzPuff(R.cloth('#d8453c', { kind: 'weave', k: 'rb' }), .0, .018, .104, .09, .05, .014, 3, 4));
+    return q;
+  };
+
+  /* ====================== coat rack ====================== */
+  // A turned walnut hall stand: a heavy round foot, a pole with rings and swellings, two tiers of curved pegs with brass tips. A red raincoat on a lower peg, a striped scarf, a canvas tote and a straw hat.
+  add('coatrack', 24, 'Hallway', { fp: [.3, .3], b: g => {
+    const wd = R.wood('#6b3f24', { v: 1, k: 'cr' }), br = BRS();
+    g.add(fzLathe(wd, [[.001, 0], [.2, 0], [.27, .006], [.288, .024], [.274, .044], [.22, .056], [.14, .072], [.08, .1], [.052, .14], [.001, .14]], 0, 0, 0, 30));
+    g.add(fzLathe(wd, [[.001, .12], [.04, .12], [.046, .17], [.032, .23], [.026, .3], [.034, .34], [.03, .38], [.026, .42], [.026, 1.06], [.034, 1.1], [.03, 1.14], [.026, 1.18], [.026, 1.5], [.036, 1.54], [.046, 1.58], [.036, 1.62], [.026, 1.66], [.026, 1.74], [.03, 1.77], [.001, 1.78]], 0, 0, 0, 14));
+    // a ring where the pegs join
+    [[1.58, .052], [1.24, .048]].forEach(([y, r]) => g.add(fzLathe(wd, [[.02, y - .035], [r, y - .028], [r + .006, y], [r, y + .028], [.02, y + .035]], 0, 0, 0, 14)));
+    const peg = (y, a, L, up) => {
+      const s = Math.sin(a), c = Math.cos(a), P = (r, h) => [s * r, y + h, c * r];
+      g.add(fzTube(wd, [P(.03, 0), P(L * .5, -.014), P(L * .85, -.004), P(L, up * .45), P(L + .018, up * .85), P(L + .014, up)], .0145, { rad: 7, seg: 16 }));
+      ball(g, br, s * (L + .014), y + up + .012, c * (L + .014), .02);
+    };
+    [-26, 64, 154, 244].forEach(a => peg(1.58, a * PI / 180, .2, .1));
+    [19, 109, 199, 289].forEach(a => peg(1.24, a * PI / 180, .18, .085));
+    // the hat on the top of the pole
+    sunHat(g, 0, 1.7, 0, .12, .6);
+    // the red raincoat on the lower front-right peg
+    const co = R.cloth('#cf3b31', { kind: 'canvas' }), a = 19 * PI / 180, d = .18 + .014;
+    coat(g, co, R.metal('#f2e3b0', 50, '#ffffff'), Math.sin(a) * d, 1.24 + .085 - .005, Math.cos(a) * d, a);
+    // a blue striped scarf over the upper left peg
+    { const sc = R.cloth('#3d6db0', { kind: 'stripe', stripe: '#f2eadb' }), a3 = 244 * PI / 180, px = Math.sin(a3) * .214, pz = Math.cos(a3) * .214, y0 = 1.58 + .1, ry = .45;
+      g.add(fzPuff(sc, px, y0 - .03, pz, .05, .05, .15, 3, 4));
+      const f = fzPuff(sc, px, y0 - .55, pz + .055, .14, .54, .04, 3, 5); f.rotation.y = ry; g.add(f);
+      const b = fzPuff(sc, px + .02, y0 - .43, pz - .05, .14, .42, .04, 3, 5); b.rotation.y = ry; g.add(b);
+      for (let i = 0; i < 6; i++) { const t = (i - 2.5) * .022; g.add(mesh(CYL, '#efe6d2', px + t * Math.cos(ry), y0 - .6, pz + .055 - t * Math.sin(ry), .004, .06, .004)); } }
+    // a canvas tote hung from the upper front peg
+    { const tm = R.cloth('#e0a62a', { kind: 'canvas', k: 'tote' }), a4 = -26 * PI / 180, px = Math.sin(a4) * .214, pz = Math.cos(a4) * .214, y0 = 1.58 + .1, t = new T.Group();
+      t.position.set(px, 0, pz); t.rotation.y = a4; g.add(t);
+      t.add(fzPuff(tm, 0, y0 - .36, 0, .3, .3, .09, 3.6, 5));
+      t.add(box(R.cloth('#f2ead6', { kind: 'canvas', k: 'tw' }), 0, y0 - .22, .046, .3, .035, .006));
+      [-1, 1].forEach(s => t.add(fzTube(tm, [[s * .09, y0 - .08, 0], [s * .06, y0 + .02, 0], [s * .01, y0 + .035, 0], [0, y0 + .02, 0]], .008, { rad: 5, seg: 8 }))); }
+  } });
+
+  /* ====================== umbrella stand ====================== */
+  // A tall glazed jar painted navy with white bands and little flowers, holding two closed umbrellas (red, and yellow with white panels) and a walking cane with a curved handle.
+  add('umbrellastand', 14, 'Hallway', { fp: [.22, .22], b: g => {
+    const gl = tex2('ustand', 256, 128, (c, w, h) => {
+      c.fillStyle = '#27487c'; c.fillRect(0, 0, w, h);
+      c.fillStyle = '#f4f1e8'; [[.02, .045], [.095, .02], [.885, .02], [.935, .045]].forEach(([a, b]) => c.fillRect(0, h * a, w, h * b));
+      c.fillStyle = '#4e7ab8'; c.fillRect(0, h * .13, w, h * .018); c.fillRect(0, h * .85, w, h * .018);
+      for (let i = 0; i < 6; i++) { const cx = (i + .5) * w / 6, cy = h * .5; c.fillStyle = '#f4f1e8'; for (let k = 0; k < 6; k++) { const a = k / 6 * TAU; c.beginPath(); c.ellipse(cx + Math.cos(a) * 11, cy + Math.sin(a) * 11, 6.5, 4.5, a, 0, TAU); c.fill(); } c.fillStyle = '#e7b83a'; c.beginPath(); c.arc(cx, cy, 4.5, 0, TAU); c.fill();
+        c.strokeStyle = '#6fa56a'; c.lineWidth = 3; c.beginPath(); c.moveTo(cx + 22, cy + 4); c.quadraticCurveTo(cx + 36, cy - 10, cx + 50, cy + 4); c.stroke(); c.beginPath(); c.moveTo(cx - 22, cy + 4); c.quadraticCurveTo(cx - 36, cy + 18, cx - 50, cy + 4); c.stroke(); }
+    }, 100, '#ffffff');
+    g.add(fzLathe(gl, [[.001, 0], [.12, 0], [.134, .014], [.145, .06], [.151, .16], [.153, .3], [.15, .44], [.145, .5], [.152, .525], [.15, .55], [.14, .556], [.132, .55], [.13, .5], [.132, .3], [.128, .2], [.12, .125], [.001, .12]], 0, 0, 0, 30));
+    // the dark inside
+    g.add(fzLathe(R.matte('#1f1a18'), [[.001, .122], [.12, .122], [.126, .2], [.13, .5], [.001, .5]], 0, 0, 0, 18));
+    const umbM = (c, panels) => panels ? tex2('umb' + c + panels, 128, 16, (cx, w, h) => { const n = 8; cx.fillStyle = c; cx.fillRect(0, 0, w, h); cx.fillStyle = panels; for (let k = 1; k < n; k += 2) cx.fillRect((k - .5) * w / n, 0, w / n, h); }, 0) : R.cloth(c, { kind: 'canvas', k: 'umb' });
+    // a closed umbrella standing with its tip in the jar: x, z where the tip stands, lean about z and x, yaw of the hook
+    const umb = (x, z, lz, lx, ry, fabric, handle) => {
+      const q = new T.Group(); q.position.set(x, .12, z); q.rotation.set(lx, ry, lz, 'YXZ'); g.add(q);
+      const prof = v => v < .8 ? .015 + .05 * Math.pow(Math.sin(v / .8 * PI / 2), 1.3) : .065 - .047 * Math.pow((v - .8) / .2, .8);
+      q.add(R.surf((u, v) => { const a = u * TAU, r = prof(v) * (1 + .17 * Math.cos(8 * a)); return [Math.cos(a) * r, .26 + v * .6, Math.sin(a) * r]; }, 32, 14, fabric, {}));
+      q.add(mesh(CYL, CHR(), 0, .15, 0, .006, .3, .006));                                                      // the shaft below the cloth
+      q.add(fzLathe(CHR(), [[.001, 0], [.008, .0], [.009, .02], [.005, .05], [.001, .1]], 0, .0, 0, 8));     // the tip
+      q.add(fzTor(R.cloth('#2a2622', { kind: 'weave', k: 'st' }), 0, .68, 0, .066, .01, PI / 2, 0, 0, 6, 16));     // the strap
+      bead(q, CHR(), .066, .68, 0, .011);
+      q.add(fzLathe(CHR(), [[.001, .84], [.016, .846], [.016, .87], [.008, .89], [.001, .9]], 0, 0, 0, 8));
+      q.add(fzTube(handle, [[0, .89, 0], [0, .97, 0], [0, 1.01, 0], [.014, 1.05, 0], [.042, 1.065, 0], [.07, 1.05, 0], [.078, 1.015, 0], [.07, .985, 0]], .013, { rad: 7, seg: 22 }));
+      bead(q, handle, .07, .985, 0, .014);
+      return q;
+    };
+    const wood = R.wood('#7a4a28', { v: 1, k: 'um' }), blk = R.wood('#3a2a20', { v: 1, k: 'um2' });
+    umb(-.04, .0, .13, .05, 2.4, umbM('#d63d38'), wood);
+    umb(.06, -.03, -.1, -.06, 4.6, umbM('#f2bb2d', '#f6f0e0'), blk);
+    // the cane: a slim stick with a brass cap and a crook
+    { const q = new T.Group(); q.position.set(.02, .12, .06); q.rotation.set(.12, 1, -.02, 'YXZ'); g.add(q);
+      q.add(mesh(CYL, wood, 0, .5, 0, .012, 1.0, .012)); q.add(fzLathe(BRS(), [[.001, 0], [.014, 0], [.014, .06], [.011, .065], [.001, .066]], 0, 0, 0, 8));
+      q.add(fzTube(wood, [[0, .98, 0], [0, 1.04, 0], [.02, 1.1, 0], [.06, 1.12, 0], [.1, 1.08, 0], [.105, 1.02, 0]], .0145, { rad: 7, seg: 16 })); bead(q, BRS(), .105, 1.015, 0, .016); }
+  } });
+
+  /* ---------- shoes, books and baskets ---------- */
+  const SH = (c, k = '') => R.cloth(c, { kind: 'canvas', k: 'sh' + k });
+  const GLOSS = (c, s = 80) => R.metal(c, s, '#bbbbbb');
+  // the upper of a shoe: a smooth body from the heel (v 0) to the toe (v 1), an arch over the foot (u), toe toward +z. L long, Wd half wide, Hh tall at the heel, Ht tall at the toe, base at y0. v0 to v1 cuts out a part (a toe cap)
+  const sst = (a, b, t) => { t = Math.min(1, Math.max(0, (t - a) / (b - a))); return t * t * (3 - 2 * t); };
+  const shoeBody = (m, L, Wd, Hh, Ht, y0, o = {}) => {
+    const v0 = o.v0 || 0, v1 = o.v1 == null ? 1 : o.v1, k = o.k || 1, bump = o.bump || 0;
+    return R.surf((u, v) => {
+      const vv = v0 + v * (v1 - v0), th = u * PI, rb = vv < .12 ? Math.sqrt(Math.max(0, 1 - Math.pow((.12 - vv) / .12, 2))) : 1, rt = vv > .88 ? Math.sqrt(Math.max(0, 1 - Math.pow((vv - .88) / .12, 2))) : 1, f = Math.min(rb, rt);
+      const w = Wd * (.84 + .16 * sst(0, .55, vv)) * (1 - .1 * sst(.72, 1, vv)) * f * k, h = (Hh + (Ht - Hh) * sst(.28, .74, vv)) * Math.pow(f, .8) * k + bump * Math.sin(vv * PI) * f;
+      return [w * Math.cos(th), y0 + h * Math.pow(Math.sin(th), .72), -L * .46 + vv * L];
+    }, 12, o.nv || 12, m, { flip: true });
+  };
+  // a dark opening with a soft rim where the foot goes in: centre x, y, z, half sizes
+  const mouth = (g, rim, x, y, z, rx, rz, dark = '#2a2220') => { g.add(mesh(SPH6, R.matte(dark), x, y, z, rx, .006, rz)); g.add(fzR(mesh(new T.TorusGeometry(1, .16, 5, 18), rim, x, y + .002, z, rx, rz, .04), PI / 2, 0, 0)); };
+  // one shoe standing at x, y (floor under it), z, toe toward +z turned by ry
+  const sneaker = (g, x, y, z, ry, up, sole, cap, lace) => {
+    const q = new T.Group(); q.position.set(x, y, z); q.rotation.y = ry; g.add(q);
+    const um = SH(up, up), sm = GLOSS(sole, 50), cm = GLOSS(cap, 60), lm = R.matte(lace);
+    q.add(fzPuff(sm, 0, 0, .0, .098, .03, .29, 4, 3));
+    q.add(shoeBody(um, .27, .046, .1, .05, .026));
+    q.add(shoeBody(cm, .27, .046, .1, .05, .026, { v0: .76, k: 1.03, nv: 5 }));
+    q.add(fzPuff(GLOSS(R.drk(up, .2), 50), 0, .026, -.122, .078, .04, .025, 3, 2));                       // heel patch
+    mouth(q, um, 0, .122, -.075, .028, .042);
+    q.add(fzR(box(R.cloth(R.drk(up, .1), { kind: 'canvas', k: 'tg' }), 0, .098, -.045, .04, .012, .08), .5, 0, 0));       // tongue
+    [.05, .025, 0].forEach((zz, i) => q.add(fzR(box(lm, 0, .092 - zz * .1 - .0, zz, .056, .006, .008), -.18 + 0, 0, 0)));
+    return q;
+  };
+  const rainboot = (g, x, y, z, ry, c) => {
+    const q = new T.Group(); q.position.set(x, y, z); q.rotation.y = ry; g.add(q);
+    const m = GLOSS(c, 90), dk = GLOSS('#34363c', 40);
+    q.add(fzPuff(dk, 0, 0, .0, .104, .03, .3, 4, 3));
+    q.add(shoeBody(m, .28, .048, .075, .045, .026));
+    q.add(fzLathe(m, [[.052, .03], [.056, .08], [.05, .12], [.046, .17], [.047, .19], [.053, .2], [.05, .205], [.044, .195], [.001, .195]], 0, 0, -.045, 14));
+    q.add(fzTor(GLOSS('#f6f1e4', 70), 0, .172, -.045, .048, .007, PI / 2, 0, 0, 5, 14));
+    [-1, 1].forEach(s2 => q.add(box(dk, s2 * .046, .178, -.045, .012, .028, .02)));
+    return q;
+  };
+  const loafer = (g, x, y, z, ry, c) => {
+    const q = new T.Group(); q.position.set(x, y, z); q.rotation.y = ry; g.add(q);
+    const m = R.metal(c, 60, '#aa9988'), dk = R.matte(R.drk(c, .55));
+    q.add(fzPuff(dk, 0, 0, .0, .092, .018, .285, 4, 3), box(dk, 0, 0, -.115, .07, .026, .05));
+    q.add(shoeBody(m, .27, .043, .062, .036, .016));
+    mouth(q, m, 0, .074, -.04, .026, .05);
+    q.add(fzPuff(R.metal(R.drk(c, .25), 60, '#aa9988'), 0, .06, .045, .082, .018, .028, 3, 3));
+    q.add(mesh(SPH6, R.brass(), 0, .082, .045, .009, .004, .014));
+    return q;
+  };
+  const slipper = (g, x, y, z, ry, c) => {
+    const q = new T.Group(); q.position.set(x, y, z); q.rotation.y = ry; g.add(q);
+    const m = R.cloth(c, { kind: 'boucle', k: 'sl' });
+    q.add(fzPuff(R.matte(R.drk(c, .35)), 0, 0, .0, .1, .018, .27, 3, 4), fzPuff(m, 0, .01, .01, .1, .055, .26, 2.4, 5));
+    q.add(mesh(SPH6, R.matte('#3b2e30'), 0, .06, -.06, .042, .008, .058));
+    return q;
+  };
+  const balletflat = (g, x, y, z, ry, c) => {
+    const q = new T.Group(); q.position.set(x, y, z); q.rotation.y = ry; g.add(q);
+    const m = R.metal(c, 60, '#aa9988');
+    q.add(fzPuff(R.matte(R.drk(c, .45)), 0, 0, .0, .074, .01, .25, 3, 4));
+    q.add(shoeBody(m, .24, .036, .028, .026, .008));
+    mouth(q, m, 0, .035, -.02, .028, .075, R.lit(c, .25));
+    q.add(fzPuff(R.metal(R.lit(c, .3), 60, '#ffffff'), 0, .03, .07, .035, .014, .03, 3, 3));
+    return q;
+  };
+  const pair = (g, fn, x, y, z, ry, ...a) => { fn(g, x - .06, y, z, ry + .06, ...a); fn(g, x + .06, y, z - .015, ry - .05, ...a); };
+  const SPH6 = new T.SphereGeometry(1, 8, 5);
+  // a book standing with its spine to +z: colour, a gold band or two, pages showing at the back
+  const book = (g, x, y, z, w, h, d, c, lean = 0) => {
+    const q = new T.Group(); q.position.set(x, y, z); q.rotation.z = lean; g.add(q);
+    q.add(box(R.cloth(c, { kind: 'leather', k: 'bk' + c }), 0, 0, 0, w, h, d), box(R.matte('#efe6cf'), 0, .004, -.0, w - .008, h - .008, d - .01).translateZ(-.006));
+    q.add(box(R.cloth(c, { kind: 'leather', k: 'bk' + c }), 0, 0, d / 2 - .004, w, h, .008));
+    [.2, .26, .78].forEach(t => q.add(box(R.gold(), 0, h * t, d / 2 + .0005, w * .94, .006, .002)));
+    return q;
+  };
+  // a woven basket: wide at the top, a rolled rim, two loop handles and something soft in it. r radius at the rim, h tall, fill 'blanket' or 'towels'
+  const BASKET = tex2('basket2', 128, 64, (c, w, h) => {
+    c.fillStyle = '#9b7040'; c.fillRect(0, 0, w, h);
+    for (let j = 0; j < h; j += 4) for (let i = 0; i < w; i += 8) { const o = ((j >> 2) % 2) * 4; c.fillStyle = (j >> 2) % 2 ? '#d1ac6e' : '#bf985a'; c.fillRect(i + o, j, 7, 3); c.fillStyle = 'rgba(255,255,255,.2)'; c.fillRect(i + o, j, 7, 1); c.fillStyle = 'rgba(60,30,0,.25)'; c.fillRect(i + o, j + 3, 7, 1); }
+  }, 6, '#333333');
+  const basket = (g, x, y, z, r, h, ry = 0, fill = 'blanket') => {
+    const q = new T.Group(); q.position.set(x, y, z); q.rotation.y = ry; g.add(q);
+    q.add(fzLathe(BASKET, [[.001, 0], [.8 * r, 0], [.88 * r, .02], [.97 * r, h * .5], [1.02 * r, h - .02], [1.04 * r, h], [.97 * r, h], [.95 * r, h - .04], [.9 * r, h * .5], [.001, .01]], 0, 0, 0, 24));
+    q.add(fzLathe(R.matte('#6f4d24'), [[.94 * r, h - .006], [1.07 * r, h - .006], [1.07 * r, h + .016], [.94 * r, h + .016]], 0, 0, 0, 24));
+    [-1, 1].forEach(s2 => q.add(fzTor(R.matte('#6f4d24'), s2 * r * 1.04, h * .86, 0, h * .2, .007, 0, PI / 2, 0, 5, 14)));
+    if (fill === 'blanket') { const bl = R.cloth('#f0e6d0', { kind: 'boucle', k: 'bf' }); q.add(fzPuff(bl, 0, h - .03, 0, r * 1.5, .07, r * 1.4, 2.6, 5), fzPuff(R.cloth('#c9d6e0', { kind: 'boucle', k: 'bf2' }), r * .1, h + .02, r * .05, r * 1.1, .05, r * 1, 2.6, 5)); }
+    else [-.45, .45].forEach(t => { const tw = fzLay(R.cloth(t < 0 ? '#e9a3b7' : '#9fc7e6', { kind: 'weave', k: 'tw' }), 0, h + .0, t * r, r * .34, r * 1.7, PI / 2); tw.rotation.y = .1; q.add(tw); });
+    return q;
+  };
+
+  /* ====================== shoe rack ====================== */
+  // A slatted oak shoe rack with three shelves and a solid top that things can stand on. Rain boots, sneakers, loafers, ballet flats and fluffy slippers.
+  add('shoerack', 20, 'Hallway', { fp: [.52, .19], top: .58, b: g => {
+    const wd = R.wood('#cfa56c', { k: 'sr' }), wv = R.wood('#c29a62', { v: 1, k: 'srv' }), dk = R.wood('#a9814c', { k: 'srd' });
+    const W = .98, D = .34;
+    // two end boards with a notch under each
+    const sh = new T.Shape(); sh.moveTo(-.17, 0); sh.lineTo(-.12, 0); sh.lineTo(-.105, .045); sh.lineTo(.105, .045); sh.lineTo(.12, 0); sh.lineTo(.17, 0); sh.lineTo(.17, .575); sh.lineTo(-.17, .575); sh.lineTo(-.17, 0);
+    [-1, 1].forEach(s => { const e = fzExt(wv, sh, .024, s * (W / 2 - .012), 0, 0, .004); e.rotation.y = PI / 2; g.add(e); });
+    // the two shelves: slats with gaps, and a rail under the front and back edge
+    [.08, .32].forEach(y => { for (let i = 0; i < 6; i++) U(g, wd, 0, y, -D / 2 + .035 + i * (D - .07) / 5, W - .048, .018, .045, 2); U(g, dk, 0, y - .025, -D / 2 + .02, W - .048, .025, .02, 2); U(g, dk, 0, y - .025, D / 2 - .02, W - .048, .025, .02, 2); });
+    U(g, dk, 0, .47, -D / 2 + .01, W - .048, .07, .016, 2);
+    g.add(fzPuff(wd, 0, .54, 0, W + .06, .035, D + .04, 6, 4));
+    // shoes
+    pair(g, rainboot, -.3, .098, 0, 0, '#f2c230'); pair(g, sneaker, 0, .098, 0, .05, '#3f7fd0', '#f4f1e8', '#ffffff', '#ffffff'); pair(g, loafer, .3, .098, 0, .06, '#7a4a2c');
+    pair(g, sneaker, -.3, .338, 0, -.04, '#f4f1e8', '#d94a46', '#f4f1e8', '#ffffff'); pair(g, balletflat, 0, .338, 0, .05, '#e88aa8'); pair(g, slipper, .3, .338, .0, -.04, '#9fc7e6');
+  } });
+
+  /* ====================== entry bench ====================== */
+  // A wooden storage bench for the front door: arched end boards, a striped seat cushion, a lower shelf with two woven baskets and a pair of slippers, a pillow and a folded throw on the seat. The kitty sits on it.
+  add('entrybench', 40, 'Hallway', { fp: [.64, .22], b: g => {
+    const wd = R.wood('#8a5a34', { k: 'eb' }), wv = R.wood('#7d5130', { v: 1, k: 'ebv' }), br = BRS();
+    const W = 1.3, D = .42;
+    // arched end boards
+    const e = new T.Shape(); e.moveTo(-.21, 0); e.lineTo(.21, 0); e.lineTo(.21, .44); e.lineTo(-.21, .44); e.lineTo(-.21, 0);
+    const hole = new T.Path(); hole.moveTo(-.13, .06); hole.lineTo(-.13, .2); hole.absarc(0, .2, .13, PI, 0, true); hole.lineTo(.13, .06); hole.lineTo(-.13, .06); e.holes.push(hole);
+    [-1, 1].forEach(s => { const m = fzExt(wv, e, .035, s * (W / 2 - .0175), 0, 0, .004); m.rotation.y = PI / 2; g.add(m); });
+    // the seat frame, the back rail, a low shelf
+    U(g, wd, 0, .395, 0, W - .07, .035, D, 2); U(g, wd, 0, .37, D / 2 - .02, W - .07, .03, .03, 2); U(g, wd, 0, .37, -D / 2 + .02, W - .07, .03, .03, 2);
+    U(g, wd, 0, .1, 0, W - .07, .022, D - .04, 2); U(g, wd, 0, .08, D / 2 - .03, W - .07, .028, .022, 2);
+    // the seat cushion
+    R.cushion(g, R.cloth('#2f6b73', { kind: 'stripe', stripe: '#efe6cf', k: 'eb' }), 0, .43, 0, W - .1, .075, D - .03, { e1: .3, e2: .18, crown: .1, pipe: true, pr: .007 });
+    // under the seat: two baskets and a pair of slippers
+    basket(g, -.34, .112, .0, .15, .2, .3, 'blanket'); basket(g, -.04, .112, .02, .13, .17, -.2, 'towels');
+    pair(g, slipper, .3, .122, .02, .08, '#e9a3b7');
+    // on the seat: a pillow at one end and a folded throw at the other
+    R.cushion(g, R.cloth('#e0a62a', { kind: 'weave', k: 'epl' }), -.46, .5, -.02, .34, .1, .34, { e1: .5, e2: .3, crown: .4, pipe: true, pr: .006, rot: [0, .35, 0] });
+    { const th = R.cloth('#c9d6e0', { kind: 'boucle', k: 'eth' }); g.add(fzPuff(th, .44, .5, -.02, .36, .06, .26, 3, 5), fzPuff(R.cloth('#9fb6c9', { kind: 'boucle', k: 'eth2' }), .44, .555, -.02, .34, .045, .24, 3, 5)); }
+  } });
+
+  /* ====================== key hooks ====================== */
+  // A little white-washed house on the wall by the door: a gabled roof, a ledge with a dish, five brass hooks and three sets of keys (two with leather tags, one with a ribbon).
+  add('keyhooks', 12, 'Hallway', { wall: 1, fp: [.26, .06], b: g => {
+    const wd = R.wood('#efe7d6', { k: 'kh', a: .05 }), rf = R.wood('#7a4a2c', { k: 'khr' }), br = BRS(), sl = R.metal('#c8ccd2', 100, '#ffffff');
+    const x0 = 1.3, hy = x0 + .2;
+    U(g, wd, 0, x0, .0125, .46, .25, .025, 2);
+    // the gabled roof: two boards meeting at the top, overhanging the sides
+    [-1, 1].forEach(s => { const r = box(rf, 0, 0, 0, .32, .022, .06); r.position.set(s * .125, x0 + .25 + .06, .03); r.rotation.z = -s * .62; g.add(r); });
+    g.add(box(rf, 0, x0 + .25 + .115, .03, .035, .035, .066));
+    // the ledge on two little brackets, and a dish
+    U(g, rf, 0, x0 - .042, .045, .5, .022, .09, 2); [-1, 1].forEach(s => g.add(box(rf, s * .2, x0 - .1, .006, .018, .06, .014)));
+    g.add(fzLathe(R.glaze('#4f86a8'), [[.001, 0], [.03, 0], [.04, .004], [.05, .02], [.052, .028], [.046, .026], [.036, .01], [.001, .008]], .17, x0 - .02, .05, 14));
+    g.add(mesh(CYL, sl, .17, x0 - .01, .05, .012, .004, .012));
+    // five hooks
+    const key = (x, y, z, c, tag, ry = 0) => {
+      const q = new T.Group(); q.position.set(x, y, z); q.rotation.y = ry; g.add(q);
+      q.add(fzTor(sl, 0, -.012, 0, .014, .0022, 0, 0, 0, 5, 14));
+      [[-.004, c], [.007, sl]].forEach(([dx, m], i) => {
+        const k = new T.Group(); k.position.set(dx, -.03, .0); k.rotation.z = i ? -.12 : .1; q.add(k);
+        k.add(fzTor(m, 0, -.012, 0, .0105, .0032, 0, 0, 0, 5, 12));
+        k.add(box(m, 0, -.07, 0, .0065, .06, .0032), box(m, .006, -.07, 0, .008, .008, .003), box(m, .005, -.058, 0, .006, .007, .003));
+      });
+      if (tag) q.add(fzPuff(R.cloth(tag, { kind: 'leather', k: 'kt' }), 0, -.115, .004, .028, .042, .007, 3, 4));
+    };
+    [-.18, -.09, 0, .09, .18].forEach(x => {
+      g.add(fzTube(br, [[x, hy, .014], [x, hy, .045], [x, hy + .004, .068], [x, hy + .025, .078]], .006, { rad: 6, seg: 10 }), mesh(CYL, br, x, hy, .016, .016, .006, .016).rotateX(PI / 2));
+      ball(g, br, x, hy + .03, .078, .0105);
+    });
+    key(-.18, hy - .005, .083, '#d4a843', '#c9574a'); key(0, hy - .005, .083, '#b88a2e', '#3f7fd0', .1);
+    // a ribbon on the fourth hook
+    { const rb = R.cloth('#d8453c', { kind: 'weave', k: 'rbn' }); g.add(fzPuff(rb, .09, hy - .12, .083, .018, .12, .006, 3, 3), fzPuff(rb, .099, hy - .1, .083, .018, .1, .006, 3, 3)); g.add(fzTor(sl, .09, hy - .125, .085, .012, .002, 0, 0, 0, 5, 12)); }
+  } });
+
+  /* ====================== wall shelf ====================== */
+  // Two wooden shelves on iron brackets. Lower: a pile of books, a leaning framed picture and a pot of trailing ivy. Upper: a row of books held by a bookend, a ceramic vase of dried grasses and a brass dish on two books.
+  add('wallshelf', 22, 'Decor', { wall: 1, fp: [.6, .1], b: g => {
+    const wd = R.wood('#a9764a', { k: 'ws' }), iron = R.iron(), br = BRS();
+    const W = 1.12, D = .2;
+    [1.3, 1.76].forEach(y => {
+      U(g, wd, 0, y, D / 2, W, .035, D, 2);
+      [-1, 1].forEach(s => {
+        const x = s * (W / 2 - .12);
+        g.add(box(iron, x, y - .16, .006, .026, .17, .012), box(iron, x, y - .014, D / 2, .026, .014, D - .02));
+        const b = box(iron, x, 0, 0, .014, .22, .014); b.position.set(x, y - .09, .09); b.rotation.x = .87; g.add(b);
+      });
+    });
+    const y1 = 1.3 + .035, y2 = 1.76 + .035;
+    // lower shelf: a pile of three lying books
+    const lbook = (x, y, z, w, h, d, c, ry = 0) => {
+      const q = new T.Group(); q.position.set(x, y, z); q.rotation.y = ry; g.add(q);
+      const cm = R.cloth(c, { kind: 'leather', k: 'lb' + c });
+      q.add(box(cm, 0, 0, 0, w, .006, d), box(cm, 0, h - .006, 0, w, .006, d), box(cm, -w / 2 + .004, 0, 0, .008, h, d), box(R.matte('#efe6cf'), .004, .005, .0, w - .012, h - .01, d - .006));
+      q.add(box(R.gold(), -w / 2 - .0005, h * .2, 0, .002, .006, d * .9), box(R.gold(), -w / 2 - .0005, h * .75, 0, .002, .006, d * .9));
+    };
+    lbook(-.36, y1, .1, .27, .045, .19, '#2f5f8a', .05); lbook(-.35, y1 + .045, .1, .25, .035, .18, '#b8453a', -.08); lbook(-.37, y1 + .08, .1, .22, .03, .17, '#4f8a56', .12);
+    // a framed picture leaning on the wall (a sunny landscape, no faces)
+    { const q = new T.Group(); q.position.set(-.03, y1, .13); q.rotation.x = -.14; g.add(q);
+      const pic = tex2('wsland', 96, 128, (c, w, h) => { const gr = c.createLinearGradient(0, 0, 0, h * .6); gr.addColorStop(0, '#9ec9e8'); gr.addColorStop(1, '#f6e3b4'); c.fillStyle = gr; c.fillRect(0, 0, w, h); c.fillStyle = '#f7c64a'; c.beginPath(); c.arc(w * .68, h * .3, 12, 0, TAU); c.fill(); c.fillStyle = '#7ca66a'; c.beginPath(); c.moveTo(0, h * .62); c.quadraticCurveTo(w * .3, h * .45, w * .6, h * .62); c.lineTo(w * .6, h); c.lineTo(0, h); c.fill(); c.fillStyle = '#5f8f55'; c.beginPath(); c.moveTo(w * .3, h * .7); c.quadraticCurveTo(w * .7, h * .5, w, h * .66); c.lineTo(w, h); c.lineTo(w * .3, h); c.fill(); });
+      q.add(box(R.wood('#5a3a22', { k: 'wsf' }), 0, 0, 0, .19, .25, .02), box(pic, 0, .018, .0105, .14, .214, .004), box(R.matte('#f4efe4'), 0, .012, .009, .15, .226, .002)); }
+    // a pot of trailing ivy
+    { const pot = new T.Group(); pot.position.set(.34, y1, .1); g.add(pot); R.pot(pot, { r: .07, h: .11, color: '#d9d2c2', glaze: 1, saucer: false, soil: '#4a3426' });
+      const lm = R.leafMat('#3f8a4a', { veins: 6 }), lg = R.leafGeo(.07, .06, { shape: 'oval' });
+      const sp = [[.4, .1, .0, .09], [.0, .12, .07, .05], [-.35, .1, -.05, .1]];
+      sp.forEach(([a, hh, off, lenx], si) => {
+        const pts = [[Math.sin(a) * .03, .12, Math.cos(a) * .03], [Math.sin(a) * .08, .13, Math.cos(a) * .08], [Math.sin(a) * .115, .06, Math.cos(a) * .115], [Math.sin(a) * .122, -.06 - si * .03, Math.cos(a) * .12 + .03]];
+        pot.add(R.stem(R.matte('#4a7a3a'), pts, .004, .0025, 5, 14));
+        pts.forEach((p, i) => { if (i === 0) return; R.leaf(pot, lm, lg, p[0] + .012, p[1], p[2] + .012, a + 1.2, .5, i * .7, 1); R.leaf(pot, lm, lg, p[0] - .012, p[1] + .01, p[2], a - 1.2, .3, -i * .6, .9); });
+      });
+      for (let i = 0; i < 7; i++) R.leaf(pot, lm, lg, Math.cos(i * 1.7) * .035, .125, Math.sin(i * 1.7) * .035, i * 1.7, -.2, 0, .9); }
+    // upper shelf: books standing, held by a bookend
+    const cols = ['#c9574a', '#2f5f8a', '#d9a63a', '#4f8a56', '#7a4a8a', '#e8e0cc', '#b8453a'];
+    let bx = -.5; [[.04, .24], [.045, .27], [.05, .22], [.04, .26], [.055, .25], [.04, .21]].forEach(([w, h], i) => { book(g, bx + w / 2, y2, .09, w, h, .15, cols[i]); bx += w + .003; });
+    book(g, bx + .055, y2, .09, .045, .24, .15, cols[6], -.22);
+    g.add(box(iron, bx + .15, y2, .09, .006, .16, .12), box(iron, bx + .105, y2, .09, .1, .006, .12));
+    // a ceramic vase of dried grasses
+    { const q = new T.Group(); q.position.set(.2, y2, .1); g.add(q);
+      q.add(fzLathe(R.glaze('#d9cdb4'), [[.001, 0], [.04, 0], [.056, .04], [.06, .09], [.04, .15], [.025, .2], [.03, .215], [.036, .22], [.028, .222], [.022, .205], [.001, .19]], 0, 0, 0, 16));
+      q.add(fzTor(R.glaze('#7a5a3a'), 0, .085, 0, .059, .005, PI / 2, 0, 0, 4, 18));
+      const gm = R.matte('#cdb381');
+      [[-.12, .2, .2], [.0, .3, .4], [.14, .26, .0], [.06, .2, -.3], [-.06, .24, .6]].forEach(([lx, hh, lz], i) => { q.add(R.stem(gm, [[0, .21, 0], [lx * .4, .21 + hh * .5, lz * .1], [lx, .21 + hh, lz * .2]], .0028, .0016, 4, 8)); q.add(fzPuff(R.matte(i % 2 ? '#e3cd9a' : '#d8bd86'), lx, .21 + hh, lz * .2, .02, .075, .02, 2.4, 4).rotateZ(-lx * 1.2)); }); }
+    // a brass dish on two books
+    lbook(.38, y2, .08, .24, .04, .17, '#2f5f8a', .1); lbook(.385, y2 + .04, .08, .21, .03, .15, '#c9574a', -.12);
+    g.add(fzLathe(br, [[.001, 0], [.035, 0], [.05, .012], [.07, .028], [.072, .034], [.066, .03], [.05, .018], [.001, .006]], .385, y2 + .07, .08, 16));
+  } });
+
+  /* ====================== bathroom scale ====================== */
+  // A flat glass scale: a white rounded base with a chrome line, a frosted mint glass top with a pattern of dots, four rubber feet and a little glowing display at the front.
+  add('bathscale', 12, 'Bathroom', { fp: [.18, .18], b: g => {
+    const W = .36, D = .36, ol = R.rect(W, D, .06, 6);
+    [[-.14, -.14], [.14, -.14], [-.14, .14], [.14, .14]].forEach(([x, z]) => g.add(mesh(CYL, R.matte('#26262a'), x, .004, z, .022, .008, .022)));
+    slab(g, R.glaze('#f3f1ea'), ol, 0, .008, 0, .026, .008);
+    band(g, CHR(), ol, 0, .02, 0, -.003, .0, .008);
+    const gl = tex2('scaleglass6', 128, 128, (c, w, h) => {
+      const gr = c.createLinearGradient(0, 0, w, h); gr.addColorStop(0, '#8fd3bc'); gr.addColorStop(1, '#6fbba3'); c.fillStyle = gr; c.fillRect(0, 0, w, h);
+      c.fillStyle = 'rgba(245,255,250,.7)'; for (let j = 0; j < 8; j++) for (let i = 0; i < 8; i++) { c.beginPath(); c.arc(8 + i * 16 + (j % 2) * 8, 8 + j * 16, 2.2, 0, TAU); c.fill(); }
+      c.strokeStyle = 'rgba(255,255,255,.4)'; c.lineWidth = 2; c.strokeRect(5, 5, w - 10, h - 10);
+    }, 0);
+    gl.map.offset.set(.5, .5);
+    slab(g, gl, R.rect(W - .03, D - .03, .05, 6), 0, .034, 0, .012, .004, 0, 3);
+    g.add(box(BLACKGLASS(), 0, .046, .13, .1, .003, .04));
+    [-.028, 0, .028].forEach(x => g.add(box(GL('#7ff0d0'), x, .049, .13, .018, .001, .005)));
+  } });
+
+  /* ====================== trash can ====================== */
+  // A stainless step bin: brushed steel body on a dark base ring, a black domed lid with a chrome rim and a hinge at the back, and a foot pedal at the front.
+  add('trashcan', 10, 'Bathroom', { fp: [.17, .2], b: g => {
+    const st = STEEL('#b4bcc6'), blk = R.metal('#26272b', 60, '#999999');
+    g.add(fzLathe(blk, [[.001, 0], [.14, 0], [.152, .012], [.155, .035], [.15, .04], [.001, .04]], 0, 0, 0, 28));
+    g.add(fzLathe(st, [[.001, .04], [.155, .04], [.158, .05], [.162, .2], [.164, .38], [.166, .405], [.158, .41], [.001, .41]], 0, 0, 0, 28));
+    g.add(fzTor(CHR(), 0, .405, 0, .166, .007, PI / 2, 0, 0, 6, 28));
+    g.add(fzLathe(blk, [[.17, .41], [.172, .428], [.16, .452], [.12, .478], [.07, .494], [.03, .5], [.001, .502]], 0, 0, 0, 28));
+    g.add(fzLathe(CHR(), [[.001, .5], [.022, .5], [.02, .512], [.001, .516]], 0, 0, 0, 12));
+    g.add(box(CHR(), 0, .39, -.17, .09, .05, .02), fzAlongX(CHR(), 0, .428, -.178, .011, .1));
+    g.add(box(blk, 0, .018, .15, .12, .014, .05), box(R.matte('#26272b'), 0, .012, .2, .13, .01, .03), box(CHR(), 0, .02, .152, .016, .05, .014));
+  } });
+
+  /* ====================== ironing board ====================== */
+  // A tall folding board with a printed cover, a padded rounded top that narrows to a nose, steel X-legs with cross bars and rubber feet, a steel iron rest on the nose and a lilac steam iron on it with its cord hanging down.
+  add('ironingboard', 18, 'Bathroom', { fp: [.6, .2], b: g => {
+    const L = 1.18, hw = x => .17 - .105 * sst(.3, 1, (x + L / 2) / L), y = .8;
+    const outl = d => { const p = [], N = 64; for (let i = 0; i < N; i++) { const t = i / N * TAU, s = Math.sin(t), x = Math.cos(t) * (L / 2 - d); p.push([x, Math.sign(s) * Math.pow(Math.abs(s), .55) * Math.max(.001, hw(x) - d)]); } return p; };
+    const cover = tex2('ironcover', 128, 128, (c, w, h) => {
+      c.fillStyle = '#cfe3ef'; c.fillRect(0, 0, w, h);
+      c.strokeStyle = 'rgba(70,110,140,.18)'; c.lineWidth = 1; for (let i = 0; i < 128; i += 4) { c.beginPath(); c.moveTo(i, 0); c.lineTo(i, h); c.stroke(); }
+      for (let i = 0; i < 16; i++) { const x = (i % 4) * 32 + 16 + ((i >> 2) & 1) * 16 - 8, y2 = (i >> 2) * 32 + 16; c.fillStyle = '#ffffff'; for (let k = 0; k < 5; k++) { const a = k / 5 * TAU; c.beginPath(); c.ellipse(x + Math.cos(a) * 5, y2 + Math.sin(a) * 5, 4, 2.6, a, 0, TAU); c.fill(); } c.fillStyle = '#f2b6c4'; c.beginPath(); c.arc(x, y2, 2.6, 0, TAU); c.fill(); }
+    }, 0);
+    slab(g, cover, outl, 0, y - .02, 0, .07, .022, 0, 2.4);
+    slab(g, STEEL('#9aa3ae'), d => outl(d + .006), 0, y - .05, 0, .03, .004);
+    // the frame: two X-leg sides, joined by cross bars, rubber feet
+    const lg = STEEL('#9aa3ae'), r = .0105, xc = -.02;
+    [1, -1].forEach(s => {
+      const z = s * .11;
+      rod(g, lg, [xc - .3, .02, z], [xc + .1, y - .05, z], r, 6); rod(g, lg, [xc + .3, .02, z], [xc - .1, y - .05, z], r, 6);
+      [xc - .3, xc + .3].forEach(x => g.add(fzLathe(R.matte('#2a2a2e'), [[.001, 0], [.022, 0], [.024, .016], [.014, .024], [.001, .024]], x, 0, z, 10)));
+    });
+    [xc - .3, xc + .3].forEach(x => g.add(fzAlongZ(lg, x, .022, 0, r, .24)));
+    g.add(fzAlongZ(lg, xc, .39, 0, r, .24), fzAlongZ(lg, xc - .095, y - .06, 0, r * .9, .24), fzAlongZ(lg, xc + .095, y - .06, 0, r * .9, .24));
+    // the iron rest on the nose
+    slab(g, STEEL('#8d96a2'), R.rect(.17, .1, .03, 5), .46, y + .05, 0, .012, .003);
+    // a lilac steam iron on the board, toe toward the nose
+    const q = new T.Group(); q.position.set(-.2, y + .05, .0); q.rotation.y = PI / 2 + .05; g.add(q);
+    const sp = new T.Shape(); sp.moveTo(0, -.108); sp.bezierCurveTo(.05, -.08, .056, 0, .05, .085); sp.lineTo(-.05, .085); sp.bezierCurveTo(-.056, 0, -.05, -.08, 0, -.108);
+    const sole = fzExt(STEEL('#b8c0ca'), sp, .012, 0, .006, 0, .002); sole.geometry.rotateX(-PI / 2); q.add(sole);
+    q.add(fzPuff(R.glaze('#a98bd0'), 0, .012, .0, .1, .065, .19, 3, 6), fzPuff(R.glaze('#c7b2e6'), 0, .062, -.004, .084, .03, .15, 3, 5), fzPuff(R.glaze('#7fbfe0'), 0, .052, .06, .06, .02, .06, 3, 4));
+    q.add(fzTube(R.glaze('#8d6fb8'), [[0, .075, -.07], [0, .13, -.06], [0, .15, .0], [0, .12, .06], [0, .085, .075]], .016, { rad: 7, seg: 14 }));
+    q.add(fzLathe(R.glaze('#f4f1e8'), [[.001, 0], [.02, 0], [.018, .012], [.001, .014]], 0, .074, .1, 10));
+    // the cord: along the board, off its edge and down to the floor
+    q.add(fzTube(R.matte('#2b2b30'), [[0, .03, -.095], [0, .02, -.14], [.05, .012, -.2], [.12, .01, -.26], [.2, -.1, -.3], [.24, -.45, -.3], [.26, -.82, -.3]], .005, { rad: 5, seg: 22 }));
+  } });
+
+  /* ====================== mop and bucket ====================== */
+  // A yellow bucket with a grey wringer basket and a wire handle, soapy water, a cotton string mop standing in it (a long wooden handle, strings draped over the rim) and a pair of rubber gloves over the edge.
+  add('mopbucket', 14, 'Bathroom', { fp: [.24, .24], b: g => {
+    const pl = R.metal('#f2c230', 70, '#bbbbbb'), gy = R.metal('#9aa0a8', 60, '#aaaaaa'), wd = R.wood('#c9a56a', { v: 1, k: 'mp' });
+    g.add(fzLathe(pl, [[.001, 0], [.12, 0], [.14, .01], [.16, .12], [.18, .25], [.19, .3], [.196, .31], [.2, .318], [.196, .326], [.186, .322], [.176, .31], [.16, .15], [.14, .04], [.001, .03]], 0, 0, 0, 28));
+    // the soapy water inside and a grey wringer basket on one side of the rim
+    g.add(fzLathe(WATER(.75, '#bfe3f0'), [[.001, .205], [.178, .205], [.18, .21], [.001, .214]], 0, 0, 0, 20));
+    for (let i = 0; i < 7; i++) { const a = i * 2.3; pearl(g, R.matte('#ffffff'), Math.cos(a) * (.04 + (i % 3) * .035), .218, Math.sin(a) * (.04 + (i % 3) * .03), .018 + (i % 2) * .008, .014, .018 + (i % 2) * .008); }
+    g.add(box(gy, 0, .27, -.185, .26, .035, .03), box(gy, -.13, .24, -.1, .016, .08, .18), box(gy, .13, .24, -.1, .016, .08, .18));
+    // the wire handle through two lugs
+    [-1, 1].forEach(s => { g.add(box(pl, s * .19, .27, .0, .02, .03, .026)); });
+    g.add(fzTube(CHR(), [[-.19, .29, 0], [-.18, .42, 0], [-.1, .5, 0], [0, .52, 0], [.1, .5, 0], [.18, .42, 0], [.19, .29, 0]], .0055, { rad: 6, seg: 22 }));
+    g.add(fzTube(R.matte('#d84a3c'), [[-.06, .518, 0], [0, .525, 0], [.06, .518, 0]], .013, { rad: 7, seg: 6 }));
+    // the mop: a long handle leaning in the bucket, strings in the water and over the rim
+    const q = new T.Group(); q.position.set(.04, .05, .02); q.rotation.set(-.1, 0, .12); g.add(q);
+    q.add(mesh(CYL, wd, 0, .65, 0, .013, 1.3, .013), fzLathe(CHR(), [[.014, 1.2], [.017, 1.206], [.017, 1.3], [.012, 1.304]], 0, 0, 0, 8));
+    q.add(fzLathe(R.matte('#d84a3c'), [[.001, 1.3], [.018, 1.3], [.02, 1.33], [.012, 1.36], [.001, 1.37]], 0, 0, 0, 8));
+    q.add(fzLathe(gy, [[.02, .06], [.04, .1], [.04, .16], [.02, .2], [.014, .24]], 0, 0, 0, 8));
+    const sm = R.cloth('#efe8d6', { kind: 'boucle', k: 'mop' });
+    for (let i = 0; i < 12; i++) { const a = i / 12 * TAU, c = Math.cos(a), s2 = Math.sin(a); q.add(fzTube(sm, [[c * .02, .14, s2 * .02], [c * .05, .12, s2 * .05], [c * .08, .06, s2 * .08], [c * .085, -.02, s2 * .085]], .011, { rad: 5, seg: 8 })); }
+    // a few wet strings hanging over the front of the rim
+    [-.06, 0, .06].forEach((dx, i) => g.add(fzTube(sm, [[dx, .22, .04], [dx * 1.3, .32, .14], [dx * 1.5, .33, .2], [dx * 1.6, .24, .215], [dx * 1.6, .12, .212]], .011, { rad: 5, seg: 12 })));
+    // yellow rubber gloves over the rim
+    const gm = R.metal('#f0c42a', 60, '#888888');
+    [[-.08, .2], [.05, .12]].forEach(([x, rot], i) => { const gp = new T.Group(); gp.position.set(-.15 + i * .02, .3 - i * .01, .15 - i * .02); gp.rotation.set(.0, .5 + i * .5, 0); g.add(gp);
+      gp.add(fzPuff(gm, 0, 0, 0, .1, .02, .12, 3, 5)); for (let k = 0; k < 4; k++) gp.add(fzPuff(gm, -.035 + k * .023, 0, .09 + (k === 1 || k === 2 ? .015 : 0), .018, .018, .07, 3, 3)); gp.add(fzPuff(gm, .066, 0, .04, .02, .018, .06, 3, 3).rotateY(-.7)); gp.add(fzPuff(gm, 0, 0, -.1, .09, .028, .12, 3, 5)); });
+  } });
+
+  /* ====================== vacuum cleaner ====================== */
+  // An upright vacuum: a red motor housing, a clear dust cup with grey dust, a slim dark spine with a loop handle, a wide floor head with a brush strip and two little wheels, and the cord wound round two hooks on the back.
+  add('vacuum', 30, 'Bathroom', { fp: [.22, .24], b: g => {
+    const red = R.glaze('#cf3a3a'), blk = R.metal('#2a2b30', 50, '#aaaaaa'), dk = R.glaze('#3c3f47'), cord = R.matte('#26272b');
+    // the floor head
+    g.add(fzPuff(red, 0, .018, .1, .34, .075, .28, 3.2, 8));
+    g.add(box(blk, 0, .0, .1, .34, .02, .26), fzPuff(blk, 0, .02, .235, .3, .035, .03, 3, 4), box(R.matte('#efe6cf'), 0, .006, .236, .3, .012, .012));
+    g.add(fzPuff(R.glassMat(.5), 0, .082, .115, .24, .018, .16, 3, 5), box(R.matte('#7a2a2a'), 0, .092, .115, .22, .006, .03));
+    [-1, 1].forEach(s => g.add(fzLathe(blk, [[.001, -.012], [.035, -.012], [.04, -.006], [.04, .006], [.035, .012], [.001, .012]], s * .17, .04, -.04, 14).rotateZ(PI / 2)));
+    // the body leans back a little from the pivot
+    const q = new T.Group(); q.position.set(0, .1, -.04); q.rotation.x = -.16; g.add(q);
+    q.add(fzAlongX(blk, 0, .02, 0, .045, .26));
+    q.add(fzPuff(red, 0, .02, -.01, .27, .34, .22, 3, 8), fzPuff(dk, 0, .3, -.01, .24, .05, .2, 3, 6));
+    // the clear dust cup in the front, with grey dust, a lid and a release button
+    q.add(fzLathe(CLEAR(.38, '#eef6fa'), [[.07, .08], [.078, .1], [.08, .3], [.07, .31]], 0, 0, .13, 18));
+    q.add(fzLathe(R.matte('#8a8d94'), [[.001, .1], [.068, .1], [.07, .12], [.045, .17], [.001, .2]], 0, 0, .13, 14));
+    q.add(fzLathe(dk, [[.001, .31], [.074, .31], [.078, .32], [.07, .34], [.001, .345]], 0, 0, .13, 18), fzLathe(blk, [[.001, .075], [.074, .075], [.08, .085], [.001, .09]], 0, 0, .13, 18));
+    q.add(fzLathe(CHR(), [[.001, 0], [.012, 0], [.012, .014], [.001, .016]], 0, .35, .13, 10));
+    // the spine and the loop handle
+    q.add(fzPuff(dk, 0, .33, -.04, .13, .56, .1, 3, 6));
+    q.add(fzTube(red, [[-.075, .84, -.04], [-.082, .98, -.04], [-.04, 1.07, -.04], [.04, 1.07, -.04], [.082, .98, -.04], [.075, .84, -.04]], .016, { rad: 8, seg: 28 }));
+    q.add(fzPuff(blk, 0, 1.045, -.04, .09, .045, .045, 3, 4), mesh(SPH6, GL('#7ff0d0'), .0, .6, .015, .008, .008, .006));
+    // the cord: two hooks on the back and three turns of cord
+    [.5, .72].forEach(y => q.add(box(blk, 0, y, -.1, .03, .02, .05), box(CHR(), 0, y - .004, -.138, .046, .028, .012)));
+    [0, 1, 2].forEach(i => q.add(fzTor(cord, 0, .53 + i * .014 + (i ? .08 : 0) * 0, -.118, .035, .006, PI / 2, 0, 0, 5, 14).translateY(.0)));
+    q.add(fzTube(cord, [[.035, .62, -.12], [.07, .5, -.14], [.1, .3, -.15], [.12, .1, -.1], [.2, .02, -.0], [.3, .012, .08], [.34, .012, .2]], .006, { rad: 5, seg: 20 }));
+  } });
+
+})();
 /* ================= yard-expansion.js: three backyard expansions, each with fancier landscaping (Demi, 2026-10-21) =================
 Drop-in (after rooms.js and backhouse.js; same place as furniture-interact.js). The yard level is save.hs[3] (0 = the yard everybody has, 1..3 = bought).
   level 0  yard 15 wide, 11 deep (as now)                       price -
   level 1  Cottage garden:  21 wide, 15 deep: wrought-iron fence with brick posts, a cobble path, flower beds, gas lamps, an arched gate, blossom and maple trees
   level 2  Rose garden:     27 wide, 19 deep: + a rose arbour with two benches, topiary urns, a bird bath, a lily pond with a little bridge, string lights, a fire pit with log seats
   level 3  Grand garden:    33 wide, 23 deep: + a three-tier fountain plaza, a white gazebo with fairy lights, a rose tunnel, cat-shaped topiary, a tall hedge all round, lanterns
+v36.6 (Demi: "remove and reorganize the grand garden items"): this file now draws only the lawn, the fence, the path, the gate and the hedges. The trees, beds, lamps, benches, fountain, gazebo and the rest are loose Garden pieces (garden-pieces.js, ids gy_*) that the kid drags, turns and puts away like any furniture; their builders come from `window.kcYardB` below.
 Each level redraws the whole yard for its size (it never stacks old pieces). Nothing blocks walking except the fountain, the ponds, the trees and the fire pit (kitties walk through the arbour, gazebo and tunnel).
 Needs 5 small edits in game files (listed in README-plug-in.md, "yard expansions"): b6.js puts the plain fence, lavender hedge and far trees in `yardFenceG` so a bigger yard can hide them;
 c2.js reads the camera limits from kcYardHalf() / kcYardBack(); cleanHs keeps a 4th number (the yard level) so visitors see the same yard.
@@ -50452,13 +51136,11 @@ Prices are coins as the kid sees them (not halved again). Visitors see the yard 
   // hs[3] = the yard size (0..3) + 4 when the kid has emptied the garden (v36.1, Demi: "make sure the grand garden can be removable"): the lawn and the fence stay, everything else goes
   const lvOf = hs => { const v = (hs && hs[3]) | 0; return v >= 0 && v <= 7 ? v & 3 : 0; };
   const emptyOf = hs => { const v = (hs && hs[3]) | 0; return v >= 4 && v <= 7; };
-  let cur2 = 0, cur = 0, yardG = null, mineFLW = [], mineObst = [], fenceHidden = [];
+  let cur = 0, yardG = null;
   window.kcYardHalf = () => KC_YARD[cur].half; window.kcYardBack = () => KC_YARD[cur].back; window.kcYardLevel = () => cur; window.KC_YARD = KC_YARD;
   const P = (x, y, z) => [x, y, z];
   const IR = '#2f3330', BRICK = '#b0573a', CREAM = '#f6f1e6';
   const rnd = s => { const x = Math.sin(s * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
-  const flw = () => {};   // the bees' landing spots are worked out once when the page starts (bugs2.js), so the list must not change: new beds get no bees
-  const obst = (x, z, r) => { const o = [x, z, r]; HOUSE_OBST.push(o); mineObst.push(o); };
 
   /* ---------- little builders ---------- */
   function tree(g, x, z, s, kind) {
@@ -50479,19 +51161,6 @@ Prices are coins as the kid sees them (not halved again). Visitors see the yard 
     [.12, .82].forEach(y => { const r = box(IR, (x0 + x1) / 2, y, (z0 + z1) / 2, .04, .05, L); r.rotation.y = ang; g.add(r); });
     const m = Math.max(2, Math.round(L / 2.4));
     for (let i = 0; i <= m; i++) { const t = i / m, bx = x0 + (x1 - x0) * t, bz = z0 + (z1 - z0) * t; g.add(box(BRICK, bx, 0, bz, .3, 1.15, .3), box('#e8dcc4', bx, 1.15, bz, .38, .07, .38), sph(.09, '#e8dcc4', bx, 1.28, bz)); }
-  }
-  // a raised flower bed with a stone edge. Its flowers only open once a kitty waters it (garden-water.js): until then there are green buds and dry soil.
-  function bed(g, x, z, w, d, seed, cols) {
-    const e = '#cfc6b3'; g.add(box(e, x, -.1, z - d / 2, w + .2, .24, .1), box(e, x, -.1, z + d / 2, w + .2, .24, .1), box(e, x - w / 2, -.1, z, .1, .24, d), box(e, x + w / 2, -.1, z, .1, .24, d));
-    const soil = box('#8d6a4a', x, -.1, z, w, .2, d); soil.material = soil.material.clone(); soil.userData.dyn = 1; g.add(soil);
-    const bud = new T.Group(), bl = new T.Group(); bud.position.set(x, .2, z); bl.position.set(x, .2, z);
-    for (let i = 0; i < Math.round(w * d * 4); i++) {
-      const fx = x + (rnd(seed + i) - .5) * (w - .15), fz = z + (rnd(seed + i * 3) - .5) * (d - .15), fy = .22 + rnd(seed + i * 7) * .12;
-      bl.add(lsph(.08, cols[i % cols.length], fx - x, fy - .2, fz - z)); bud.add(lsph(.045, '#6faa56', fx - x, fy - .2 - .02, fz - z, 1, 1.3, 1)); g.add(lcyl('#4f8a46', fx, .06, fz, .012, .2)); if (i % 3 === 0) flw(fx, .38, fz);
-    }
-    bake(bl); bake(bud); bl.userData.dyn = 1; bud.userData.dyn = 1; g.add(bl, bud);
-    g.add(lsph(.16, '#4f8a46', x - w / 2 + .15, .22, z, 1, .7, 1), lsph(.16, '#4f8a46', x + w / 2 - .15, .22, z, 1, .7, 1));
-    (window.kcBeds || (window.kcBeds = [])).push({ key: 'y' + cur2 + ':' + Math.round(x * 2) + ',' + Math.round(z * 2), x, z, hw: w / 2, hd: d / 2, soil, bud, bl, v: null });
   }
   function bush(g, x, z, r, c) { g.add(lsph(r, c || '#3f6a3a', x, r * .85, z, 1, .85, 1), lsph(r * .6, shade(c || '#3f6a3a', 1.15), x - r * .3, r * 1.2, z + r * .2)); }
   function urn(g, x, z) { g.add(fzLathe('#d8cbb0', [[.001, 0], [.2, 0], [.26, .12], [.2, .35], [.28, .42], [.001, .42]], x, 0, z, 14), lsph(.3, '#3f7a3a', x, .72, z), lsph(.06, '#ff8fb0', x + .15, .95, z), lsph(.06, '#ffd23f', x - .12, .98, z + .08)); }
@@ -50538,55 +51207,39 @@ Prices are coins as the kid sees them (not halved again). Visitors see the yard 
     t.add(box('#8a8a80', 0, 0, 0, .9, .25, .9), lsph(.6, c, 0, .95, 0, 1, 1.05, 1.1), lsph(.4, shade(c, 1.1), 0, 1.75, .35), mesh(CONE, c, -.22, 2.15, .35, .13, .3, .1), mesh(CONE, c, .22, 2.15, .35, .13, .3, .1), fzTube(c, [P(0, .7, -.5), P(0, .6, -.9), P(0, 1.1, -1.05), P(0, 1.5, -.8)], .1, { seg: 12, rad: 6 }), sph(.05, '#fff', -.14, 1.8, .7), sph(.05, '#fff', .14, 1.8, .7));
   }
 
-  /* ---------- the yard for one level ---------- */
-  function build(lv, empty) {
-    const g = new T.Group(), Y = KC_YARD[lv], XH = Y.fence, ZB = Y.fback, hx = Y.half;
+  function birdbath(g, x, z) { g.add(fzLathe('#d8d0c0', [[.001, 0], [.18, 0], [.12, .5], [.16, .7], [.45, .85], [.5, .95], [.001, .95]], x, 0, z, 18), cyl('#8fd0e8', x, .9, z, .44, .04)); }
+  function pond(g, px, pz) {   // a lily pond with a little wooden bridge on its front (+z) side
+    g.add(cyl('#cfc6b3', px, -.1, pz, 1.7, .2), cyl('#6fb0d0', px, .02, pz, 1.5, .1));
+    for (let i = 0; i < 5; i++) g.add(lsph(.22, '#5f9a52', px + Math.cos(i * 1.7) * .8, .15, pz + Math.sin(i * 1.7) * .8, 1, .12, 1), lsph(.07, '#ff8fb0', px + Math.cos(i * 1.7) * .8, .2, pz + Math.sin(i * 1.7) * .8));
+    [[.3, .2, '#ff8a3a'], [-.5, -.3, '#fff'], [.6, -.5, '#ff8a3a']].forEach(([dx, dz, c]) => g.add(lsph(.12, c, px + dx, .12, pz + dz, 1.6, .4, .7)));
+    g.add(box(M.wood('#a07850'), px, .0, pz + 1.9, 1.0, .12, 2.2), box(M.wood('#8a6a46'), px + .5, .1, pz + 1.9, .05, .5, 2.0), box(M.wood('#8a6a46'), px - .5, .1, pz + 1.9, .05, .5, 2.0));
+  }
+  function firepit(g, fx, fz) {   // a ring of stones with embers and four log seats
+    g.add(fzTor('#8a8a80', fx, .1, fz, .75, .16, Math.PI / 2, 0, 0, 6, 16), cyl('#3a2a20', fx, .02, fz, .62, .12), lsph(.24, glow('#ff8a2a'), fx, .26, fz, 1, .7, 1), lsph(.15, glow('#ffd23f'), fx + .1, .34, fz, 1, .8, 1));
+    for (let i = 0; i < 4; i++) { const a = i * Math.PI / 2 + .4; g.add(lcyl('#8a5a3a', fx + Math.sin(a) * 1.35, 0, fz + Math.cos(a) * 1.35, .26, .4), cyl('#c49a6a', fx + Math.sin(a) * 1.35, .4, fz + Math.cos(a) * 1.35, .22, .02)); }
+  }
+  function roseArch(g, z) {   // one arch of the rose tunnel, across the path
+    [-1.1, 1.1].forEach(s => g.add(lcyl(CREAM, s, 0, z, .04, 2.2))); g.add(fzTube(CREAM, [P(-1.1, 2.2, z), P(-.6, 2.65, z), P(0, 2.8, z), P(.6, 2.65, z), P(1.1, 2.2, z)], .035, { seg: 18, rad: 5 }));
+    [-1, 1].forEach(s => { for (let i = 0; i < 5; i++) g.add(lsph(.12, '#4f8a46', s * 1.1, .4 + i * .45, z), lsph(.06, i % 2 ? '#e8456a' : '#ff8fb0', s * 1.1 + s * .08, .45 + i * .45, z + .06)); });
+    for (let i = 0; i < 4; i++) g.add(lsph(.11, '#4f8a46', -.9 + i * .6, 2.6 + Math.sin(i / 3 * Math.PI) * .2, z), lsph(.06, '#ffd0dc', -.9 + i * .6, 2.68, z));
+  }
+  // the loose garden pieces (garden-pieces.js) are drawn with these, each at its own origin
+  window.kcYardB = { tree, lamp, bush, urn, bench, arbour, fountain, gazebo, topiaryCat, birdbath, pond, firepit, roseArch, plaza: (g, x, z) => g.add(cyl('#e0d4ba', x, -.1, z, 3.2, .1), cyl('#cbbd9f', x, -.09, z, 3.2 - .0001, .01)) };
+
+  /* ---------- the yard for one level: only the lawn, the fence, the path, the gate and the hedges; everything else is a loose piece (garden-pieces.js) ---------- */
+  function build(lv) {
+    const g = new T.Group(), Y = KC_YARD[lv], XH = Y.fence, ZB = Y.fback;
     // grass is the world's (the house's big green plane); a slightly different patch marks the yard, like the original
     g.add(box(M.grass('#a3bf72'), 0, -.12, (ZB - 5.4) / 2 - 0, XH * 2 - .2, .1, 5.4 - ZB - .2 - 0));
     ironFence(g, -XH, -5.4, -XH, ZB); ironFence(g, XH, -5.4, XH, ZB); ironFence(g, -XH, ZB, XH, ZB);
-    if (empty) { bake(g); return g; }   // an empty garden: just the lawn and the fence, ready to decorate
     path(g, -6.1, ZB + 2.2, 1.8);
-    // flower beds along the path (both sides) and along the fence
-    const cols = [['#ff8fb0', '#ffd23f', '#fff'], ['#9b86c4', '#fff', '#ff8fb0'], ['#ffd23f', '#ff9a3a', '#fff']];
-    for (let i = 0; i < 4; i++) [-1, 1].forEach((s, k) => bed(g, s * 2.4, -8.2 - i * 2.6, 2.0, 1.2, 10 * i + k * 50 + lv, cols[(i + k) % 3]));
-    for (let z = -7; z > ZB + 1; z -= 3.2) [-1, 1].forEach(s => bed(g, s * (XH - .8), z, 1.0, 2.2, z + s * 9 + lv, cols[(Math.floor(-z) + (s > 0 ? 1 : 0)) % 3]));
-    // gas lamps along the path
-    [-8, -12.5].forEach(z => [-1, 1].forEach(s => lamp(g, s * 1.2, z)));
     // gate arch at the end of the path, boxwood balls, lavender along the back
     [-1, 1].forEach(s => { g.add(lcyl(IR, s * 1.05, 0, ZB + .4, .05, 2.5)); bush(g, s * 1.9, ZB + 1.0, .5); });
     g.add(fzTube(IR, [P(-1.05, 2.45, ZB + .4), P(-.5, 3.0, ZB + .4), P(0, 3.15, ZB + .4), P(.5, 3.0, ZB + .4), P(1.05, 2.45, ZB + .4)], .04, { seg: 20, rad: 6 }), sph(.08, '#d9b23a', 0, 3.25, ZB + .4));
-    for (let x = -XH + 1.2; x <= XH - 1.2; x += .8) { if (Math.abs(x) < 1.4) continue; g.add(lsph(.4, x % 1.6 ? '#9b86c4' : '#8a74b8', x, .35, ZB + .9, 1, .8, 1)); flw(x, .8, ZB + .9); }
-    // trees: blossom, maple, apple
-    const T1 = [[-hx + 1.2, -9.5, 1, 'blossom'], [hx - .8, ZB + 3, 1.05, 'maple'], [-hx + .8, ZB + 3.2, 1.0, 'apple']];
-    if (lv >= 2) T1.push([hx - 1.2, -7.6, .95, 'blossom'], [-hx + .6, -14.5, 1.0, 'maple']);
-    if (lv >= 3) T1.push([hx - .8, -15, 1.0, 'green'], [-hx + .8, ZB + 7.5, 1.0, 'blossom'], [hx - .8, ZB + 8, 1.05, 'maple']);
-    T1.forEach(([x, z, s, k]) => { tree(g, x, z, s, k); obst(x, z, .45 * s); });
-    [[-hx + 1.6, ZB + 1.6], [hx - 1.6, ZB + 1.6]].forEach(([x, z]) => bush(g, x, z, .6));
-    if (lv >= 2) {
-      // rose arbour with two benches, urns, a bird bath, a lily pond with a bridge, string lights, a fire pit
-      arbour(g, 0, -15.0, 0); [-1, 1].forEach(s => { bench(g, s * 2.6, -15.0, -s * Math.PI / 2); urn(g, s * 1.2, -13.3); });
-      g.add(fzLathe('#d8d0c0', [[.001, 0], [.18, 0], [.12, .5], [.16, .7], [.45, .85], [.5, .95], [.001, .95]], -4.6, 0, -11.2, 18), cyl('#8fd0e8', -4.6, .9, -11.2, .44, .04));
-      const px = hx - 3.2, pz = -17.5; g.add(cyl('#cfc6b3', px, -.1, pz, 1.7, .2), cyl('#6fb0d0', px, .02, pz, 1.5, .1)); obst(px, pz, 1.5);
-      for (let i = 0; i < 5; i++) g.add(lsph(.22, '#5f9a52', px + Math.cos(i * 1.7) * .8, .15, pz + Math.sin(i * 1.7) * .8, 1, .12, 1), lsph(.07, '#ff8fb0', px + Math.cos(i * 1.7) * .8, .2, pz + Math.sin(i * 1.7) * .8));
-      [[.3, .2, '#ff8a3a'], [-.5, -.3, '#fff'], [.6, -.5, '#ff8a3a']].forEach(([dx, dz, c]) => g.add(lsph(.12, c, px + dx, .12, pz + dz, 1.6, .4, .7)));
-      const br = box(M.wood('#a07850'), px, .0, pz + 1.9, 1.0, .12, 2.2); g.add(br, box(M.wood('#8a6a46'), px + .5, .1, pz + 1.9, .05, .5, 2.0), box(M.wood('#8a6a46'), px - .5, .1, pz + 1.9, .05, .5, 2.0));
-      stringLights(g, -1.2, 2.3, -8, 1.2, 2.3, -8, 10); stringLights(g, -1.2, 2.3, -12.5, 1.2, 2.3, -12.5, 10); stringLights(g, -1.2, 2.3, -8, -1.2, 2.3, -12.5, 8); stringLights(g, 1.2, 2.3, -8, 1.2, 2.3, -12.5, 8);
-      const fx = -hx + 3.4, fz = -9.2; g.add(fzTor('#8a8a80', fx, .1, fz, .75, .16, Math.PI / 2, 0, 0, 6, 16), cyl('#3a2a20', fx, .02, fz, .62, .12), lsph(.24, glow('#ff8a2a'), fx, .26, fz, 1, .7, 1), lsph(.15, glow('#ffd23f'), fx + .1, .34, fz, 1, .8, 1)); obst(fx, fz, .8);
-      for (let i = 0; i < 4; i++) { const a = i * Math.PI / 2 + .4; g.add(lcyl('#8a5a3a', fx + Math.sin(a) * 1.35, 0, fz + Math.cos(a) * 1.35, .26, .4), cyl('#c49a6a', fx + Math.sin(a) * 1.35, .4, fz + Math.cos(a) * 1.35, .22, .02)); }
-    }
-    if (lv >= 3) {
-      fountain(g, 0, ZB + 5.5); obst(0, ZB + 5.5, 2.1);
-      [-1, 1].forEach(s => { bench(g, s * 3.6, ZB + 5.5, -s * Math.PI / 2); urn(g, s * 2.9, ZB + 3.0); });
-      g.add(cyl('#e0d4ba', 0, -.1, ZB + 5.5, 3.2, .1), cyl('#cbbd9f', 0, -.09, ZB + 5.5, 3.2 - .0001, .01));
-      gazebo(g, -hx + 3.5, -10.5);
-      topiaryCat(g, 2.9, -10.4, -.5, '#3f7a3a'); topiaryCat(g, -2.9, -10.4, .5, '#4a8a42');
-      // the hedge all round, inside the fence
+    for (let x = -XH + 1.2; x <= XH - 1.2; x += .8) { if (Math.abs(x) < 1.4) continue; g.add(lsph(.4, x % 1.6 ? '#9b86c4' : '#8a74b8', x, .35, ZB + .9, 1, .8, 1)); }
+    if (lv >= 3) {   // the hedge all round, inside the fence
       [-XH + .55, XH - .55].forEach(x => { for (let z = -6.4; z > ZB + .5; z -= .9) g.add(lsph(.55, '#3f6a3a', x, .6, z, 1, 1.1, 1)); });
       for (let x = -XH + 1.2; x < XH - 1; x += .9) { if (Math.abs(x) < 1.5) continue; g.add(lsph(.55, '#3f6a3a', x, .6, ZB + .55, 1, 1.1, 1)); }
-      // rose tunnel along the path
-      for (let k = 0; k < 4; k++) { const z = -9.0 - k * 1.2; [-1.1, 1.1].forEach(s => g.add(lcyl(CREAM, s, 0, z, .04, 2.2))); g.add(fzTube(CREAM, [P(-1.1, 2.2, z), P(-.6, 2.65, z), P(0, 2.8, z), P(.6, 2.65, z), P(1.1, 2.2, z)], .035, { seg: 18, rad: 5 })); [-1, 1].forEach(s => { for (let i = 0; i < 5; i++) g.add(lsph(.12, '#4f8a46', s * 1.1, .4 + i * .45, z), lsph(.06, i % 2 ? '#e8456a' : '#ff8fb0', s * 1.1 + s * .08, .45 + i * .45, z + .06)); }); for (let i = 0; i < 4; i++) g.add(lsph(.11, '#4f8a46', -.9 + i * .6, 2.6 + Math.sin(i / 3 * Math.PI) * .2, z), lsph(.06, '#ffd0dc', -.9 + i * .6, 2.68, z)); }
-      [[-4.2, -7.6], [4.2, -7.6]].forEach(([x, z]) => lamp(g, x, z));
-      stringLights(g, -hx + 3.5 - 1.65, 2.9, -10.5, -1.2, 2.3, -8, 12); stringLights(g, 1.2, 2.3, -8, hx - 1.2, 2.5, -8, 12);
     }
     bake(g); return g;
   }
@@ -50596,16 +51249,14 @@ Prices are coins as the kid sees them (not halved again). Visitors see the yard 
     if (typeof yardFenceG !== 'undefined') yardFenceG.visible = lv === 0;
   }
   function applyYard(hs) {
-    const lv = lvOf(hs), empty = emptyOf(hs); cur = lv;
+    const lv = lvOf(hs); cur = lv;
     if (yardG) { houseScene.remove(yardG); yardG.traverse(o => { if (o.geometry) o.geometry.dispose(); }); yardG = null; }
-    mineFLW.forEach(f => { const i = houseFLW.indexOf(f); if (i >= 0) houseFLW.splice(i, 1); }); mineFLW = [];
-    mineObst.forEach(o => { const i = HOUSE_OBST.indexOf(o); if (i >= 0) HOUSE_OBST.splice(i, 1); }); mineObst = [];
     resetFence(lv);
     const Y = KC_YARD[lv], r = HOUSE_RECTS[2]; r.x0 = -Y.half; r.x1 = Y.half; r.z0 = Y.back;
     // the sun's shadow has to cover the bigger yard
     const L = 14 + lv * 3.2; Object.assign(hSun.shadow.camera, { left: -L, right: L, top: L + lv * 2, bottom: -L - lv * 2 }); hSun.shadow.camera.updateProjectionMatrix(); hSun.target.position.set(0, 0, -5 - lv * 2);
-    window.kcBeds = []; cur2 = lv;
-    if (lv > 0) { yardG = build(lv, empty); houseScene.add(yardG); }
+    window.kcBeds = [];
+    if (lv > 0) { yardG = build(lv); houseScene.add(yardG); }
   }
   const origInt = applyHouseInterior;
   applyHouseInterior = function (hs) { origInt(hs); applyYard(hs); };
@@ -50620,11 +51271,11 @@ Prices are coins as the kid sees them (not halved again). Visitors see the yard 
     const lv = lvOf(save.hs), row = h('div', 'hrow'), x = p.querySelector('.hx');
     if (lv >= 3) row.append(h('span', 'pill', '🌳 Grand garden!'));
     else { const up = KC_YARD[lv + 1], b = btn('', '🌳'); b.append(h('div', 'lbl', 'Bigger yard · ' + up.price + ' 🪙'));
-      b.onclick = () => { if (save.coins < up.price) { speak('You need ' + up.price + ' coins for a bigger yard. Keep working!'); return; } save.coins -= up.price; save.hs[3] = lv + 1 + (emptyOf(save.hs) ? 4 : 0); houseChanged('Wow! Your yard got bigger!'); speak(lv === 0 ? 'Your yard is bigger! Walk out the back door to see it.' : lv === 1 ? 'Your garden has roses now!' : 'You have a grand garden!'); };
+      b.onclick = () => { if (save.coins < up.price) { speak('You need ' + up.price + ' coins for a bigger yard. Keep working!'); return; } save.coins -= up.price; save.hs[3] = lv + 1 + (emptyOf(save.hs) ? 4 : 0); if (window.kcGarden) kcGarden.upgrade(lv + 1); houseChanged('Wow! Your yard got bigger!'); speak(lv === 0 ? 'Your yard is bigger! Walk out the back door to see it.' : lv === 1 ? 'Your garden has roses now!' : 'You have a grand garden!'); };
       row.append(b); }
     if (lv >= 1) {   // v36.1: empty the garden to decorate it another way, and put it back (free, any time)
       const e = emptyOf(save.hs), b = btn('', e ? '🌳' : '🚜'); b.append(h('div', 'lbl', e ? 'Garden back' : 'Empty garden'));
-      b.onclick = () => { save.hs[3] = lv + (e ? 0 : 4); houseChanged(e ? 'Your garden is back!' : 'Your garden is empty!'); speak(e ? 'Your garden is back!' : 'Your garden is empty. Now you can decorate it!'); };
+      b.onclick = () => { save.hs[3] = lv + (e ? 0 : 4); if (window.kcGarden) kcGarden.setEmpty(!e); houseChanged(e ? 'Your garden is back!' : 'Your garden is empty!'); speak(e ? 'Your garden is back!' : 'Your garden is empty. Now you can decorate it!'); };
       row.append(b);
     }
     if (x) p.insertBefore(row, x); else p.append(row);
@@ -50672,7 +51323,7 @@ Prices are coins as the kid sees them (not halved again). Visitors see the yard 
     const out = [];
     (window.kcBeds || []).forEach(b => out.push(b));
     if (window.kcInteract && typeof furnGroup !== 'undefined') kcInteract.items.forEach((it, idx) => {
-      const fd = FURN_BY_ID[it.i]; if (!fd || fd.id !== 'flowerbed') return;
+      const fd = FURN_BY_ID[it.i]; if (!fd || !/^(flowerbed|gy_bed)$/.test(fd.id)) return;
       const g = furnGroup.children[idx]; if (!g) return;
       let b = own.get(g);
       if (!b) { const soil = g.getObjectByName('bedsoil'), bl = g.getObjectByName('bedbloom'), bud = g.getObjectByName('bedbud'); if (!soil || !bl || !bud) return; soil.material = soil.material.clone(); b = { soil, bl, bud, v: null, idx }; own.set(g, b); }
@@ -50754,6 +51405,122 @@ Prices are coins as the kid sees them (not halved again). Visitors see the yard 
   };
   const oldLeave = leaveHouse; leaveHouse = function () { stopWater(); return oldLeave(); };
   const oldGo = kcGoRoom; kcGoRoom = function (id, q) { stopWater(); return oldGo(id, q); };
+})();
+/* ================= garden-pieces.js: the yard's trees, beds, lamps and the rest as loose pieces (Demi, v36.6: "i want to be able to remove and reorganize the grand garden items") =================
+After garden-water.js, before halfprice.js (build.sh). Until v36.5 the three bigger yards drew all of this themselves (yard-expansion.js `build`). Now yard-expansion.js draws only the lawn, the fence,
+the path, the gate and the hedges, and everything else is a free piece with an id that starts with `gy_`: the kid drags it, turns it and puts it away like any furniture (press and drag, drag onto the tray).
+The pieces are free and there are always enough (`furnForever`), they are not in the Home Store, and they show in the tray under Outdoors once the yard has been bought. A kid who already has a bigger yard
+finds every piece where it stood (`kcGarden.migrate`, once per save: `save.gyLv`). Buying a bigger yard moves the untouched pieces to the new fence line, or, when the kid has moved something, only adds the
+new level's pieces. Empty garden takes every piece away and remembers them (`save.gyKeep`), Garden back puts them where they were. The flower beds are `gy_bed`, a copy of the watered flowerbed.
+Pieces no longer block walking (the fountain, the pond, the trees and the fire pit used to); like the playground gear, a kitty walks through them. A visitor sees the same pieces (they travel in presence like any furniture).
+Test handle: window.kcGarden. No text, no emoji. */
+(function kcGardenPieces() {
+  const B = window.kcYardB; if (!B || typeof FURN === 'undefined') return;
+  // id, the yard level that first has it, how it is drawn at its own origin, half width and depth
+  const KINDS = [
+    ['gy_tree_green', 1, g => B.tree(g, 0, 0, 1, 'green'), [.6, .6]],
+    ['gy_tree_blossom', 1, g => B.tree(g, 0, 0, 1, 'blossom'), [.6, .6]],
+    ['gy_tree_maple', 1, g => B.tree(g, 0, 0, 1, 'maple'), [.6, .6]],
+    ['gy_tree_apple', 1, g => B.tree(g, 0, 0, 1, 'apple'), [.6, .6]],
+    ['gy_bush', 1, g => B.bush(g, 0, 0, .6), [.6, .6]],
+    ['gy_lamp', 1, g => B.lamp(g, 0, 0), [.3, .3]],
+    ['gy_urn', 1, g => B.urn(g, 0, 0), [.4, .4]],
+    ['gy_bench', 1, g => B.bench(g, 0, 0, 0), [.7, .25]],
+    ['gy_arbour', 2, g => B.arbour(g, 0, 0, 0), [1.1, .7]],
+    ['gy_birdbath', 2, g => B.birdbath(g, 0, 0), [.5, .5]],
+    ['gy_pond', 2, g => B.pond(g, 0, 0), [1.7, 1.7]],
+    ['gy_firepit', 2, g => B.firepit(g, 0, 0), [1.6, 1.6]],
+    ['gy_fountain', 3, g => { B.plaza(g, 0, 0); B.fountain(g, 0, 0); }, [3.2, 3.2]],
+    ['gy_gazebo', 3, g => B.gazebo(g, 0, 0), [2.3, 2.3]],
+    ['gy_topiary', 3, g => B.topiaryCat(g, 0, 0, 0, '#3f7a3a'), [.8, .8]],
+    ['gy_rosearch', 3, g => B.roseArch(g, 0), [1.2, .3]],
+  ];
+  const MIN = {};
+  KINDS.forEach(([id, min, b, fp]) => {
+    MIN[id] = min;
+    if (FURN_BY_ID[id]) return;
+    const f = { id, icon: '', price: 0, tab: 'Garden', garden: 1, bake: 1, b, fp };
+    f.i = FURN.length; FURN.push(f); FURN_BY_ID[id] = f;
+  });
+  const fb = FURN_BY_ID.flowerbed;   // garden-water.js has already given the flowerbed its buds and its watering spot
+  if (fb && !FURN_BY_ID.gy_bed) { const f = Object.assign({}, fb, { id: 'gy_bed', icon: '', price: 0 }); delete f.proto; f.i = FURN.length; FURN.push(f); FURN_BY_ID.gy_bed = f; MIN.gy_bed = 1; }
+  // the tray's kinds (c1thumbs.js): every yard piece is Outdoors, whatever its id says (a lamp would be a light, a bench a seat)
+  const origType = furnTypeOf;
+  furnTypeOf = function (f) { return f && /^gy_/.test(f.id) ? 'Outdoors' : origType(f); };
+
+  const lvOf = () => { const v = (save.hs && save.hs[3]) | 0; return v >= 0 && v <= 7 ? v & 3 : 0; };
+  const emptyOf = () => { const v = (save.hs && save.hs[3]) | 0; return v >= 4 && v <= 7; };
+  const living = () => (kcHeld !== 'living' && save.rooms && save.rooms.living) || save.house;
+  const isGy = it => it && /^gy_/.test(it.i);
+  const q = v => Math.round(v * 2) / 2;
+
+  /* ---------- where everything stood in each yard (the same places the old drawing used; the rotations are quarter turns) ---------- */
+  function layout(lv) {
+    const Y = KC_YARD[lv], hx = Y.half, XH = Y.fence, ZB = Y.fback, out = [];
+    const add = (i, x, z, r, min) => out.push({ i, x: q(x), z: q(z), r: r || 0, min });
+    for (let i = 0; i < 4; i++) [-1, 1].forEach(s => add('gy_bed', s * 2.4, -8.2 - i * 2.6, 0, 1));
+    for (let z = -7; z > ZB + 1; z -= 3.2) [-1, 1].forEach(s => add('gy_bed', s * (XH - .8), z, 1, 1));
+    [-8, -12.5].forEach(z => [-1, 1].forEach(s => add('gy_lamp', s * 1.2, z, 0, 1)));
+    add('gy_tree_blossom', -hx + 1.2, -9.5, 0, 1); add('gy_tree_maple', hx - .8, ZB + 3, 0, 1); add('gy_tree_apple', -hx + .8, ZB + 3.2, 0, 1);
+    add('gy_tree_blossom', hx - 1.2, -7.6, 0, 2); add('gy_tree_maple', -hx + .6, -14.5, 0, 2);
+    add('gy_tree_green', hx - .8, -15, 0, 3); add('gy_tree_blossom', -hx + .8, ZB + 7.5, 0, 3); add('gy_tree_maple', hx - .8, ZB + 8, 0, 3);
+    add('gy_bush', -hx + 1.6, ZB + 1.6, 0, 1); add('gy_bush', hx - 1.6, ZB + 1.6, 0, 1);
+    // the rose garden
+    add('gy_arbour', 0, -15, 0, 2); [-1, 1].forEach(s => { add('gy_bench', s * 2.6, -15, (4 - s) % 4, 2); add('gy_urn', s * 1.2, -13.3, 0, 2); });
+    add('gy_birdbath', -4.6, -11.2, 0, 2); add('gy_pond', hx - 3.2, -17.5, 0, 2); add('gy_firepit', -hx + 3.4, lv >= 3 ? -15.5 : -9.2, 0, 2);
+    // the grand garden
+    add('gy_fountain', 0, ZB + 5.5, 0, 3); [-1, 1].forEach(s => { add('gy_bench', s * 3.6, ZB + 5.5, (4 - s) % 4, 3); add('gy_urn', s * 2.9, ZB + 3, 0, 3); });
+    add('gy_gazebo', -hx + 3.5, -10.5, 0, 3); add('gy_topiary', 2.9, -10.4, 0, 3); add('gy_topiary', -2.9, -10.4, 0, 3);
+    for (let k = 0; k < 4; k++) add('gy_rosearch', 0, -9 - k * 1.2, 0, 3);
+    [-1, 1].forEach(s => add('gy_lamp', s * 4.2, -7.6, 0, 3));
+    return out.filter(d => d.min <= lv);
+  }
+  const sig = it => it.i + '|' + it.x + '|' + it.z + '|' + (it.r | 0);
+  // true when the pieces in the yard are exactly the ones the old yard of that level had (the kid has not touched them)
+  const untouched = (L, lv) => { const a = L.filter(isGy).map(sig).sort().join(), b = layout(lv).map(sig).sort().join(); return a === b; };
+  const kinds = lv => { Object.keys(MIN).forEach(id => { if (MIN[id] <= lv && (save.furn[id] | 0) < 99) save.furn[id] = 99; }); };
+
+  function done() {   // save, draw and tell friends
+    persist();
+    if (typeof mode !== 'undefined' && mode === 'house' && kcHeld === 'living' && kcRoom === 'living' && !(typeof visitingHouse === 'function' && visitingHouse())) { held = null; ghost.clear(); renderHouse(save.house); }
+    if (typeof pushPresence === 'function') pushPresence(true);
+  }
+  function put(L, list) { list.forEach(d => L.push({ i: d.i, x: d.x, z: d.z, r: d.r | 0 })); }
+  function strip(L) { for (let k = L.length - 1; k >= 0; k--) if (isGy(L[k])) L.splice(k, 1); }
+
+  // a save that already has a bigger yard: put every piece where it stood, once
+  function migrate() {
+    const lv = lvOf(); if (lv < 1) return false;
+    kinds(lv); const L = living();
+    if (emptyOf()) { if (save.gyLv == null) save.gyLv = lv; return false; }
+    if ((save.gyLv | 0) >= lv || L.some(isGy)) { if ((save.gyLv | 0) < lv) { save.gyLv = lv; persist(); } return false; }
+    put(L, layout(lv)); save.gyLv = lv; done(); return true;
+  }
+  // the yard got bigger (called after the coins are paid and hs[3] is set)
+  function upgrade(newLv) {
+    const L = living(), old = Math.max(0, newLv - 1); kinds(newLv);
+    if (old >= 1 && (save.gyLv | 0) < old && !L.some(isGy) && !emptyOf()) put(L, layout(old));   // never walked in since the update: the old yard's pieces first
+    if (emptyOf()) { save.gyLv = newLv; delete save.gyKeep; persist(); return; }
+    if (untouched(L, old)) { strip(L); put(L, layout(newLv)); }
+    else put(L, layout(newLv).filter(d => d.min > old));
+    save.gyLv = newLv; done();
+  }
+  // Empty garden / Garden back (hs[3] has been set by the button first)
+  function setEmpty(e) {
+    const lv = lvOf(), L = living(); kinds(lv);
+    if (e) { save.gyKeep = L.filter(isGy).map(it => [it.i, it.x, it.z, it.r | 0]); strip(L); }
+    else {
+      const keep = Array.isArray(save.gyKeep) ? save.gyKeep.filter(a => Array.isArray(a) && FURN_BY_ID[a[0]] && MIN[a[0]] <= lv) : [];
+      if (keep.length) keep.forEach(a => L.push({ i: a[0], x: +a[1] || 0, z: +a[2] || 0, r: a[3] | 0 })); else put(L, layout(lv));
+      delete save.gyKeep; save.gyLv = lv;
+    }
+    done();
+  }
+
+  // my own house: the pieces are made ready every time I walk in (a backup from an older version, a bought yard)
+  const origEnter = enterHouse;
+  enterHouse = function (owner) { if (owner === myPeer) { try { migrate(); } catch (er) { } } return origEnter(owner); };
+  window.kcGarden = { layout, migrate, upgrade, setEmpty, KINDS: KINDS.map(k => k[0]).concat(['gy_bed']), MIN };
 })();
 /* ================= tub-water.js: every bathtub gets a visible blue water surface under its bubbles (Demi, 2026-10-21: "this bathtub needs water") =================
 Drop-in, anywhere after kitchen-bath.js, sea-set.js, candy-set.js and space-set.js (before furniture-color.js is fine). It wraps the model builders of
@@ -52554,7 +53321,7 @@ window.kcBank = Object.assign(window.kcBank || {}, { photoAt: kcPhotoAt, photo: 
     tick(o, st, e, dt, t) { const c = o.cat; arms(c, -.9 + sin(t * 5) * .25, -.9 + sin(t * 5 + 2) * .25); st.b.position.set(c.position.x, 2.35 + sin(t * 2) * .06, c.position.z); } });
 
   /* ===== 1. lemonade stand (town): she walks round the stand, pours for computer kitties who queue up in front ===== */
-  KW.def('lemon', { where: 'town', games: ['lemonade'], max: 1, ring: () => [LEMON.x, LEMON.z + 1.6, 0],
+  KW.def('lemon', { where: 'town', games: ['lemonade'], max: 1, ring: () => [LEMON.x, LEMON.z + .95, 0],
     path: () => [[LEMON.x - 1.7, LEMON.z + 1.2], [LEMON.x - 1.7, LEMON.z - 1.1]], spot: () => [LEMON.x - .45, LEMON.z - 1.0, 0], pose: 'up',
     init(o, st) {
       st.cup = lcyl('#ffe873', 0, 0, 0, .07, .16); st.cup.visible = false; st.add(st.cup);
@@ -52862,7 +53629,7 @@ $('#go-home').onclick = () => { sfx.tap(); if (mode === 'bus') return; enterHous
 $('#deco').onclick = () => { deco = !deco; fdrag = null; held = null; decoPick = null; trayCat = traySub = null; trayPopClose(); ghost.clear(); heldBar(); $('#tray').hidden = !deco; $('#hud-bot').hidden = deco; if (deco) { if (window.kcFixCounts) kcFixCounts(); if (kcTidyWall()) renderHouse(save.house); drawTray(); speak('Pick something, then tap the floor or the yard.'); } else decoFitOff(); sfx.tap(); };
 function available(id) { if (furnForever(id)) return 99; return (save.furn[id] || 0) - save.house.filter(it => it.i === id).length; }
 // the wall mirror and the mirror chest come free and never run out (kept at 9), so the tray and the shop show no number for them
-function furnForever(id) { return id === 'wallmirror' || id === 'mirrorchest' || id === 'hearth' || id === 'roomwindow'; }
+function furnForever(id) { return id === 'wallmirror' || id === 'mirrorchest' || id === 'hearth' || id === 'roomwindow' || /^gy_/.test(id); }
 // "Buy this?" pop-up (Demi): the piece's picture and price, a big green check to buy and a big X to go back; nothing is spent until the check
 function kcBuyAsk(pic, price, yes) {
   const host = $('#shop'); if (!host || host.querySelector('#buyask')) return;
@@ -53734,7 +54501,7 @@ function applyBackup(v) {
   const look = cleanLook(v.look && typeof v.look === 'object' ? lookArr(v.look) : null);
   const furn = {}; Object.entries(v.furn || {}).forEach(([k, c]) => { if (FURN_BY_ID[k]) furn[k] = clamp(c | 0, 0, 99); });
   // the network's 52-piece view is not a limit on a child's saved layout
-  const furnList = l => Array.isArray(l) ? l.filter(it => it && FURN_BY_ID[it.i]).map(it => ({ i: it.i, x: clamp(+it.x || 0, -7, 7), z: clamp(+it.z || 0, -16.4, 4.5), r: (it.r | 0) % 4 })) : [];
+  const furnList = l => Array.isArray(l) ? l.filter(it => it && FURN_BY_ID[it.i]).map(it => ({ i: it.i, x: clamp(+it.x || 0, -16.5, 16.5), z: clamp(+it.z || 0, -29.5, 4.5), r: (it.r | 0) % 4 })) : [];
   const friends = {}; if (v.friends && typeof v.friends === 'object') Object.entries(v.friends).slice(0, 50).forEach(([k, f]) => { if (/^[a-z0-9]{10}$/.test(k) && f && typeof f === 'object') friends[k] = { n: safeName(f.n), a: Array.isArray(f.a) ? lookArr(cleanLook(f.a)) : [0], me: !!f.me, them: !!f.them, sent: !!f.sent, lt: Math.max(0, +f.lt || 0) }; });
   Object.assign(save, {
     name: n, look, coins: clamp(+v.coins || 0, 0, 99999),
@@ -53757,7 +54524,7 @@ function applyBackup(v) {
   ['pet', 'wallt', 'wallc'].forEach(k => { if (typeof v[k] === 'string' || typeof v[k] === 'number') save[k] = v[k]; });
   if (v.age != null) { const a = Math.round(+v.age); if (a >= 4 && a <= 8) save.age = a; }   // v36.3: the age picker
   if (v.mini && typeof v.mini === 'object' && Array.isArray(v.mini.it)) save.mini = { v: 1, zo: v.mini.zo ? 1 : 0, it: v.mini.it.slice(0, 80) };   // v36.4: the school's mini city (the game checks every piece when it opens)
-  ['c500', 'c1500', 'fbonus', 'start50', 'starterV2', 'bankAt'].forEach(k => { if (v[k] != null && typeof v[k] !== 'object') save[k] = v[k]; });
+  ['c500', 'c1500', 'fbonus', 'start50', 'starterV2', 'bankAt', 'gyLv'].forEach(k => { if (v[k] != null && typeof v[k] !== 'object') save[k] = v[k]; });
   // blocked and muted kitties keep their safety: a backup only adds to this device's lists, it never lifts a block or a mute, and a backup that has none changes nothing
   const ids = m => m && typeof m === 'object' && !Array.isArray(m) ? Object.entries(m).filter(([k]) => /^[a-z0-9]{10}$/.test(k)).slice(0, 50) : [];
   ids(v.blocked).forEach(([k, b]) => { if (!save.blocked[k] && Object.keys(save.blocked).length < 50) save.blocked[k] = { n: safeName(b && b.n), t: Math.max(0, +(b && b.t) || 0) }; });
