@@ -25303,6 +25303,7 @@ KCG.level = () => KCG.age() >= 6 ? 2 : 1;
 
     /* ----- putting a piece down ----- */
     const place = (d, t, o = {}) => {
+      if (items.length >= MAXP) { tone(250, .13, 'sine', .07, [210, 170]); speak('The city is full!'); return null; }   // the most a city holds is what opens again and what a backup keeps (Kyle #65)
       const a = d.cat === 'k' ? t.node : t.c, b = d.cat === 'k' ? 0 : t.r;
       const rot = d.cat === 'v' ? okRots(t.c, t.r)[Math.random() < .5 ? 0 : okRots(t.c, t.r).length - 1] : d.cat === 'k' ? 1 : (d.cat === 'b' && (t.c + t.r) % 2 ? 1 : 0);
       const it = addItem(d, a, b, rot, { pop: 1 }); placed++; KCG.snd.pop(); keep(); checkFinish();
@@ -25558,6 +25559,7 @@ KCG.level = () => KCG.age() >= 6 ? 2 : 1;
       };
       items.filter(i => i.d.cat === 'v').forEach(it => {
         let rot = it.rot, d = DIRS[rot]; const c = it.c, r = it.r;
+        if (!isNodeT(c, r) && !nxt(c, r, rot)) { const b = (rot + 2) & 3; if (!nxt(c, r, b)) return; rot = b; d = DIRS[rot]; }   // a car on the tail past the last crossing drives back toward it (a stored one too)
         const v = { it, pieces: [], pi: 0, dd: 0, sp: 0, stuck: 0, ghost: 0, rot, held: null };
         let nc, nr;
         if (isNodeT(c, r)) {
@@ -39379,13 +39381,16 @@ const PET_FLY = { butterfly: 1.15, bee: 1.35, bird: 0 };
 // the little motions of each pet; base lifts it onto a shelf in the shop
 function petAnim(m, t, moving, base = 0) {
   const k = m.userData.kind, ud = m.userData; let y = 0;
+  // mk eases between standing (0) and moving (1), so a bird never snaps up into the air and a frog never starts hopping from a standstill (v36.6, Demi: "the pets dont look smooth")
+  const dt = Math.min(.1, Math.max(0, t - (ud.pat == null ? t : ud.pat))); ud.pat = t;
+  const mk = ud.mk = (ud.mk || 0) + ((moving ? 1 : 0) - (ud.mk || 0)) * Math.min(1, dt * 7);
   if (k === 'butterfly') { y = PET_FLY[k] + Math.sin(t * 2.2) * .18; const f = Math.sin(t * 16) * .9; ud.wl.rotation.z = -f; ud.wr.rotation.z = f; m.rotation.z = Math.sin(t * 2) * .12; }
   else if (k === 'bee') { y = PET_FLY[k] + Math.sin(t * 3) * .1; const f = Math.sin(t * 45) * .7; ud.wl.rotation.z = -f; ud.wr.rotation.z = f; }
-  else if (k === 'bird') { if (moving) { y = .55 + Math.sin(t * 7) * .12; const f = Math.sin(t * 22) * .9; ud.wl.rotation.z = -f; ud.wr.rotation.z = f; } else { y = Math.max(0, Math.sin(t * 2.6)) * .0 + (Math.sin(t * 2.6) > .93 ? .08 : 0); ud.wl.rotation.z = -.15; ud.wr.rotation.z = .15; m.rotation.x = Math.sin(t * 3.1) * .08; } }
-  else if (k === 'frog') { y = moving ? Math.abs(Math.sin(t * 8)) * .32 : 0; m.scale.y = 1 + (moving ? 0 : Math.sin(t * 3) * .05); }
-  else if (k === 'turtle') { ud.legs.forEach((l, i) => { l.position.z += 0; l.rotation.x = moving ? Math.sin(t * 6 + i * 1.6) * .6 : 0; }); y = moving ? Math.sin(t * 6) * .01 : 0; }
-  else if (k === 'hamster') { y = moving ? Math.abs(Math.sin(t * 13)) * .07 : 0; m.rotation.z = moving ? Math.sin(t * 13) * .06 : Math.sin(t * 4) * .02; }
-  else if (k === 'mouse') { y = moving ? Math.abs(Math.sin(t * 15)) * .05 : 0; if (ud.tail) ud.tail.rotation.y = .2 + Math.sin(t * 4) * .35; }
+  else if (k === 'bird') { const f = Math.sin(t * 22) * .9; y = mk * (.55 + Math.sin(t * 7) * .12) + (1 - mk) * Math.max(0, Math.sin(t * 2.6) - .85) * .6; ud.wl.rotation.z = -(f * mk + .15 * (1 - mk)); ud.wr.rotation.z = f * mk + .15 * (1 - mk); m.rotation.x = Math.sin(t * 3.1) * .08 * (1 - mk); }
+  else if (k === 'frog') { y = mk * Math.abs(Math.sin(t * 8)) * .32; m.scale.y = 1 + (1 - mk) * Math.sin(t * 3) * .05; }
+  else if (k === 'turtle') { ud.legs.forEach((l, i) => { l.rotation.x = mk * Math.sin(t * 6 + i * 1.6) * .6; }); y = mk * Math.sin(t * 6) * .01; }
+  else if (k === 'hamster') { y = mk * Math.abs(Math.sin(t * 13)) * .07; m.rotation.z = mk * Math.sin(t * 13) * .06 + (1 - mk) * Math.sin(t * 4) * .02; }
+  else if (k === 'mouse') { y = mk * Math.abs(Math.sin(t * 15)) * .05; if (ud.tail) ud.tail.rotation.y = .2 + Math.sin(t * 4) * .35; }
   m.position.y = base + y;
 }
 // walk a pet after its owner (x, z, ry), and keep it inside the walkable area
@@ -39395,7 +39400,7 @@ function petFollow(m, ox, oz, ory, dt, t, fix, ownerMoving) {
   const back = fly ? 1 : 1.3, tx = ox - Math.sin(ory) * back + Math.cos(ory) * .65, tz = oz - Math.cos(ory) * back - Math.sin(ory) * .65;
   let dx = tx - ud.x, dz = tz - ud.z, d = Math.hypot(dx, dz), moving = false;
   const hold = fly ? .15 : .35;
-  if (d > hold) { const sp = Math.min(d * 3, PET_SPEED[k] * (d > 3 ? 1.6 : 1)), st = Math.min(d, sp * dt); let nx = ud.x + dx / d * st, nz = ud.z + dz / d * st; if (fix) { const q = fix(nx, nz); nx = q[0]; nz = q[1]; } ud.x = nx; ud.z = nz; moving = true; ud.ry = angLerp(ud.ry, Math.atan2(dx, dz), Math.min(1, dt * 10)); }
+  if (d > hold + .02) { const sp = Math.min((d - hold) * 3.2, PET_SPEED[k] * (d > 3 ? 1.6 : 1)), st = Math.min(d, sp * dt); let nx = ud.x + dx / d * st, nz = ud.z + dz / d * st; if (fix) { const q = fix(nx, nz); nx = q[0]; nz = q[1]; } ud.x = nx; ud.z = nz; moving = sp > .25; ud.ry = angLerp(ud.ry, Math.atan2(dx, dz), Math.min(1, dt * 10)); }
   else ud.ry = angLerp(ud.ry, Math.atan2(ox - ud.x, oz - ud.z), Math.min(1, dt * 3));
   m.position.x = ud.x; m.position.z = ud.z; m.rotation.y = ud.ry;
   petAnim(m, t, moving);
@@ -40820,7 +40825,7 @@ function fcTick(t) { // draw the cars and the friends riding in them
   FC.cars.forEach((k, i) => {
     const p = fcPose(i), d = fcDriver(i);
     k.g.position.set(p.x, d ? Math.abs(Math.sin(t * 9)) * .015 : 0, p.z); k.g.rotation.y = p.ry;
-    OBST[k.ob] = d ? [1e5, 1e5, 0] : [k.P.x, k.P.z, 1.6];
+    OBST[k.ob] = d || !k.g.visible ? [1e5, 1e5, 0] : [k.P.x, k.P.z, 1.6]; // a hidden shared car must not push a kitty on the empty road
   });
   if (mode !== 'town') return;
   for (const o of others.values()) if (o.fc != null && o.loc === 'town' && o.cat && o.cat.parent === town) fcPlaceCat(o.cat, o.fc & 3, fcPose(o.fc >> 2), t);
@@ -46885,22 +46890,22 @@ const V = window.kcVoice || null;
 /* the pop-up is a cute pink cat phone in the middle of the screen: ears, a camera and speaker, signal and battery drawn in CSS, a sparkly wallpaper and big round apps */
 #kphone{position:absolute;z-index:22;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none}
 #kphone>*{pointer-events:auto}
-#kphone .kp-ear{position:absolute;top:-34px;width:0;height:0;border-left:34px solid transparent;border-right:34px solid transparent;border-bottom:56px solid #5a3a28}
-#kphone .kp-ear::after{content:'';position:absolute;left:-21px;top:16px;border-left:21px solid transparent;border-right:21px solid transparent;border-bottom:36px solid #ff9ec4}
-#kphone .kp-ear.l{left:14px;transform:rotate(-12deg)}
-#kphone .kp-ear.r{right:14px;transform:rotate(12deg)}
+#kphone .kp-ear,#ktexts .kp-ear{position:absolute;top:-34px;width:0;height:0;border-left:34px solid transparent;border-right:34px solid transparent;border-bottom:56px solid #5a3a28}
+#kphone .kp-ear::after,#ktexts .kp-ear::after{content:'';position:absolute;left:-21px;top:16px;border-left:21px solid transparent;border-right:21px solid transparent;border-bottom:36px solid #ff9ec4}
+#kphone .kp-ear.l,#ktexts .kp-ear.l{left:14px;transform:rotate(-12deg)}
+#kphone .kp-ear.r,#ktexts .kp-ear.r{right:14px;transform:rotate(12deg)}
 #kphone .kp-body{position:relative;box-sizing:border-box;padding:14px 14px 12px;background:linear-gradient(165deg,#ffc9de,#ff9ec4);border:5px solid #5a3a28;border-radius:46px;box-shadow:0 10px 0 #c96f97,0 10px 0 5px #5a3a28,0 26px 40px #0005,inset 0 0 0 4px #ffe8f1;display:flex;flex-direction:column;align-items:center;gap:8px}
 #kphone .kp-body::before,#kphone .kp-body::after{content:'';position:absolute;right:-10px;width:6px;border-radius:3px;background:#5a3a28}
 #kphone .kp-body::before{top:84px;height:34px}
 #kphone .kp-body::after{top:130px;height:50px}
-#kphone .kp-top{display:flex;align-items:center;gap:12px;height:14px}
-#kphone .kp-spk{width:46px;height:8px;border-radius:4px;background:#5a3a28;display:block}
-#kphone .kp-cam{width:13px;height:13px;border-radius:50%;background:#5a3a28;box-shadow:inset 3px 3px 0 #7f8fd0;display:block}
-#kphone .kp-st{box-sizing:border-box;width:100%;display:flex;justify-content:space-between;align-items:center;height:14px;padding:0 12px}
-#kphone .kp-sig{width:22px;height:12px;background:linear-gradient(#5a3a28,#5a3a28) 0 100%/4px 35% no-repeat,linear-gradient(#5a3a28,#5a3a28) 6px 100%/4px 60% no-repeat,linear-gradient(#5a3a28,#5a3a28) 12px 100%/4px 80% no-repeat,linear-gradient(#5a3a28,#5a3a28) 18px 100%/4px 100% no-repeat}
-#kphone .kp-bat{position:relative;width:26px;height:12px;border:2px solid #5a3a28;border-radius:5px;box-sizing:border-box;background:linear-gradient(#7bcf7b,#7bcf7b) 1px 1px/72% calc(100% - 2px) no-repeat}
-#kphone .kp-bat::after{content:'';position:absolute;right:-5px;top:2px;width:3px;height:4px;background:#5a3a28;border-radius:0 2px 2px 0}
-#kphone .kp-bar{width:62px;height:6px;border-radius:3px;background:#fff;box-shadow:0 0 0 3px #5a3a28;display:block;margin:4px 0 2px}
+#kphone .kp-top,#ktexts .kp-top{display:flex;align-items:center;gap:12px;height:14px}
+#kphone .kp-spk,#ktexts .kp-spk{width:46px;height:8px;border-radius:4px;background:#5a3a28;display:block}
+#kphone .kp-cam,#ktexts .kp-cam{width:13px;height:13px;border-radius:50%;background:#5a3a28;box-shadow:inset 3px 3px 0 #7f8fd0;display:block}
+#kphone .kp-st,#ktexts .kp-st{box-sizing:border-box;width:100%;display:flex;justify-content:space-between;align-items:center;height:14px;padding:0 12px}
+#kphone .kp-sig,#ktexts .kp-sig{width:22px;height:12px;background:linear-gradient(#5a3a28,#5a3a28) 0 100%/4px 35% no-repeat,linear-gradient(#5a3a28,#5a3a28) 6px 100%/4px 60% no-repeat,linear-gradient(#5a3a28,#5a3a28) 12px 100%/4px 80% no-repeat,linear-gradient(#5a3a28,#5a3a28) 18px 100%/4px 100% no-repeat}
+#kphone .kp-bat,#ktexts .kp-bat{position:relative;width:26px;height:12px;border:2px solid #5a3a28;border-radius:5px;box-sizing:border-box;background:linear-gradient(#7bcf7b,#7bcf7b) 1px 1px/72% calc(100% - 2px) no-repeat}
+#kphone .kp-bat::after,#ktexts .kp-bat::after{content:'';position:absolute;right:-5px;top:2px;width:3px;height:4px;background:#5a3a28;border-radius:0 2px 2px 0}
+#kphone .kp-bar,#ktexts .kp-bar{width:62px;height:6px;border-radius:3px;background:#fff;box-shadow:0 0 0 3px #5a3a28;display:block;margin:4px 0 2px}
 #kphone .kp-screen{box-sizing:border-box;padding:16px;border-radius:28px;border:4px solid #5a3a28;background:radial-gradient(circle,#ffffffb0 0 2.5px,transparent 3.5px) 0 0/30px 30px,linear-gradient(#bde5ff,#ffe0ee);display:grid;grid-template-columns:repeat(2,var(--kpt));gap:14px;justify-items:center;align-content:start;min-height:calc(var(--kpt) * 3 + 60px)}
 @media (max-height:560px){#kphone .kp-screen{grid-template-columns:repeat(3,var(--kpt));gap:10px;padding:12px;min-height:0}#kphone .kp-ear{display:none}}
 #kphone .kapp{position:relative;width:var(--kpt);height:var(--kpt);border-radius:24px;font-size:calc(var(--kpt) * .58);border:4px solid #fff;box-shadow:0 5px 0 #0002;background:var(--c,#fff);order:0}
@@ -46956,23 +46961,74 @@ const V = window.kcVoice || null;
 #kring .kr-btns button:active{transform:translateY(5px);box-shadow:0 2px 0 var(--d),0 2px 0 5px #5a3a28}
 #kring .kr-no{--d:#a8362f;background:linear-gradient(#ff8f86,#e0665e 70%)}#kring .kr-yes{--d:#2f8f3a;background:linear-gradient(#8be884,#4cc454 70%);animation:kbounce .8s infinite}
 @keyframes kbounce{50%{transform:scale(1.12)}}
-#ktext{width:min(500px,calc(100% - var(--kpw) - 40px))}
-#ktext .tx-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px;width:100%}
-#ktext .tx-b{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:6px 4px;min-height:90px;border-radius:20px;border:3px solid #f6c9d4;box-shadow:0 5px 0 #f6c9d4;font:800 15px/1.1 var(--display);text-align:center;color:var(--ink)}
-#ktext .tx-b .i{font-size:42px;line-height:1}
 #ktexts .none{width:100%;text-align:center;font-size:30px}
 #ktexts .frow .fbtn{align-items:center}
 #ktexts .tx-r.new{box-shadow:0 0 0 4px #ffd24a,0 4px 0 #0002}
-#ktexts .tx-top{display:flex;align-items:center;gap:10px;font:800 24px var(--display);color:var(--accent);width:100%}
-#ktexts .tx-top .face{width:48px;height:48px;font-size:28px}
-#ktexts .tx-log{display:flex;flex-direction:column;gap:8px;width:100%;max-height:min(46vh,340px);overflow-y:auto;padding:6px 2px;box-sizing:border-box}
-#ktexts .tx-m{display:flex;align-items:center;gap:8px;max-width:84%;padding:8px 12px;border-radius:20px;border:3px solid var(--c);font:800 17px/1.15 var(--display);text-align:left;width:auto;box-sizing:border-box;cursor:pointer}
-#ktexts .tx-m .i{font-size:30px;line-height:1;flex:none}
-#ktexts .tx-m.in{align-self:flex-start;background:#fff;color:var(--c);border-bottom-left-radius:6px}
-#ktexts .tx-m.out{align-self:flex-end;background:var(--c);color:#fff;border-bottom-right-radius:6px}
-#ktexts .tx-acts{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;width:100%}
-#ktexts .tx-acts>button{width:auto;flex:1 1 auto}
-#ktexts .tx-r .tx-i{font-size:34px;line-height:1;flex:none}
+/* v36.6 (Demi, 27 Oct: "like the iMessage screen"): the chat is a tall phone screen: the friend's face and name on top with Back, gray bubbles on the left, blue on the right,
+   "Delivered" under my last one, and a tray of ready-made texts where the keyboard would be (nothing is typed): tap one to hear it and see it in the bar, the blue arrow sends it */
+#ktexts[data-v=chat]{flex-wrap:nowrap;flex-direction:column;align-items:center;justify-content:flex-start;gap:8px;padding:14px 14px 12px;overflow:visible;box-sizing:border-box;background:linear-gradient(165deg,#ffc9de,#ff9ec4);border:5px solid #5a3a28;border-radius:46px;box-shadow:0 10px 0 #c96f97,0 10px 0 5px #5a3a28,0 26px 40px #0005,inset 0 0 0 4px #ffe8f1;width:min(340px,calc(100% - var(--kpw) - 40px));height:calc(100% - 118px);max-height:660px}
+#ktexts[data-v=chat]::before,#ktexts[data-v=chat]::after{content:'';position:absolute;right:-10px;width:6px;border-radius:3px;background:#5a3a28}
+#ktexts[data-v=chat]::before{top:84px;height:34px}
+#ktexts[data-v=chat]::after{top:130px;height:50px}
+#ktexts .tx-screen{flex:1;min-height:0;width:100%;display:flex;flex-direction:column;box-sizing:border-box;background:#fff;border:4px solid #5a3a28;border-radius:28px;overflow:hidden}
+@media (max-width:520px),(max-height:500px){#ktexts[data-v=chat]{height:calc(100% - 96px)}}
+@media (max-height:500px){#ktexts[data-v=chat]{top:calc(8px + env(safe-area-inset-top,0px));height:calc(100% - 20px - env(safe-area-inset-top,0px));padding:8px;gap:0;border-radius:32px}#ktexts[data-v=chat] .kp-ear,#ktexts[data-v=chat] .kp-top,#ktexts[data-v=chat] .kp-st,#ktexts[data-v=chat] .kp-bar{display:none}#ktexts .tx-screen{border-radius:22px}}
+#ktexts .tx-head{flex:none;display:flex;align-items:center;gap:6px;padding:8px 8px 4px;background:linear-gradient(#f7f2ea,#fff)}
+#ktexts .tx-round{flex:none;width:40px;height:40px;padding:0;border-radius:50%;display:grid;place-items:center;font-size:21px}
+#ktexts .tx-hr{flex:none;display:flex;gap:6px;min-width:40px;justify-content:flex-end}
+#ktexts .tx-hr .kcall-b{width:40px;height:40px;font-size:21px}
+#ktexts .tx-who{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:0;box-shadow:none;padding:0;border-radius:12px;color:var(--ink)}
+#ktexts .tx-who::before{display:none}
+#ktexts .tx-who:active{transform:none;opacity:.7}
+#ktexts .tx-av{width:46px;height:46px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 2px #d9cfc4,0 4px 0 #0001;background:#fde3ec;display:block;overflow:hidden;box-sizing:border-box}
+#ktexts .tx-av i.fc{display:block;width:100%;height:100%}#ktexts .tx-av svg{width:100%;height:100%;display:block}
+#ktexts .tx-name{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:800 14px/1.1 var(--display)}
+#ktexts .tx-name::after{content:'';display:inline-block;width:6px;height:6px;border:solid #9a8c82;border-width:0 3px 3px 0;transform:rotate(-45deg);margin-left:6px;vertical-align:1px}
+#ktexts .tx-log{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;padding:4px 12px 8px;gap:2px;box-sizing:border-box;background:#fff;width:100%}
+#ktexts .tx-log .none{margin:auto;opacity:.45}
+#ktexts .tx-time{align-self:center;margin:8px 0 3px;font:700 11.5px var(--display);color:#8e8e93}
+#ktexts .tx-time b{font-weight:900}
+#ktexts .tx-m{--bg:#e9e9eb;position:relative;flex:none;display:flex;align-items:center;gap:6px;max-width:82%;padding:5px 12px 5px 8px;border-radius:18px;background:var(--bg);color:var(--ink);font:800 15px/1.15 var(--display);cursor:pointer;box-sizing:border-box;margin-top:2px;text-align:left}
+#ktexts .tx-m.first{margin-top:7px}
+#ktexts .tx-m .i{font-size:26px;line-height:1;flex:none}
+#ktexts .tx-m.in{align-self:flex-start;transform-origin:0 100%}
+#ktexts .tx-m.out{--bg:#3d9cf4;align-self:flex-end;color:#fff;text-shadow:0 1px 0 #0003;transform-origin:100% 100%}
+#ktexts .tx-m.last::before,#ktexts .tx-m.last::after{content:'';position:absolute;bottom:0;height:18px}
+#ktexts .tx-m.last::before{width:16px;background:var(--bg)}
+#ktexts .tx-m.last::after{width:22px;background:#fff}
+#ktexts .tx-m.in.last::before{left:-6px;border-bottom-right-radius:13px 11px}
+#ktexts .tx-m.in.last::after{left:-22px;border-bottom-right-radius:8px}
+#ktexts .tx-m.out.last::before{right:-6px;border-bottom-left-radius:13px 11px}
+#ktexts .tx-m.out.last::after{right:-22px;border-bottom-left-radius:8px}
+#ktexts .tx-m.fresh{animation:txPop .38s cubic-bezier(.3,1.5,.5,1)}
+@keyframes txPop{0%{transform:scale(.4) translateY(26px);opacity:0}100%{transform:none;opacity:1}}
+#ktexts .tx-deliv{align-self:flex-end;margin:2px 4px 0 0;font:800 11.5px var(--display);color:#8e8e93}
+#ktexts .tx-go{--l:#8be884;--c:#4cc454;--d:#2f8f3a;color:#fff;text-shadow:0 2px 0 #0004;align-self:flex-start;flex:none;width:auto;margin:5px 0 2px 2px;font-size:14px;padding:4px 14px 4px 10px}
+#ktexts .tx-bar{flex:none;display:flex;align-items:center;gap:6px;padding:6px 8px 8px;background:#fff}
+#ktexts .tx-pick{flex:1;min-width:0;height:42px;box-sizing:border-box;display:flex;align-items:center;gap:6px;padding:0 12px 0 7px;border:2px solid #cfc9c1;border-radius:22px;background:#fff;font:800 14.5px var(--display);color:var(--ink);overflow:hidden;white-space:nowrap}
+#ktexts .tx-pick .i{font-size:28px;line-height:1;flex:none}
+#ktexts .tx-pick .ph{font-size:25px;opacity:.28;filter:grayscale(1)}
+#ktexts .tx-pick .w{overflow:hidden;text-overflow:ellipsis}
+#ktexts .tx-send{--l:#92d0ff;--c:#4fa9f0;--d:#2f78b8;flex:none;width:42px;height:42px;padding:0;border-radius:50%;display:grid;place-items:center}
+#ktexts .tx-send svg{width:62%;height:62%;display:block;filter:drop-shadow(0 2px 0 #2f78b8)}
+#ktexts .tx-send:disabled{--l:#f4f1ec;--c:#e0dad2;--d:#c5beb3;opacity:1}
+#ktexts .tx-send:disabled svg{filter:none;opacity:.8}
+#ktexts .tx-send.ready{animation:kbounce .8s infinite}
+#ktexts .tx-tray{flex:none;height:min(166px,32%);overflow-y:auto;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-rows:min-content;gap:6px;padding:8px 8px 12px;box-sizing:border-box;background:#eeebf2;border-radius:22px 22px 0 0;box-shadow:inset 0 3px 6px #0001;width:100%}
+#ktexts .tx-g{grid-column:1/-1;display:flex;align-items:center;gap:8px;height:24px}
+#ktexts .tx-g::before,#ktexts .tx-g::after{content:'';flex:1;border-top:3px dotted #cdc4da}
+#ktexts .tx-g .i{font-size:19px;line-height:1}
+#ktexts .tx-t{height:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;min-width:0;padding:2px 1px;border-radius:13px;border-width:3px;box-shadow:0 3px 0 #dcc7a0,0 3px 0 3px var(--o);font:800 10px/1.02 var(--display);letter-spacing:-.2px;text-align:center;word-break:break-word}
+#ktexts .tx-t .i{font-size:23px;line-height:1}
+#ktexts .tx-t.on{outline:5px solid #4fa9f0;outline-offset:1px;--l:#e4f3ff;--c:#bfe2ff}
+@media (max-height:500px){
+#ktexts .tx-tray{grid-auto-flow:column;grid-template-columns:none;grid-template-rows:58px;grid-auto-columns:88px;height:80px;overflow-x:auto;overflow-y:hidden;padding:6px 8px 8px;gap:6px}
+#ktexts .tx-g{display:none}#ktexts .tx-t{height:auto;font-size:11.5px}#ktexts .tx-t .i{font-size:23px}
+#ktexts .tx-head{padding:6px 10px 2px}#ktexts .tx-round{width:34px;height:34px;font-size:18px}#ktexts .tx-hr .kcall-b{width:34px;height:34px;font-size:18px}
+#ktexts .tx-who{flex-direction:row;justify-content:center;gap:8px}#ktexts .tx-av{width:34px;height:34px;flex:none}
+#ktexts .tx-bar{padding:4px 8px 6px}#ktexts .tx-pick{height:38px}#ktexts .tx-send{width:38px;height:38px}}
+#ktexts .tx-r .tx-i{position:relative;font-size:38px;line-height:1;flex:none}
+#ktexts .tx-r .tx-i b{position:absolute;right:-8px;top:-8px;font-size:16px}
 #ktexts .tx-r>span:last-child{display:flex;flex-direction:column;align-items:flex-start;min-width:0;white-space:normal;overflow:visible;font-size:17px;line-height:1.15;text-align:left}
 #ktexts .tx-r>span:last-child b{font-size:15px;color:#8a7466}
 #pcard .tx-wrap{display:flex;flex-direction:column;align-items:center;gap:22px;width:100%}
@@ -46983,7 +47039,7 @@ const V = window.kcVoice || null;
 .tx-from{display:flex;align-items:center;gap:10px;font:800 26px var(--display);color:#fff;text-shadow:0 2px 0 #0006}
 .tx-from .face{width:56px;height:56px;font-size:32px}
 .pcbtns button.call{background:#cdeccf}
-@media (prefers-reduced-motion:reduce){#open-call,#kopen.incall,#kopen.buzz,#khang,.kcall-b.ring,#kring .kr-yes{animation:none}#kopen.buzz{box-shadow:0 0 0 7px #ffd24a,0 5px 0 #0003}}
+@media (prefers-reduced-motion:reduce){#ktexts .tx-m.fresh,#ktexts .tx-send.ready,#open-call,#kopen.incall,#kopen.buzz,#khang,.kcall-b.ring,#kring .kr-yes{animation:none}#kopen.buzz{box-shadow:0 0 0 7px #ffd24a,0 5px 0 #0003}}
 `; document.body.append(st); } // after the page's own style block, so these rules win
 
 const app = $('#app');
@@ -47129,6 +47185,10 @@ const TEXTS = [
   ['🏠', 'Come over to my house!', 'house'], ['🍕', "Let's get pizza!", 'pizza'], ['🍦', "Let's get ice cream!", 'icecream'], ['☕', 'Meet me at the coffee shop!', 'coffee'],
   ['⛲', 'Meet me at the fountain!', 'fountain'], ['🎳', "Let's go bowling!", 'arcade'], ['🪩', 'Meet me at the Kitty Club!', 'club'], ['🎂', 'Happy birthday!'],
   ['🤗', 'Thank you!'], ['👍', 'Good job!'], ['😸', 'That was fun!'], ['😻', 'I love your kitty!'], ['😴', 'I have to go. Bye!'], ['📞', 'Call me!', '', 1],
+  // v36.6 (Demi: "more sentence bubble ideas"): new ones only go on the END, because the number travels in presence and an older iPad ignores a number it does not know
+  ['✅', 'Yes!'], ['⏳', 'Maybe later!'], ['🙋', 'Me too!'], ['🤔', 'What are you doing?'], ['✋', 'Wait for me!'], ['😿', "I'm sorry."], ['☀', 'Good morning!'], ['🌙', 'Good night!'],
+  ['⭐', "You're awesome!"], ['🎈', "Let's have a party!"], ['🏫', "Let's go to school!", 'school'], ['🛝', 'Come play in my yard!', 'house'], ['👗', 'I got a new outfit!'], ['🍪', "I'm hungry!"],
+  ['❌', 'No, thank you.'],   // 32, added after Demi asked for a No (27 Oct); it sits next to Yes! in the tray
 ];
 const TX_COL = ['#e86a8a', '#5f8a46', '#3f9fb0', '#d9a441', '#8a6ac8', '#c8643c'];
 const txOk = c => typeof c === 'string' && /^t\d{1,2}$/.test(c) && +c.slice(1) < TEXTS.length;
@@ -47139,6 +47199,7 @@ const TLOG_MAX = 50;
 const tlogOf = k => save.tlog[k] || (save.tlog[k] = []);
 const unread = () => { tidyLog(); return Object.values(save.tlog).reduce((n, l) => n + (Array.isArray(l) ? l.filter(e => e.new).length : 0), 0); };   // postcards wait in the mailbox (postbox.js), not on the phone
 if (!save.seenTx || typeof save.seenTx !== 'object' || Array.isArray(save.seenTx)) save.seenTx = {};
+let txPick = -1;   // the text picked in the bar of the open chat (-1 = none)
 function logText(k, d, c, t, isNew) {
   const l = tlogOf(k); l.push({ d, c, t, new: isNew ? 1 : 0 }); l.sort((x, y) => x.t - y.t); if (l.length > TLOG_MAX) l.splice(0, l.length - TLOG_MAX);
 }
@@ -47154,22 +47215,15 @@ const tidyLog = () => { let ch = 0; for (const k of Object.keys(save.tlog)) if (
 tidyLog();
 function sendText(k, i) {
   const f = save.friends[k]; if (!f || !isFriend(f) || !TEXTS[i]) return;
-  mailOut(k, 't' + i); logText(k, 'o', 't' + i, Date.now(), false); persist(); touchF(k); sfx.good(); speak(TEXTS[i][1]); toast(k, '✅ ' + f.n); if (!pTexts.hidden && pTexts.dataset.k === k) drawChat(k);
+  mailOut(k, 't' + i); logText(k, 'o', 't' + i, Date.now(), false); persist(); touchF(k); sfx.good();
+  if (!pTexts.hidden && pTexts.dataset.k === k) drawChat(k); else toast(k, '✅ ' + f.n);
 }
+// the kitty card's Text button (and the old postcard Reply buttons) open the chat with that friend, the tray of ready-made texts at the bottom
 function openTextPicker(k) {
-  const f = save.friends[k]; if (!f) return;
-  closePanels('#ktext'); const p = pText; p.textContent = ''; p.dataset.k = k;
-  const t = h('div', 'ttl'); t.textContent = '🗨️ ' + f.n; p.append(t);
-  const g = h('div', 'tx-grid');
-  TEXTS.forEach(([ic, words, , call], i) => {
-    if (call && !V) return;
-    const b = btn('tx-b', '<span class="i">' + ic + '</span>'); b.append(document.createTextNode(words));
-    b.onclick = () => { p.hidden = true; sendText(k, i); }; g.append(b);
-  });
-  const x = btn('', '✖️'); x.onclick = () => { sfx.tap(); p.hidden = true; };
-  p.append(g, x); p.hidden = false;
+  const f = save.friends[k]; if (!f || !isFriend(f)) return;
+  closePanels('#ktexts'); pTexts.hidden = false; drawChat(k);
 }
-openCardPicker = openTextPicker; // the old postcard Reply buttons now open the texts
+openCardPicker = openTextPicker;
 // the Texts app: the friends you have talked with, the newest conversation first, a gold ring round the ones with something not read yet; a tap opens the conversation
 function drawTexts() {
   const p = pTexts; tidyLog(); p.textContent = ''; p.dataset.v = 'list'; delete p.dataset.k; p.append(h('div', 'ttl', '🗨️ Texts'));
@@ -47177,37 +47231,83 @@ function drawTexts() {
   if (!ks.length) p.append(h('span', 'pill none', '🗨️ 💤'));
   ks.forEach(k => {
     const l = save.tlog[k], last = l[l.length - 1], T = TEXTS[+last.c.slice(1)], n = l.filter(e => e.new).length, f = save.friends[k];
-    const row = h('div', 'frow'), b = btn('fbtn tx-r' + (n ? ' new' : ''), ''), face = faceEl(furOf(k)), s = h('span'), nm = h('b'), w = h('span');
-    if (n) face.append(h('b', '', '🔴'));
-    nm.textContent = f.n; w.textContent = (last.d === 'o' ? 'You: ' : '') + T[1]; s.append(nm, w); b.append(face, h('span', 'tx-i', T[0]), s);
+    // v36.6 (Demi: "dont need a photo of myself here"): no round cat face in the row, it looked like my own kitty; the last text's picture leads, the unread dot sits on it
+    const row = h('div', 'frow'), b = btn('fbtn tx-r' + (n ? ' new' : ''), ''), pic = h('span', 'tx-i', T[0]), s = h('span'), nm = h('b'), w = h('span');
+    if (n) pic.append(h('b', '', '🔴'));
+    nm.textContent = f.n; w.textContent = (last.d === 'o' ? 'You: ' : '') + T[1]; s.append(nm, w); b.append(pic, s);
     b.onclick = () => { sfx.tap(); drawChat(k); }; row.append(b); p.append(row);
   });
   const x = btn('', '✖️'); x.onclick = () => { sfx.tap(); p.hidden = true; }; p.append(x);
 }
 textsB.onclick = () => { sfx.tap(); closePanels('#ktexts'); if (pTexts.hidden) { drawTexts(); pTexts.hidden = false; } else pTexts.hidden = true; };
-// one conversation: bubbles from the friend on the left, mine on the right, the newest at the bottom; a tap on a bubble says it out loud
+// "Today 9:41 AM", "Yesterday 4:05 PM", "Monday 4:05 PM" or "Oct 20 4:05 PM" (the day word is bold, like iMessage)
+function txStamp(t) {
+  const d = new Date(t), n = new Date(), day = x => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime(), ago = Math.round((day(n) - day(d)) / 86400000);
+  const w = ago <= 0 ? 'Today' : ago === 1 ? 'Yesterday' : ago < 7 ? d.toLocaleDateString('en-US', { weekday: 'long' }) : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return '<b>' + w + '</b> ' + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+}
+// v36.6 (Demi: "organize the buttons better, put the invitation ones at the end"): the tray shows the texts in groups, a small picture between groups, invitations last.
+// Only the ORDER SHOWN changes: the numbers in TEXTS never move (they travel in presence); a text that is in no group lands in a last group of its own.
+const TX_GROUPS = [['👋', [0, 24, 25, 16]], ['🗨️', [18, 32, 19, 20, 12, 23, 22]], ['💞', [1, 13, 14, 15, 26, 11, 30, 31]], ['❓', [2, 21]], ['💌', [3, 4, 29, 5, 6, 7, 8, 9, 10, 27, 28, 17]]];
+const TX_ARROW = '<svg viewBox="0 0 40 40"><path d="M20 31V10M10 19.5L20 9.5l10 10" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+// one conversation, like iMessage (Demi, v36.6): face and name on top, the friend's bubbles gray on the left, mine blue on the right with a tail on the last of a row, "Delivered" under my last one,
+// and instead of a keyboard a tray of the ready-made texts: a tap picks one (it is read out loud and sits in the bar), the blue arrow sends it. A tap on a bubble says it out loud.
 function drawChat(k) {
   const f = save.friends[k], p = pTexts; if (!f) return drawTexts();
   const l = tlogOf(k); if (l.some(e => e.new)) { l.forEach(e => { e.new = 0; }); persist(); refresh(true); }
+  const was = p.dataset.k === k && p.dataset.v === 'chat' && p.querySelector('.tx-tray'); const keep = was ? was.scrollTop : 0;
+  if (p.dataset.k !== k) txPick = -1;
   p.textContent = ''; p.dataset.v = 'chat'; p.dataset.k = k;
-  const top = h('div', 'tx-top'), face = faceEl(furOf(k)), nm = h('b'); nm.textContent = f.n; top.append(face, nm); p.append(top);
-  const log = h('div', 'tx-log');
-  if (!l.length) log.append(h('span', 'pill none', '🗨️'));
-  l.forEach(e => {
-    const T = TEXTS[+e.c.slice(1)]; if (!T) return;
-    const b = btn('tx-m ' + (e.d === 'o' ? 'out' : 'in'), '<span class="i">' + T[0] + '</span>'); b.append(document.createTextNode(T[1]));
-    b.style.setProperty('--c', TX_COL[+e.c.slice(1) % TX_COL.length]); b.onclick = () => { sfx.tap(); speak((e.d === 'o' ? 'You said: ' : f.n + ' says: ') + T[1]); }; log.append(b);
+  const fr = isFriend(f), here = mode === 'town' || mode === 'inside' || mode === 'house';
+  const lastIn = [...l].reverse().find(e => e.d === 'i'), place = lastIn && TEXTS[+lastIn.c.slice(1)] && TEXTS[+lastIn.c.slice(1)][2], m = { k, n: f.n };
+  // the top: Back, her face and name (a tap opens her kitty card), the paw (go to her) and the call button
+  const head = h('div', 'tx-head'), bk = btn('round tx-round tx-back', '⬅️', 'Back'), who = btn('tx-who', '', f.n), av = h('span', 'tx-av'), nm = h('span', 'tx-name'), hr = h('div', 'tx-hr');
+  bk.onclick = () => { sfx.tap(); drawTexts(); };
+  nm.textContent = f.n; av.append(faceDot(personK(k).look)); who.append(av, nm); who.onclick = () => { sfx.tap(); openCard(personK(k), ''); };
+  if (!place && fr && lobbyOnline.has(k) && here) { const go = btn('round tx-round tx-gof', '🐾', 'Go to ' + f.n); go.onclick = () => { sfx.tap(); p.hidden = true; goFriend(k); }; hr.append(go); }
+  const cb = fr ? callBtn(k) : null; if (cb) hr.append(cb);
+  head.append(bk, who, hr);
+  // the conversation
+  const log = h('div', 'tx-log'), vis = l.filter(e => TEXTS[+e.c.slice(1)]), GAP = 3600e3;
+  if (!vis.length) log.append(h('span', 'pill none', '🗨️'));
+  let lastOut = null, lastInEl = null;
+  vis.forEach((e, n) => {
+    const T = TEXTS[+e.c.slice(1)], prev = vis[n - 1], next = vis[n + 1];
+    if (!prev || e.t - prev.t > GAP) { const s = h('div', 'tx-time', txStamp(e.t)); log.append(s); }
+    // a bubble from the last second pops in
+    const first = !prev || prev.d !== e.d || e.t - prev.t > GAP, last = !next || next.d !== e.d || next.t - e.t > GAP;
+    const b = h('div', 'tx-m ' + (e.d === 'o' ? 'out' : 'in') + (first ? ' first' : '') + (last ? ' last' : '') + (Date.now() - e.t < 1200 ? ' fresh' : ''), '<span class="i">' + T[0] + '</span>');
+    b.append(document.createTextNode(T[1])); b.setAttribute('role', 'button');
+    b.onclick = () => { sfx.tap(); speak((e.d === 'o' ? 'You said: ' : f.n + ' says: ') + T[1]); }; log.append(b);
+    if (e.d === 'o') lastOut = b; else lastInEl = b;
   });
-  p.append(log);
-  const row = h('div', 'tx-acts'), fr = isFriend(f), here = mode === 'town' || mode === 'inside' || mode === 'house';
-  const lastIn = [...l].reverse().find(e => e.d === 'i'), place = lastIn && TEXTS[+lastIn.c.slice(1)][2], m = { k, n: f.n };
-  if (fr) { const rp = btn('rep', '🗨️ Reply'); rp.onclick = () => { sfx.tap(); openTextPicker(k); }; row.append(rp); }
-  if (place && here && (place !== 'house' || lobbyOnline.has(k))) { const go = btn('go', '🐾 Go there'); go.onclick = () => { sfx.tap(); p.hidden = true; pcGo(place, m); }; row.append(go); }
-  else if (!place && fr && lobbyOnline.has(k) && here) { const go = btn('go', '🐾 Go to ' + f.n); go.onclick = () => { sfx.tap(); p.hidden = true; goFriend(k); }; row.append(go); }
-  if (fr && callState(k) === 'can') { const cb = btn('call', '📞', 'Call'); cb.onclick = () => { sfx.tap(); p.hidden = true; V.invite(k); }; row.append(cb); }
-  p.append(row);
-  const bk = btn('', '⬅️', 'Back'); bk.onclick = () => { sfx.tap(); drawTexts(); }; p.append(bk);
-  log.scrollTop = log.scrollHeight;
+  if (lastOut) lastOut.after(h('div', 'tx-deliv', 'Delivered'));
+  if (place && here && lastInEl && (place !== 'house' || lobbyOnline.has(k))) { const go = btn('go tx-go', '🐾 Go there'); go.onclick = () => { sfx.tap(); p.hidden = true; pcGo(place, m); }; lastInEl.after(go); }
+  const scr = h('div', 'tx-screen'), top = h('div', 'kp-top'), st = h('div', 'kp-st');   // the pink cat phone of the pop-up, round the chat
+  top.append(h('i', 'kp-spk'), h('i', 'kp-cam')); st.append(h('i', 'kp-sig'), h('i', 'kp-bat'));
+  p.append(h('i', 'kp-ear l'), h('i', 'kp-ear r'), top, st, scr, h('i', 'kp-bar'));
+  scr.append(head, log);
+  if (fr) {   // the bar and the tray
+    const bar = h('div', 'tx-bar'), pick = h('div', 'tx-pick'), send = btn('tx-send', TX_ARROW, 'Send'), tray = h('div', 'tx-tray');
+    const fill = () => {
+      pick.textContent = ''; send.disabled = txPick < 0; send.classList.toggle('ready', txPick >= 0);
+      if (txPick < 0) pick.append(h('span', 'i ph', '🗨️')); else { const w = h('span', 'w'); w.textContent = TEXTS[txPick][1]; pick.append(h('span', 'i', TEXTS[txPick][0]), w); }
+      tray.querySelectorAll('.tx-t').forEach(t => t.classList.toggle('on', +t.dataset.i === txPick));
+    };
+    const listed = new Set(TX_GROUPS.flatMap(g => g[1])), groups = TX_GROUPS.concat(TEXTS.some((_, i) => !listed.has(i)) ? [['✨', TEXTS.map((_, i) => i).filter(i => !listed.has(i))]] : []);
+    groups.forEach(([gic, ids]) => {
+      const ok = ids.filter(i => TEXTS[i] && !(TEXTS[i][3] && !V)); if (!ok.length) return;
+      const g = h('div', 'tx-g', '<span class="i">' + gic + '</span>'); tray.append(g);
+      ok.forEach(i => {
+        const [ic, words] = TEXTS[i], t = btn('tx-t', '<span class="i">' + ic + '</span>'); t.append(document.createTextNode(words)); t.dataset.i = i;
+        t.onclick = () => { sfx.tap(); txPick = i; speak(words); fill(); }; tray.append(t);
+      });
+    });
+    send.onclick = () => { if (txPick < 0) return; const i = txPick; txPick = -1; sendText(k, i); };
+    bar.append(pick, send); scr.append(bar, tray); fill();
+    tray.scrollTop = keep;
+  }
+  log.scrollTop = log.scrollHeight; requestAnimationFrame(() => { log.scrollTop = log.scrollHeight; });
 }
 // a text arrives: the phone buzzes and glows until it is read (a post office postcard goes to the mailbox instead)
 mailCheck = function (k, on) {
@@ -47371,7 +47471,7 @@ function refresh(force) {
     if (key === keyP && !force) return; keyP = key;
     const idle = p => !p.matches(':active') && !p.querySelector(':active');
     if (!pPeople.hidden && idle(pPeople)) drawPeople();
-    if (!pTexts.hidden && idle(pTexts)) drawTexts();
+    if (!pTexts.hidden && idle(pTexts)) { if (pTexts.dataset.v === 'chat' && save.friends[pTexts.dataset.k]) drawChat(pTexts.dataset.k); else drawTexts(); }   // an open chat stays a chat (it used to jump back to the list when a text came in)
     if (!pCall.hidden && idle(pCall)) { if (V && V.active()) drawCall(); else pCall.hidden = true; }
     if (!pCard.hidden && pCard.dataset.k && idle(pCard) && !prevDrag) { const q = personK(pCard.dataset.k); if (sigOf(q) !== pCard.dataset.sig) openCard(q, pCard.dataset.from, true); }
   } catch (er) { noteErr(er); }
@@ -49557,7 +49657,7 @@ Game hooks used: houseTap, kcPartyTick (runs every frame in a house), renderHous
   function tvTick(t) {
     tvOverlays.forEach(o => { const ch = o.it.ch | 0; o.m.visible = ch > 0; if (!ch) return; const g = o.cv.getContext('2d'); SHOW[ch](g, 128, 72, t); o.tx.needsUpdate = true; });
   }
-  window.kcInteract = { ids: () => Object.keys(FURN_BY_ID), spotsOf, fbox, taken: (i, s) => !!taken(i, s), use: (k, pt) => { tapPt = pt ? new T.Vector3(pt[0], pt[1], pt[2]) : null; return startUse(k); }, get using() { return ia; }, get items() { return curItems; } };
+  window.kcInteract = { ids: () => Object.keys(FURN_BY_ID), spotsOf, fbox, taken: (i, s) => !!taken(i, s), use: (k, pt) => { tapPt = pt ? new T.Vector3(pt[0], pt[1], pt[2]) : null; return startUse(k); }, get using() { return ia; }, get items() { return curItems; }, get petBed() { return petBed; } };
 })();
 /* ================= playground.js: buyable playground equipment for the backyard (Demi, 2026-10-21) =================
 Drop-in for the furn2 slot (anywhere after b3.js/furn2.js and BEFORE halfprice.js, so the 50% cut halves these too; the prices below are the full prices).
@@ -51500,7 +51600,14 @@ Test handle: window.kcGarden. No text, no emoji. */
   function upgrade(newLv) {
     const L = living(), old = Math.max(0, newLv - 1); kinds(newLv);
     if (old >= 1 && (save.gyLv | 0) < old && !L.some(isGy) && !emptyOf()) put(L, layout(old));   // never walked in since the update: the old yard's pieces first
-    if (emptyOf()) { save.gyLv = newLv; delete save.gyKeep; persist(); return; }
+    if (emptyOf()) {
+      if (Array.isArray(save.gyKeep)) {
+        const keep = save.gyKeep.filter(a => Array.isArray(a) && FURN_BY_ID[a[0]] && MIN[a[0]] <= newLv).map(a => ({ i: a[0], x: +a[1] || 0, z: +a[2] || 0, r: a[3] | 0 }));
+        const grown = untouched(keep, old) ? layout(newLv) : keep.concat(layout(newLv).filter(d => d.min > old));
+        save.gyKeep = grown.map(it => [it.i, it.x, it.z, it.r | 0]);
+      } else delete save.gyKeep;
+      save.gyLv = newLv; persist(); return;
+    }
     if (untouched(L, old)) { strip(L); put(L, layout(newLv)); }
     else put(L, layout(newLv).filter(d => d.min > old));
     save.gyLv = newLv; done();
@@ -53508,6 +53615,403 @@ window.kcBank = Object.assign(window.kcBank || {}, { photoAt: kcPhotoAt, photo: 
     setInterval(() => { const m = KW.mine(); if (m === KW.SC.piano && (mode !== 'inside' || $('#deed').hidden || !$('#deed').classList.contains('piano') || (roomInfo && roomInfo.piano && Math.hypot(me.x - roomInfo.piano.x, me.z - roomInfo.piano.z) > 2.2))) KW.stop(); }, 700);
   })();
 })();
+/* ================= housepets.js: the pets live in the house and play (Demi, 2026-10-27) =================
+"In the house I want pets to always stay in frame doing stuff and climbing on things." Inside a house (and its yard) every pet the kitty owns is there, busy and in view:
+they stroll, run about, sit, groom, nap, chase each other, slide down the slide, bounce on the trampoline and hop or climb onto sofas, beds, cat trees,
+shelves, tables and the playground (the same places a kitty can use, plus any flat top). Flyers (butterfly, bee, bird) float over the furniture and land on it.
+  - Small and spread out (Demi, 23:33Z): the pets are small in the house and are dispersed through the house and the yard. Each pet has a zone, the rooms or the yard (the ones that like
+    the outdoors, butterfly, bee, frog, bird, live in the yard when the kitty owns two or more pets), and picks its places far from the other pets. Nobody crowds the kitty.
+  - In frame: in the zone the kitty is in, a pet likes places the camera sees. If the camera moves on and a pet is out of sight for about 3 seconds, it runs in from the edge of the picture
+    (or pops in) to a free place the camera sees. Furniture between the camera and a pet goes see-through like it does for the kitty.
+  - No clipping: ground pets walk round furniture (box footprints), hop up from a free side (a ray tells which side has no arm or backrest in the way), and
+    climb the outside of tall pieces. They stand only on surfaces found by a ray (seat spots of furniture-interact.js, or a flat patch on top).
+  - My own house shows ALL my pets (save.pets). The one taken along (save.pet) is the same model as in town. In a friend's house only my taken-along pet is there.
+    A friend's pet that I see in a house stays near its owner and plays the same way. Nothing new is sent to friends.
+  - The pet bed trick (tap a pet bed, the taken-along pet curls up) still works: while it is on, furniture-interact.js moves that pet.
+Wraps: petFollow, petStep, renderHouse, houseFade. Needs: kcInteract (furniture-interact.js, with petBed), playground.js for the slide. No text, no emoji. */
+(function kcHousePets() {
+  const SC = .6;   // inside a house the pets are small (the town size is 1)
+  const RC = new T.Raycaster(), DN = new T.Vector3(0, -1, 0), V = new T.Vector3(), V2 = new T.Vector3(), B = new T.Box3(), FR = new T.Ray();
+  const rnd = (a, b) => a + Math.random() * (b - a), pick = a => a[Math.random() * a.length | 0], ease = u => u * u * (3 - 2 * u);
+  // fly: floats (hov = how high it hovers); sp = stroll speed, run = running speed (m/s); max = the highest top it goes up to; jump = the highest ledge it hops onto, taller ones it climbs
+  const K = { butterfly: { fly: 1, hov: 1.2, sp: 1, run: 2.4, max: 9 }, bee: { fly: 1, hov: 1.35, sp: 1.4, run: 3, max: 9 }, bird: { fly: 1, hov: .9, sp: 1.8, run: 3.4, max: 9 },
+    frog: { sp: 1, run: 2.4, max: 1.3, jump: .7 }, turtle: { sp: .45, run: .95, max: .8, jump: .5 }, hamster: { sp: 1.2, run: 3, max: 2.1, jump: .75 }, mouse: { sp: 1.4, run: 3.4, max: 2.1, jump: .75 } };
+  const NOPERCH = /tub|pool|splash|toilet|sink|fountain|aquarium|fish|stove|oven|fire|candle|hearth|tv$|mirror|piano|jukebox|disco|dancefloor|sandbox|garden|bed_|flowerbed|swing|hammock|rocker|rocking|seesaw|merry|tire|spring|dj|record/;
+  const FAVE = /sofa|couch|bed$|^bed|catbed|cattree|cattower|catcondo|scratch|armchair|loveseat|bench|chest|shelf|trampoline|ballpit|bounce/;
+  Object.values(K).forEach(k => { k.sp *= .8; k.run *= .85; });   // small legs, slower steps
+  K.butterfly.hov = 1; K.bee.hov = 1.1;
+  const APP = .3;   // the floor spot to hop from: this far out from the piece's edge
+  const keyOf = it => it.i + ',' + it.x + ',' + it.z + ',' + (it.r | 0);
+  let W = null, WV = 0;
+
+  /* ---------- what is in the room (rebuilt after every renderHouse, perches worked out one piece per frame) ---------- */
+  function world() {
+    if (W) return W;
+    const items = (window.kcInteract && kcInteract.items) || [], obs = [], keys = new Set(), work = [], boxes = [];
+    W = { v: ++WV, obs, keys, per: [], slides: [], work, boxes, tops: [] };
+    furnGroup.updateMatrixWorld(true);
+    furnGroup.children.forEach((g, idx) => {
+      const it = items[idx], f = it && FURN_BY_ID[it.i]; if (!f) return;
+      keys.add(keyOf(it)); B.setFromObject(g); if (!isFinite(B.min.x)) return;
+      boxes[idx] = B.clone(); if (f.wall || B.min.y > .45) return;
+      const o = { idx, key: keyOf(it), x0: B.min.x, x1: B.max.x, z0: B.min.z, z1: B.max.z, h: B.max.y, lift: g.position.y };
+      if (o.lift < .05 && o.h > .12) obs.push(o);
+      work.push(o);
+    });
+    return W;
+  }
+  const blocked = (w, x, z, m, skip) => w.obs.some(o => o.idx !== skip && x > o.x0 - m && x < o.x1 + m && z > o.z0 - m && z < o.z1 + m);
+  const topAt = (w, x, z) => { let h = 0; for (const o of w.obs) if (x > o.x0 - .1 && x < o.x1 + .1 && z > o.z0 - .1 && z < o.z1 + .1 && o.h > h) h = o.h; return h; };
+  // one piece per frame: where can a pet stand on it?
+  function pump() {
+    const w = W; if (!w || !w.work.length) return;
+    const o = w.work.shift(), g = furnGroup.children[o.idx], items = kcInteract.items, it = items[o.idx]; if (!g || !it || NOPERCH.test(it.i)) return;
+    try { perches(w, o, g, it); } catch (e) {}
+  }
+  function approach(g, o, x, y, z, w) {   // which side of the piece to jump from: the line to the spot at the height of the spot must be free (no arm, no backrest) and the floor there free
+    let best = null;
+    for (const [bx, bz, dx, dz] of [[o.x1, z, 1, 0], [o.x0, z, -1, 0], [x, o.z1, 0, 1], [x, o.z0, 0, -1]]) {
+      const sx = bx + dx * .02, sz = bz + dz * .02, ax = bx + dx * APP, az = bz + dz * APP, len = Math.hypot(x - sx, z - sz); if (len < .02) continue;
+      RC.set(V.set(sx, y + .13, sz), V2.set((x - sx) / len, 0, (z - sz) / len)); RC.near = 0; RC.far = len - .05;
+      if (RC.intersectObject(g, true).some(h => h.object.visible !== false)) continue;
+      const q = houseConstrain(ax, az); if (Math.hypot(q[0] - ax, q[1] - az) > .06 || blocked(w, ax, az, .1, o.idx)) continue;
+      if (!best || len < best.len) best = { ax, az, dx, dz, len };
+    }
+    return best;
+  }
+  function perches(w, o, g, it) {
+    const sp = kcInteract.spotsOf(it.i) || [];
+    let moving = false; g.traverse(n => { if (n.userData && n.userData.ian) moving = true; });
+    const sl = sp.find(s => s.pose === 'slide' && s.path);
+    if (sl) { w.slides.push({ idx: o.idx, key: o.key, path: sl.path.map(q => { V.set(q.p[0], q.p[1], q.p[2]); g.localToWorld(V); return { x: V.x, y: V.y, z: V.z, d: q.d, m: q.m }; }) }); return; }
+    if (moving) return;
+    let seats = 0;
+    sp.forEach((s, k) => {
+      if (s.node || s.sway || s.rock || s.path || s.again || s.tub || !/^(sit|sleep|bounce|petbed)$/.test(s.pose)) return;
+      seats++; V.set(s.x || 0, s.y || 0, s.z || 0); g.localToWorld(V);
+      const x = V.x, y = V.y + (s.pose === 'bounce' ? 0 : .03), z = V.z, a = approach(g, o, x, y, z, w); if (!a) return;
+      w.per.push({ idx: o.idx, key: o.key, slot: k, x, y, z, ax: a.ax, az: a.az, dx: a.dx, dz: a.dz, pose: s.pose === 'sit' ? 'sit' : s.pose === 'bounce' ? 'bounce' : 'sleep', amp: (s.amp || .3) * .6, fave: FAVE.test(it.i) });
+    });
+    if (seats || o.h < .28 || o.h > 2.3) return;
+    // a table, a shelf, a counter: any flat patch on top, close enough to the edge to hop on
+    const nx = Math.min(14, Math.floor((o.x1 - o.x0) / .16)), nz = Math.min(14, Math.floor((o.z1 - o.z0) / .16)); if (nx < 3 || nz < 3) return;
+    const H = [], X = i => o.x0 + (i + .5) * (o.x1 - o.x0) / nx, Z = j => o.z0 + (j + .5) * (o.z1 - o.z0) / nz;
+    for (let i = 0; i < nx; i++) { H[i] = []; for (let j = 0; j < nz; j++) { RC.set(V.set(X(i), o.h + .2, Z(j)), DN); RC.near = 0; RC.far = o.h + .3; const h = RC.intersectObject(g, true).find(q => q.object.visible !== false); H[i][j] = h ? h.point.y : NaN; } }
+    const cand = [];
+    for (let i = 1; i < nx - 1; i++) for (let j = 1; j < nz - 1; j++) {
+      const h = H[i][j]; if (!(h >= .28 && h <= 2.3)) continue;
+      let flat = true; for (let a = -1; a <= 1 && flat; a++) for (let b = -1; b <= 1; b++) if (!(Math.abs(H[i + a][j + b] - h) < .03)) { flat = false; break; }
+      const x = X(i), z = Z(j), edge = Math.min(x - o.x0, o.x1 - x, z - o.z0, o.z1 - z); if (flat && edge < .55) cand.push({ x, y: h + .01, z, edge });
+    }
+    for (let n = 0; n < 4 && cand.length; n++) {
+      const c = cand.splice(Math.random() * cand.length | 0, 1)[0], a = approach(g, o, c.x, c.y, c.z, w); if (!a) continue;
+      w.per.push({ idx: o.idx, key: o.key, slot: -1, x: c.x, y: c.y, z: c.z, ax: a.ax, az: a.az, dx: a.dx, dz: a.dz, pose: 'sit', fave: FAVE.test(it.i) });
+      for (let q = cand.length - 1; q >= 0; q--) if (Math.hypot(cand[q].x - c.x, cand[q].z - c.z) < .5) cand.splice(q, 1);
+    }
+  }
+  const clearAbove = (p) => { RC.set(V.set(p.x, p.y + .9, p.z), DN); RC.near = 0; RC.far = .98; const h = RC.intersectObjects(furnGroup.children, true).find(q => q.object.visible !== false); return !h || Math.abs(h.point.y - p.y) < .07; };
+
+  /* ---------- the camera: is this spot in the picture? ---------- */
+  // the yard and the rooms are seen from different sides of the house wall: a pet is only 'in the picture' on the kitty's side of it
+  let frameLo = -.58;   // the bottom of the picture that counts: the yard camera puts the kitty low on the screen, so it reaches down to her
+  const sideOK = z => kcRoomOf() !== 'living' || (me.z < -5.2 ? z < -5.5 : z > -4.7);
+  function inFrame(x, y, z, pad) { if (!sideOK(z)) return false; V.set(x, y, z).project(camera); pad = pad || 0; return V.z < 1 && Math.abs(V.x) < .8 - pad && V.y > (deco ? -.2 : frameLo) + pad && V.y < .76 - pad; }
+  // a pet should not hide the kitty: nothing stops in front of her on the screen
+  function onKitty(x, y, z) { V.set(x, y, z).project(camera); const px = V.x, py = V.y; V.set(me.x, .9, me.z).project(camera); return Math.abs(px - V.x) < .11 && py > V.y - .22 && py < V.y + .36 && V.z < 1; }
+  // zones: the rooms (the rect of the room) or the yard. Only the living room has a yard door; in every other room all pets are in the room.
+  const OUT = { butterfly: 1, bee: .95, frog: .9, bird: .6, turtle: .5, hamster: .3, mouse: .2 };   // who likes to be outdoors
+  const homeOn = () => mode === 'house' && me.houseOwner === myPeer;
+  const zoneOf = z => kcRoomOf() === 'living' && z < -5.2 ? 'yard' : 'room';
+  function zoneFor(kind) {   // my own house: the outdoor kinds live in the yard (about half of my pets, none if I have just one); a visit: the pet is where the kitty is
+    if (kcRoomOf() !== 'living') return 'room';
+    if (!homeOn()) return zoneOf(me.z);
+    const l = (save.pets || []).slice().sort((a, b) => (OUT[b] || 0) - (OUT[a] || 0)), n = l.length;
+    return l.indexOf(kind) >= 0 && l.indexOf(kind) < (n < 2 ? 0 : Math.round(n * .55)) ? 'yard' : 'room';
+  }
+  const zoneRect = zn => zn === 'yard' ? HOUSE_RECTS[2] : HOUSE_RECTS[0];
+  const all = () => { const a = []; if (myPetM && myPetM.parent === houseScene && myPetM.userData.hp) a.push(myPetM); extras.forEach(m => { if (m.parent === houseScene && m.userData.hp) a.push(m); }); return a; };
+  const extras = new Map(), stats = { slide: 0, chase: 0, perch: 0, rescue: 0 };
+  const same = (q, p) => q && q.key === p.key && q.slot === p.slot && Math.hypot(q.x - p.x, q.z - p.z) < .45;   // the same place (a pet that is on the way there has asked for it already)
+  const taken = (p, m) => all().some(o => o !== m && (same(o.userData.hp.perch, p) || same(o.userData.hp.want, p)))
+    || (p.slot >= 0 && kcInteract.taken(p.idx, p.slot));
+
+  /* ---------- one pet's little life ---------- */
+  function newHp(m, anch, t, w) {
+    const ud = m.userData, ox = anch ? anch.ax : me.x, oz = anch ? anch.az : me.z, ory = anch ? anch.ry : me.ry, n = [...extras.values()].indexOf(m) + 1 + (m === myPetM ? 0 : 1);
+    const q = houseConstrain(ox - Math.sin(ory) * (1.2 + n * .25) + Math.cos(ory) * (.7 - n * .35), oz - Math.cos(ory) * (1.2 + n * .25) - Math.sin(ory) * (.7 - n * .35));
+    const keep = ud.x != null && m.parent === houseScene && ud.hroom === kcRoomOf();
+    const hp = ud.hp = { kind: ud.kind, x: keep ? ud.x : q[0], z: keep ? ud.z : q[1], y: 0, ry: ory, s: 'idle', pose: 'sit', until: t + rnd(.4, 1.6), t0: t, room: kcRoomOf(), oof: 0, wv: -1, pop: 1, stuck: 0, sx: 0, sz: 0, st: t, zone: anch ? 'room' : zoneFor(ud.kind) };
+    hp.y = K[ud.kind].fly ? K[ud.kind].hov : 0; ud.hroom = hp.room;
+    if (!anch && !keep) { const p = spotZone(m, hp, w); if (p) { hp.x = p[0]; hp.z = p[1]; hp.pop = 0; } }   // my own pets start spread out through the house and the yard
+    return hp;
+  }
+  function rescue(m, hp, w, t, anch) {
+    stats.rescue++;   // a friend's pet that strayed from its owner: run in from the edge of the picture next to the owner
+    const cx = anch ? anch.ax : me.x, cz = anch ? anch.az : me.z, kd = K[hp.kind];
+    for (let i = 0; i < 12; i++) {
+      const a = rnd(0, 6.28), r = rnd(1.3, 3.6), fx = cx + Math.sin(a) * r, fz = cz + Math.cos(a) * r, f = houseConstrain(fx, fz);
+      if (Math.hypot(f[0] - fx, f[1] - fz) > .1 || (!kd.fly && blocked(w, f[0], f[1], .3))) continue;
+      if (!anch && !inFrame(f[0], .3, f[1], .1)) continue;
+      let sx = f[0], sz = f[1], out = false; const dx = Math.sin(a), dz = Math.cos(a);
+      if (!anch) for (let k = 1; k <= 10; k++) { const p = houseConstrain(f[0] + dx * k * .9, f[1] + dz * k * .9); if (!inFrame(p[0], .3, p[1], 0)) { sx = p[0]; sz = p[1]; out = true; break; } }
+      hp.x = sx; hp.z = sz; hp.y = kd.fly ? kd.hov : 0; hp.perch = null; hp.seq = null; hp.then = null; hp.oof = 0; hp.pop = out ? 1 : 0;
+      go(hp, f[0], f[1], true, null, t); if (kd.fly) hp.ty = kd.hov; return;
+    }
+    const q = houseConstrain(cx, cz + 1.3); hp.x = q[0]; hp.z = q[1]; hp.y = kd.fly ? kd.hov : 0; hp.perch = null; hp.seq = null; hp.pop = 0; hp.s = 'idle'; hp.pose = 'sit'; hp.until = t + 1;
+  }
+  function rescueIn(m, hp, w, t) {   // out of sight for too long: run in from the edge of the picture to a free place the camera sees (or pop in when there is none)
+    stats.rescue++;
+    const kd = K[hp.kind], f = spotZone(m, hp, w, true);
+    hp.perch = null; hp.seq = null; hp.then = null; hp.want = null; hp.oof = 0; hp.y = kd.fly ? kd.hov : 0;
+    if (!f) { const q = houseConstrain(me.x + 1.3, me.z + 1.3); hp.x = q[0]; hp.z = q[1]; hp.pop = 0; idle(hp, t, 'sit', 1); return; }
+    let sx = f[0], sz = f[1], out = false; const a0 = rnd(0, 6.28);
+    for (let i = 0; i < 12 && !out; i++) { const dx = Math.sin(a0 + i * .52), dz = Math.cos(a0 + i * .52);
+      for (let k = 1; k <= 10; k++) {   // along the way the picture ends before the wall does, and the start is in the pet's own zone (never over a wall)
+        const x = f[0] + dx * k * .9, z = f[1] + dz * k * .9, p = houseConstrain(x, z); if (Math.hypot(p[0] - x, p[1] - z) > .1 || zoneOf(p[1]) !== hp.zone) break;
+        if (!inFrame(p[0], .3, p[1], 0)) { sx = p[0]; sz = p[1]; out = true; break; } } }
+    hp.x = sx; hp.z = sz; hp.pop = out ? 1 : 0; go(hp, f[0], f[1], true, null, t);
+  }
+  // a free place in the pet's own zone, far from the other pets, from where they are going and from the kitty; the places the camera sees are liked more
+  function spotZone(m, hp, w, frame) {
+    const kd = K[hp.kind], R = zoneRect(hp.zone), here = zoneOf(me.z) === hp.zone, pts = [];
+    all().forEach(o => { if (o === m) return; const h = o.userData.hp; if (!h) return; pts.push([h.x, h.z]); if ((h.s === 'walk' || h.s === 'fly') && h.tx != null) pts.push([h.tx, h.tz]); });
+    let best = null, bs = -1e9;
+    for (let i = 0; i < 18; i++) {
+      const x = rnd(R.x0 + .5, R.x1 - .5), z = rnd(R.z0 + .5, R.z1 - .5), q = houseConstrain(x, z);
+      if (Math.hypot(q[0] - x, q[1] - z) > .1 || (!kd.fly && blocked(w, q[0], q[1], .2))) continue;
+      if (here && (Math.hypot(q[0] - me.x, q[1] - me.z) < 1 || onKitty(q[0], kd.fly ? kd.hov : .3, q[1]))) continue;
+      const fr = here && inFrame(q[0], .3, q[1], .08); if (frame && !fr) continue;
+      let dm = 4; for (const p of pts) dm = Math.min(dm, Math.hypot(p[0] - q[0], p[1] - q[1]));
+      const dk = here ? Math.hypot(q[0] - me.x, q[1] - me.z) : 9, sc = dm + (fr ? 2.2 : 0) + Math.min(2, Math.hypot(q[0] - hp.x, q[1] - hp.z)) * .3 + Math.random() * 1.2 - Math.max(0, 2.2 - dk) * 1.2;
+      if (sc > bs) { bs = sc; best = q; }
+    }
+    return best;
+  }
+  const spot = (m, hp, w, anch, rmin, rmax) => anch ? spotNear(m, hp, w, anch, rmin, rmax) : spotZone(m, hp, w);
+  function go(hp, x, z, fast, then, t) { const kd = K[hp.kind]; hp.s = kd.fly ? 'fly' : 'walk'; hp.tx = x; hp.tz = z; hp.ty = kd.fly ? (hp.kind === 'bird' ? 0 : kd.hov) : 0; hp.fast = !!fast; hp.then = then || null; hp.sx = hp.x; hp.sz = hp.z; hp.st = t; hp.stuck = 0; }
+  function idle(hp, t, pose, dur) { hp.s = 'idle'; hp.pose = pose; hp.t0 = t; hp.until = t + dur; hp.then = null; hp.ign = -1; hp.v = 0; hp.want = null; }
+  function spotNear(m, hp, w, anch, rmin, rmax) {   // a free place on the floor near a friend's pet's owner
+    const cx = anch.ax, cz = anch.az, kd = K[hp.kind];
+    for (let i = 0; i < 18; i++) {
+      const a = rnd(0, 6.28), r = rnd(rmin, rmax), x = cx + Math.sin(a) * r, z = cz + Math.cos(a) * r, q = houseConstrain(x, z);
+      if (Math.hypot(q[0] - x, q[1] - z) > .1 || (!kd.fly && blocked(w, q[0], q[1], .2)) || Math.hypot(q[0] - me.x, q[1] - me.z) < .8) continue; return q;
+    }
+    return null;
+  }
+
+  /* what to do next */
+  function decide(m, hp, w, t, anch) {
+    const kd = K[hp.kind], r = Math.random(), mates = all().filter(o => o !== m && !K[o.userData.kind].fly && o.userData.hp && o.userData.hp.zone === hp.zone);
+    if (r < .34 && tryPerch(m, hp, w, t, anch)) return;
+    if (r < .46 && !kd.fly && !anch && trySlide(m, hp, w, t)) return;
+    if (r < .56 && mates.length && !kd.fly && !anch && tryChase(m, hp, mates, t)) return;
+    if (r < .72) {   // zoomies: three quick turns round the room
+      const pts = []; for (let i = 0; i < 3; i++) { const q = spot(m, hp, w, anch, 1.2, 2.6); if (q) pts.push(q); }
+      if (pts.length) { const nxt = () => { const q = pts.shift(); if (q) go(hp, q[0], q[1], true, nxt, hp.t); else idle(hp, hp.t, 'play', rnd(.8, 1.4)); }; nxt(); return; }
+    }
+    const q = spot(m, hp, w, anch, 1.2, 2.6);
+    if (q) go(hp, q[0], q[1], false, () => idle(hp, hp.t, pick(['sit', 'groom', 'look', 'sit']), rnd(1.6, 3.6)), t);
+    else idle(hp, t, 'sit', 1);
+  }
+  function tryPerch(m, hp, w, t, anch) {
+    const kd = K[hp.kind], here = !anch && zoneOf(me.z) === hp.zone, list = w.per.filter(p => p.y <= kd.max && !taken(p, m) && (anch ? Math.hypot(p.x - anch.ax, p.z - anch.az) < 3.2 : zoneOf(p.z) === hp.zone && !(here && onKitty(p.x, p.y + .2, p.z))));
+    if (!list.length) return false;
+    const others = anch ? [] : all().filter(o => o !== m && o.userData.hp).map(o => o.userData.hp);   // places far from the other pets, and the ones the camera sees, are liked more
+    let pr = null, best = -1; list.forEach(p => { const dm = Math.min(3, ...others.map(h => Math.hypot(h.x - p.x, h.z - p.z))), sc = (p.fave ? .6 : 0) + Math.random() + dm * .25 + (here && inFrame(p.x, p.y + .2, p.z, .05) ? 1.3 : 0) - (here ? Math.max(0, 2 - Math.hypot(p.x - me.x, p.z - me.z)) * .6 : 0); if (sc > best) { best = sc; pr = p; } });
+    if (!clearAbove(pr)) { w.per.splice(w.per.indexOf(pr), 1); return false; }
+    if (kd.fly) { hp.want = pr; hp.s = 'fly'; hp.tx = pr.x; hp.tz = pr.z; hp.ty = pr.y; hp.fast = false; hp.then = () => land(hp, pr, hp.t); hp.sx = hp.x; hp.sz = hp.z; hp.st = t; hp.stuck = 0; return true; }
+    stats.perch++; hp.want = pr; go(hp, pr.ax, pr.az, false, () => climbTo(hp, pr, hp.t), t); return true;
+  }
+  function land(hp, pr, t) { hp.perch = pr; hp.y = pr.y; hp.x = pr.x; hp.z = pr.z; idle(hp, t, pr.pose === 'sleep' && hp.kind !== 'butterfly' ? 'sleep' : pr.pose === 'bounce' ? 'bounce' : pick(['sit', 'groom', 'look', 'sit']), pr.pose === 'sleep' ? rnd(7, 12) : rnd(4, 8) * (hp.kind === 'turtle' ? 1.6 : 1)); }
+  function climbTo(hp, pr, t) {   // from the floor at the foot of the piece up to the spot: a hop, or a climb up the outside when it is high
+    const kd = K[hp.kind], a = [hp.x, 0, hp.z], p = [pr.x, pr.y, pr.z];
+    if (pr.y <= kd.jump) hp.seq = [{ a, b: p, dur: .5 + pr.y * .55, bump: .28 + pr.y * .4, mode: 'hop' }];
+    else { const c0 = [pr.ax - pr.dx * (APP - .1), 0, pr.az - pr.dz * (APP - .1)], c1 = [c0[0], pr.y, c0[2]]; hp.seq = [{ a, b: c0, dur: .35, mode: 'walk' }, { a: c0, b: c1, dur: pr.y / .75, mode: 'climb' }, { a: c1, b: p, dur: .5, bump: .22, mode: 'hop' }]; }
+    hp.s = 'seq'; hp.si = 0; hp.st = t; hp.endPerch = pr;
+  }
+  function leave(m, hp, w, t, anch) {   // get down: hop to the floor in front, or take off again
+    const pr = hp.perch, kd = K[hp.kind]; hp.perch = null;
+    if (kd.fly) { const q = spot(m, hp, w, anch, 1.2, 2.6); if (q) go(hp, q[0], q[1], false, () => idle(hp, hp.t, hp.kind === 'bird' ? pick(['sit', 'groom', 'look']) : 'sit', rnd(1, 2.5)), t); else idle(hp, t, 'sit', 1); return; }
+    const f = [pr.ax, 0, pr.az]; hp.seq = [{ a: [hp.x, hp.y, hp.z], b: f, dur: .4 + hp.y * .35, bump: .2 + hp.y * .25, mode: 'hop' }]; hp.s = 'seq'; hp.si = 0; hp.st = t; hp.endPerch = null;
+  }
+  function trySlide(m, hp, w, t) {
+    const here = zoneOf(me.z) === hp.zone, all2 = w.slides.filter(s => zoneOf(s.path[2].z) === hp.zone), fr = here ? all2.filter(s => inFrame(s.path[2].x, s.path[2].y, s.path[2].z, .02)) : [], sl = fr.length ? fr : all2;
+    if (!sl.length || hp.kind === 'turtle' && Math.random() < .6) return false;
+    const s = pick(sl), p0 = s.path[0]; hp.ign = s.idx; stats.slide++;
+    go(hp, p0.x, p0.z, false, () => {
+      const seq = []; for (let i = 1; i < s.path.length; i++) { const a = s.path[i - 1], b = s.path[i], dy = b.y - a.y, hd = Math.hypot(b.x - a.x, b.z - a.z); seq.push({ a: [a.x, a.y - (a.m === 'sit' ? .08 : 0), a.z], b: [b.x, b.y - (b.m === 'sit' ? .08 : 0), b.z], dur: Math.max(.2, b.d * .75), mode: dy > .3 && dy > hd * .6 ? 'climb' : dy < -.3 ? 'slide' : 'walk' }); }
+      hp.seq = seq; hp.s = 'seq'; hp.si = 0; hp.st = hp.t; hp.endPerch = null; hp.thenSeq = () => idle(hp, hp.t, 'play', rnd(1, 1.8));
+    }, t); return true;
+  }
+  function tryChase(m, hp, mates, t) {
+    const o = pick(mates), oh = o.userData.hp; if (!oh || oh.perch || oh.s === 'seq') return false;
+    stats.chase++; hp.s = 'chase'; hp.chase = o; hp.t0 = t; hp.until = t + 6; hp.fast = true; hp.sx = hp.x; hp.sz = hp.z; hp.st = t; hp.stuck = 0; return true;
+  }
+
+  /* ---------- every frame ---------- */
+  function brain(m, dt, t, anch) {
+    const ud = m.userData, kd = K[ud.kind]; if (!kd) return;
+    if (m.rotation.order !== 'YXZ') m.rotation.order = 'YXZ';
+    dt = Math.min(dt, .1); const w = world(); pump();
+    let hp = ud.hp; if (!hp || ud.x == null || hp.room !== kcRoomOf() || ud.hroom !== hp.room) hp = newHp(m, anch, t, w);
+    if (hp.wv !== w.v) { hp.wv = w.v; if (hp.perch && !w.keys.has(hp.perch.key)) { hp.perch = null; hp.y = kd.fly ? kd.hov : 0; hp.seq = null; idle(hp, t, 'sit', .5); } if (hp.s === 'seq' && hp.endPerch && !w.keys.has(hp.endPerch.key)) { hp.seq = null; hp.y = kd.fly ? kd.hov : 0; idle(hp, t, 'sit', .5); } }
+    hp.t = t; hp.dt = dt;
+    // out of sight for a moment: come back in
+    if (!anch) {   // out of sight for a while, in the zone the kitty is in: come back in. (Pets in the other zone, the yard while she is indoors, are just busy there.)
+      hp.zone = zoneFor(ud.kind); hp.oof = zoneOf(me.z) !== hp.zone || inFrame(hp.x, hp.y + .25 * SC, hp.z) ? 0 : hp.oof + dt; if (hp.oof > (homeOn() ? 3 : 1)) rescueIn(m, hp, w, t);
+    }
+    else if (Math.hypot(hp.x - anch.ax, hp.z - anch.az) > 4.2) rescue(m, hp, w, t, anch);
+    if (hp.pop < 1) hp.pop = Math.min(1, hp.pop + dt * 3);
+    const A = { mv: false, up: 0, pitch: 0, roll: 0, sq: 1, air: false };
+    // the others: stay apart, and don't stand on the kitty
+    if (hp.s !== 'seq' && !hp.perch && !kd.fly) {
+      for (const o of all()) { if (o === m) continue; const h2 = o.userData.hp, dx = hp.x - h2.x, dz = hp.z - h2.z, d = Math.hypot(dx, dz); if (d < .3 && d > 1e-3 && !(h2.perch) && hp.s !== 'chase') { hp.x += dx / d * (.3 - d) * .3; hp.z += dz / d * (.3 - d) * .3; } }
+      if (!anch) { const dx = hp.x - me.x, dz = hp.z - me.z, d = Math.hypot(dx, dz); if (d < .4 && d > 1e-3) { hp.x += dx / d * (.4 - d) * .5; hp.z += dz / d * (.4 - d) * .5; } }
+    }
+    switch (hp.s) {
+      case 'walk': case 'chase': {
+        let tx = hp.tx, tz = hp.tz, done = false;
+        if (hp.s === 'chase') { const o = hp.chase, oh = o && o.userData.hp; if (!oh || t > hp.until || oh.s === 'seq' || oh.perch) { idle(hp, t, 'sit', 1); break; } tx = oh.x; tz = oh.z; if (Math.hypot(tx - hp.x, tz - hp.z) < .55) {   // caught: both bounce, then the other one runs
+            idle(hp, t, 'play', 1.5); oh.ry = Math.atan2(hp.x - oh.x, hp.z - oh.z); hp.ry = Math.atan2(oh.x - hp.x, oh.z - hp.z); idle(oh, t, 'play', 1.5); oh.afterPlay = 'run'; break; } }
+        const dx = tx - hp.x, dz = tz - hp.z, d = Math.hypot(dx, dz);
+        if (d < .14 && hp.s === 'walk') done = true;
+        else { hp.v = (hp.v || 0) + ((hp.fast ? kd.run : kd.sp) * Math.min(1, Math.max(.3, d * 1.8)) - (hp.v || 0)) * Math.min(1, dt * 5); const st = Math.min(d, hp.v * dt); hp.x += dx / d * st; hp.z += dz / d * st; hp.ry = angLerp(hp.ry, Math.atan2(dx, dz), Math.min(1, dt * 9)); A.mv = true;
+          pushOut(hp, w);
+          if (t - hp.st > .9) { if (Math.hypot(hp.x - hp.sx, hp.z - hp.sz) < .12) { if (++hp.stuck >= 2) { hp.then = null; idle(hp, t, 'sit', .6); break; } } else hp.stuck = 0; hp.sx = hp.x; hp.sz = hp.z; hp.st = t; } }
+        if (done) { const f = hp.then; hp.then = null; if (f) f(); else idle(hp, t, 'sit', 1); }
+        break; }
+      case 'fly': {
+        const dx = hp.tx - hp.x, dz = hp.tz - hp.z, d = Math.hypot(dx, dz);
+        if (d > .04) { hp.v = (hp.v || 0) + ((hp.fast ? kd.run : kd.sp) * Math.min(1, Math.max(.25, d * 1.5)) - (hp.v || 0)) * Math.min(1, dt * 4); const st = Math.min(d, hp.v * dt); hp.x += dx / d * st; hp.z += dz / d * st; hp.ry = angLerp(hp.ry, Math.atan2(dx, dz), Math.min(1, dt * 6)); }
+        let ay = hp.ty; if (d > .75) { const nx = d > 1e-3 ? dx / d : 0, nz = d > 1e-3 ? dz / d : 0; ay = Math.max(hp.kind === 'bird' ? .85 : kd.hov, topAt(w, hp.x, hp.z) + .4, topAt(w, hp.x + nx * .7, hp.z + nz * .7) + .4); }
+        hp.y += (ay - hp.y) * Math.min(1, dt * (d > .75 ? 3 : 2.2)); A.mv = A.air = d > .1 || Math.abs(hp.y - ay) > .08;
+        if (d <= .04 && Math.abs(hp.y - hp.ty) < .07) { hp.y = hp.ty; const f = hp.then; hp.then = null; if (f) f(); else idle(hp, t, 'sit', rnd(.8, 2)); }
+        else if (t - hp.st > 7) { hp.then = null; idle(hp, t, 'sit', .6); }
+        break; }
+      case 'seq': {
+        const sg = hp.seq && hp.seq[hp.si]; if (!sg) { hp.s = 'idle'; hp.until = t; break; }
+        const u = Math.min(1, (t - hp.st) / sg.dur), e = sg.mode === 'slide' ? u : ease(u), hd = Math.hypot(sg.b[0] - sg.a[0], sg.b[2] - sg.a[2]), dy = sg.b[1] - sg.a[1];
+        hp.x = sg.a[0] + (sg.b[0] - sg.a[0]) * e; hp.z = sg.a[2] + (sg.b[2] - sg.a[2]) * e; hp.y = sg.a[1] + dy * e + (sg.bump || 0) * 4 * u * (1 - u);
+        if (sg.mode === 'climb') { hp.ry = angLerp(hp.ry, Math.atan2(-(hp.endPerch ? hp.endPerch.dx : 0), -(hp.endPerch ? hp.endPerch.dz : 1)), Math.min(1, dt * 12)); if (hd > .1) hp.ry = angLerp(hp.ry, Math.atan2(sg.b[0] - sg.a[0], sg.b[2] - sg.a[2]), Math.min(1, dt * 12)); A.pitch = -1.15; A.mv = true; A.roll = Math.sin(t * 14) * .12; }
+        else if (sg.mode === 'slide') { if (hd > .05) hp.ry = angLerp(hp.ry, Math.atan2(sg.b[0] - sg.a[0], sg.b[2] - sg.a[2]), Math.min(1, dt * 10)); A.pitch = Math.max(0, Math.atan2(-dy, hd + .001)) * .8; }
+        else { if (hd > .05) hp.ry = angLerp(hp.ry, Math.atan2(sg.b[0] - sg.a[0], sg.b[2] - sg.a[2]), Math.min(1, dt * 10)); A.mv = sg.mode === 'walk'; A.air = kd.fly || hp.kind === 'bird'; if (sg.mode === 'hop') A.pitch = -Math.sin(u * Math.PI) * .35 * (dy >= 0 ? 1 : -.5); }
+        if (u >= 1) { hp.si++; hp.st = t; if (hp.si >= hp.seq.length) { hp.seq = null; const pr = hp.endPerch; hp.endPerch = null; if (pr) land(hp, pr, t); else { const f = hp.thenSeq; hp.thenSeq = null; hp.y = 0; if (f) f(); else idle(hp, t, 'sit', rnd(.6, 1.4)); } } }
+        break; }
+      default: {   // idle: on the floor, or on a piece of furniture
+        const k = t - hp.t0;
+        if (hp.pose === 'play') { A.up = Math.abs(Math.sin(k * 7)) * .17 * (hp.kind === 'turtle' ? .4 : 1); hp.ry += dt * 2.4; if (kd.fly) A.mv = A.air = true; }
+        else if (hp.pose === 'bounce') { A.up = Math.abs(Math.sin(k * 4.4)) * (hp.perch ? hp.perch.amp || .2 : .2); hp.ry += dt * 1.6; }
+        else if (hp.pose === 'groom') { A.pitch = .25 + Math.sin(k * 9) * .22; }
+        else if (hp.pose === 'look') { hp.ry += Math.sin(k * 1.7) * dt * 1.6; }
+        else if (hp.pose === 'sleep') { A.sq = .78 + Math.sin(k * 1.8) * .03; A.pitch = .18; }
+        else if (!anch) { const dx = me.x - hp.x, dz = me.z - hp.z; if (dx * dx + dz * dz > .1 && dx * dx + dz * dz < 20) hp.ry = angLerp(hp.ry, Math.atan2(dx, dz), Math.min(1, dt * 1.6)); }
+        if (kd.fly && !hp.perch) { hp.y += (kd.hov + Math.sin(t * 1.3 + hp.x) * .1 - (hp.kind === 'bird' ? kd.hov : 0) - hp.y) * Math.min(1, dt * 2); A.mv = A.air = hp.kind !== 'bird'; }
+        if (t >= hp.until) {
+          if (hp.afterPlay === 'run') { hp.afterPlay = null; const q = spot(m, hp, w, anch, 2, 3.6); if (q) { go(hp, q[0], q[1], true, () => idle(hp, hp.t, 'sit', rnd(1, 2)), t); break; } }
+          if (hp.perch) leave(m, hp, w, t, anch); else decide(m, hp, w, t, anch);
+        }
+      }
+    }
+    if (hp.s !== 'seq' && !hp.perch && !kd.fly) pushOut(hp, w);
+    ud.x = hp.x; ud.z = hp.z; ud.ry = hp.ry; ud.hroom = hp.room; ud.hp = hp;
+    show(m, hp, t, A, kd);
+  }
+  function pushOut(hp, w) {   // not through the furniture: out by the nearest side; and always inside the house or yard
+    for (const o of w.obs) {
+      const mg = .14; if (hp.x > o.x0 - mg && hp.x < o.x1 + mg && hp.z > o.z0 - mg && hp.z < o.z1 + mg) {
+        if ((hp.perch && hp.perch.idx === o.idx) || hp.ign === o.idx) continue;
+        const dl = hp.x - (o.x0 - mg), dr = o.x1 + mg - hp.x, db = hp.z - (o.z0 - mg), df = o.z1 + mg - hp.z, mn = Math.min(dl, dr, db, df);
+        if (mn === dl) hp.x = o.x0 - mg; else if (mn === dr) hp.x = o.x1 + mg; else if (mn === db) hp.z = o.z0 - mg; else hp.z = o.z1 + mg;
+      }
+    }
+    const q = houseConstrain(hp.x, hp.z); hp.x = q[0]; hp.z = q[1];
+  }
+  function show(m, hp, t, A, kd) {
+    const k = hp.kind, ud = m.userData, sm = hp.sm || (hp.sm = { up: 0, pitch: 0, roll: 0, sq: 1 }), e = Math.min(1, (hp.dt || .016) * 9);
+    ['up', 'pitch', 'roll', 'sq'].forEach(n => { sm[n] += (A[n] - sm[n]) * e; });   // every pose eases in and out, nothing snaps
+    m.scale.set(1, 1, 1); m.rotation.x = m.rotation.z = 0;
+    if (k === 'butterfly' || k === 'bee') petAnim(m, t, true, hp.y + sm.up - PET_FLY[k]);
+    else if (k === 'bird') petAnim(m, t, A.air, hp.y + sm.up - .55 * (ud.mk || 0));
+    else petAnim(m, t, A.mv, hp.y + sm.up);
+    if (hp.perch && (k === 'butterfly' || k === 'bee')) { const f = .35 + Math.sin(t * 2.4) * .22; ud.wl.rotation.z = -f; ud.wr.rotation.z = f; m.position.y = hp.y + sm.up; m.rotation.z = 0; }
+    m.position.x = hp.x; m.position.z = hp.z; m.rotation.y = hp.ry;
+    m.rotation.x += sm.pitch; m.rotation.z += sm.roll;
+    m.scale.multiplyScalar(SC); m.scale.y *= sm.sq;
+    if (hp.pop < 1) m.scale.multiplyScalar(.05 + .95 * ease(hp.pop));
+  }
+  function release(m) { const ud = m.userData; if (ud.hp) { ud.hp = null; ud.hroom = null; m.scale.set(1, 1, 1); m.rotation.x = m.rotation.z = 0; m.rotation.order = 'XYZ'; } }
+
+  /* ---------- round and light: all the parts of a pet that do not move become ONE smooth mesh (a handful of draw calls instead of 50 to 90, and rounder spheres) ---------- */
+  const PSPH = new T.SphereGeometry(1, 18, 13), PSPH2 = new T.SphereGeometry(1, 12, 9), PMAT = new T.MeshLambertMaterial({ vertexColors: true });
+  function mergeInto(root, parts) {   // parts (meshes under root) become one vertex-coloured mesh that lives in root, in root's own coordinates
+    if (parts.length < 3) return;
+    const inv = new T.Matrix4().copy(root.matrixWorld).invert(), mat = new T.Matrix4();
+    const geos = parts.map(o => {   // tiny spheres (sparkles in the eyes, toes) keep the old low detail
+      const big = o.geometry.type === 'SphereGeometry' && o.geometry.parameters.widthSegments <= 12 ? o.matrixWorld.getMaxScaleOnAxis() : 0, q = (big >= .1 ? PSPH : big >= .045 ? PSPH2 : o.geometry).clone();
+      q.applyMatrix4(mat.multiplyMatrices(inv, o.matrixWorld)); return q;
+    });
+    let nv = 0, ni = 0; geos.forEach(q => { nv += q.attributes.position.count; ni += q.index ? q.index.count : q.attributes.position.count; });
+    const pos = new Float32Array(nv * 3), nor = new Float32Array(nv * 3), col = new Float32Array(nv * 3), idx = new (nv > 65000 ? Uint32Array : Uint16Array)(ni);
+    let vo = 0, io = 0;
+    geos.forEach((q, i) => {
+      const n = q.attributes.position.count, c = parts[i].material.color; pos.set(q.attributes.position.array, vo * 3); nor.set(q.attributes.normal.array, vo * 3);
+      for (let v = 0; v < n; v++) { col[(vo + v) * 3] = c.r; col[(vo + v) * 3 + 1] = c.g; col[(vo + v) * 3 + 2] = c.b; }
+      if (q.index) for (let v = 0; v < q.index.count; v++) idx[io++] = q.index.array[v] + vo; else for (let v = 0; v < n; v++) idx[io++] = vo + v;
+      vo += n; q.dispose();
+    });
+    const mg = new T.BufferGeometry(); mg.setAttribute('position', new T.BufferAttribute(pos, 3)); mg.setAttribute('normal', new T.BufferAttribute(nor, 3)); mg.setAttribute('color', new T.BufferAttribute(col, 3)); mg.setIndex(new T.BufferAttribute(idx, 1));
+    parts.forEach(o => o.parent && o.parent.remove(o));
+    const mm = new T.Mesh(mg, PMAT); mm.castShadow = false; root.add(mm);
+  }
+  function slick(g) {
+    const ud = g.userData, wings = [ud.wl, ud.wr, ud.tail].filter(Boolean), keep = wings.concat(ud.legs || []), ok = o => o.isMesh && o.geometry && o.material.color && !(o.material.transparent && o.material.opacity < 1);
+    g.updateMatrixWorld(true);
+    const body = []; g.traverse(o => { if (!ok(o)) return; for (let p = o; p && p !== g.parent; p = p.parent) if (keep.includes(p)) return; body.push(o); });
+    const bits = wings.map(r => { const a = []; r.traverse(o => { if (o !== r && ok(o)) a.push(o); }); return [r, a]; });
+    mergeInto(g, body); bits.forEach(([r, a]) => mergeInto(r, a));
+    return g;
+  }
+  const baseBuild = buildPet; buildPet = function (kind) { return slick(baseBuild(kind)); };
+
+  /* ---------- hooks ---------- */
+  const oldFollow = petFollow;
+  petFollow = function (m, ox, oz, ory, dt, t, fix, om) {
+    if (mode !== 'house' || m.parent !== houseScene) { release(m); return oldFollow(m, ox, oz, ory, dt, t, fix, om); }
+    if (m === myPetM && window.kcInteract && kcInteract.petBed) { m.userData.hp = null; return oldFollow(m, ox, oz, ory, dt, t, fix, om); }
+    brain(m, dt, t, m === myPetM ? null : { ax: ox, az: oz, ry: ory });
+  };
+  const oldStep = petStep;
+  let hold = false;   // tests: stop the game's own calls and step the pets by hand with kcHousePets.step
+  const step = function (dt, t) {
+    oldStep(dt, t);
+    if (mode === 'house') { V.set(me.x, .5, me.z).project(camera); frameLo = Math.max(-.95, Math.min(-.58, V.y - .3)); }
+    const home = mode === 'house' && me.houseOwner === myPeer && window.kcInteract;
+    if (!home) { extras.forEach(m => { if (m.parent) m.parent.remove(m); release(m); }); return; }
+    const want = save.pets.filter(k => !(k === save.pet && myPetM && myPetM.userData.kind === k));
+    extras.forEach((m, k) => { if (!want.includes(k)) { if (m.parent) m.parent.remove(m); release(m); extras.delete(k); } });
+    want.forEach(k => {
+      let m = extras.get(k); if (!m) { m = buildPet(k); extras.set(k, m); }
+      if (m.parent !== houseScene) { houseScene.add(m); release(m); m.userData.x = null; }
+      brain(m, dt, t, null);
+    });
+  };
+  petStep = function (dt, t) { if (!hold) step(dt, t); };
+  const oldRender = renderHouse;
+  renderHouse = function (items) { oldRender(items); W = null; };
+  // furniture between the camera and a pet goes see-through, like it does for the kitty
+  const oldFade = houseFade;
+  houseFade = function (t, c) {
+    const due = t - (houseFade.at || 0) > .3; oldFade(t, c);
+    if (!due || deco || !W) return;
+    const pets = all(); if (!pets.length) return;
+    pets.forEach(m => {
+      const hp = m.userData.hp; V.set(hp.x, hp.y + .3, hp.z); const d = camera.position.distanceTo(V);
+      FR.origin.copy(camera.position); FR.direction.copy(V).sub(camera.position).normalize();
+      furnGroup.children.forEach((p, i) => { const bx = W.boxes[i]; if (!bx || (hp.perch && hp.perch.idx === i) || p.userData.fade) return; if (FR.intersectBox(bx, V2) && V2.distanceTo(camera.position) < d - .45) p.userData.fade = true; });
+    });
+  };
+  window.kcHousePets = { build: k => buildPet(k), stats, step, hold: v => { hold = !!v; }, world: () => world(), pets: all, extras, inFrame, perches: () => world().per, slides: () => world().slides, K, SC };
+})();
 /* ================= half price (Demi, v33): "for all house and furniture items, lets drop the prices by 50%" =================
    Every house style and every furniture piece costs half now. Done once here, after every set and house module has added its items, so the lists in the
    files keep their original numbers (and a piece added later by a new module should be priced here at full and halved the same way). Whole coins, at least 1;
@@ -54523,8 +55027,18 @@ function applyBackup(v) {
   }
   ['pet', 'wallt', 'wallc'].forEach(k => { if (typeof v[k] === 'string' || typeof v[k] === 'number') save[k] = v[k]; });
   if (v.age != null) { const a = Math.round(+v.age); if (a >= 4 && a <= 8) save.age = a; }   // v36.3: the age picker
-  if (v.mini && typeof v.mini === 'object' && Array.isArray(v.mini.it)) save.mini = { v: 1, zo: v.mini.zo ? 1 : 0, it: v.mini.it.slice(0, 80) };   // v36.4: the school's mini city (the game checks every piece when it opens)
-  ['c500', 'c1500', 'fbonus', 'start50', 'starterV2', 'bankAt', 'gyLv'].forEach(k => { if (v[k] != null && typeof v[k] !== 'object') save[k] = v[k]; });
+  // the school's mini city (v36.4): a backup holds the game's own v 2 city, so keep its version (anything else is the old small map and the game moves it), and the same 200 pieces the game keeps; the game checks every piece when it opens
+  if (v.mini && typeof v.mini === 'object' && Array.isArray(v.mini.it)) save.mini = { v: v.mini.v === 2 ? 2 : 1, zo: v.mini.zo ? 1 : 0, it: v.mini.it.slice(0, 200).filter(r => Array.isArray(r) && r.length <= 6) };
+  save.bike = clamp(+v.bike | 0, 0, 4);   // a bought bike (0 = none)
+  // the text chats and the texts seen in the last day (the phone cleans them again when the page reloads)
+  const txList = l => Array.isArray(l) ? l.slice(-50).filter(e => e && typeof e === 'object' && (e.d === 'i' || e.d === 'o') && typeof e.c === 'string' && /^t\d{1,3}$/.test(e.c) && Number.isFinite(+e.t)).map(e => ({ d: e.d, c: e.c, t: +e.t, new: e.new ? 1 : 0 })) : [];
+  save.tlog = {}; if (v.tlog && typeof v.tlog === 'object' && !Array.isArray(v.tlog)) Object.entries(v.tlog).filter(([k]) => /^[a-z0-9]{10}$/.test(k)).slice(0, 50).forEach(([k, l]) => { const t = txList(l); if (t.length) save.tlog[k] = t; });
+  save.seenTx = {}; if (v.seenTx && typeof v.seenTx === 'object' && !Array.isArray(v.seenTx)) Object.entries(v.seenTx).slice(0, 100).forEach(([k, t]) => { if (/^[a-z0-9]{10}:\d{1,16}$/.test(k) && Number.isFinite(+t)) save.seenTx[k] = +t; });
+  ['c500', 'c1500', 'fbonus', 'start50', 'starterV2', 'bankAt'].forEach(k => { if (v[k] != null && typeof v[k] !== 'object') save[k] = v[k]; });
+  // garden migration and Empty garden's hidden arrangement belong to the backup, not this device
+  delete save.gyLv; delete save.gyKeep;
+  if (v.gyLv != null && typeof v.gyLv !== 'object') save.gyLv = clamp(v.gyLv | 0, 0, 3);
+  if (Array.isArray(v.gyKeep)) save.gyKeep = furnList(v.gyKeep.filter(a => Array.isArray(a) && typeof a[0] === 'string' && /^gy_/.test(a[0])).map(a => ({ i: a[0], x: a[1], z: a[2], r: a[3] }))).map(it => [it.i, it.x, it.z, it.r]);
   // blocked and muted kitties keep their safety: a backup only adds to this device's lists, it never lifts a block or a mute, and a backup that has none changes nothing
   const ids = m => m && typeof m === 'object' && !Array.isArray(m) ? Object.entries(m).filter(([k]) => /^[a-z0-9]{10}$/.test(k)).slice(0, 50) : [];
   ids(v.blocked).forEach(([k, b]) => { if (!save.blocked[k] && Object.keys(save.blocked).length < 50) save.blocked[k] = { n: safeName(b && b.n), t: Math.max(0, +(b && b.t) || 0) }; });
