@@ -21290,16 +21290,21 @@ for (let i = 0; i < 7; i++) {
 // NPCs walk between the walkable areas through the spots where they overlap, step around posts and trees,
 // and pick somewhere new if they stop making progress.
 const rectOf = (x, z) => RECTS.findIndex(r => x >= r.x0 - .05 && x <= r.x1 + .05 && z >= r.z0 - .05 && z <= r.z1 + .05);
+// where two walkable areas overlap, the middle of the overlap (a narrow overlap, like the playground's gate, gets less sideways wobble so the kitty does not aim into a post)
+const npcVia = (r1, r2) => { const A = RECTS[r1], B = RECTS[r2], x0 = Math.max(A.x0, B.x0), x1 = Math.min(A.x1, B.x1), z0 = Math.max(A.z0, B.z0), z1 = Math.min(A.z1, B.z1); return x0 <= x1 && z0 <= z1 ? [(x0 + x1) / 2 + (Math.random() - .5) * Math.max(0, Math.min(2, x1 - x0 - 2)), (z0 + z1) / 2] : null; };
+// v36.8 (Demi: "cats throughout the city keep getting stuck"): the route goes through every area on the way (it used to know only the main street as a hub, so a kitty in the playground
+// or on Kitty Lane walked straight at a wall and stood there), and a kitty never picks a spot where a post or a pot would push her back off it
 function npcRoute(n, x, z) {
   const a = rectOf(n.x, n.z), b = rectOf(x, z);
   n.way = [];
   if (a >= 0 && b >= 0 && a !== b) {
-    const via = (r1, r2) => { const A = RECTS[r1], B = RECTS[r2], x0 = Math.max(A.x0, B.x0), x1 = Math.min(A.x1, B.x1), z0 = Math.max(A.z0, B.z0), z1 = Math.min(A.z1, B.z1); return x0 <= x1 && z0 <= z1 ? [(x0 + x1) / 2 + (Math.random() - .5) * Math.min(2, x1 - x0), (z0 + z1) / 2] : null; };
-    const j = via(a, b);
-    if (j) n.way.push(j); else { const j1 = via(a, 0), j2 = via(0, b); if (j1) n.way.push(j1); if (j2) n.way.push(j2); }
+    const prev = { [a]: -1 }, q = [a];
+    while (q.length && !(b in prev)) { const c = q.shift(); RECTS.forEach((_, j) => { if (!(j in prev) && npcVia(c, j)) { prev[j] = c; q.push(j); } }); }
+    if (b in prev) { const path = []; for (let c = b; prev[c] >= 0; c = prev[c]) path.unshift(c); let c0 = a; path.forEach(j => { n.way.push(npcVia(c0, j)); c0 = j; }); }
   }
   n.way.push([x, z]); [n.tx, n.tz] = n.way.shift(); n.stuck = 0;
 }
+const npcSpot = (x, z) => { for (let k = 0; k < 12; k++) { const p = k ? randomSpot() : constrain(x, z); if (OBST.every(o => !o || Math.hypot(p[0] - o[0], p[1] - o[1]) > o[2] + .6)) return p; } return constrain(x, z); };
 function npcFree(x, z) {
   for (const o of OBST) { const dx = x - o[0], dz = z - o[1], d = Math.hypot(dx, dz), r = o[2] + .35; if (d < r && d > 1e-4) { x = o[0] + dx / d * r; z = o[1] + dz / d * r; } }
   return constrain(x, z);
@@ -21311,13 +21316,13 @@ function updateNpcs(dt, t) {
     let walking = false;
     if (d > .15) {
       const st = Math.min(d, n.sp * dt), ox = n.x, oz = n.z;
-      [n.x, n.z] = npcFree(n.x + dx / d * st, n.z + dz / d * st);
+      [n.x, n.z] = slideStep(n.x, n.z, dx / d, dz / d, st, npcFree, n);   // round a post or the merry-go-round, like the player's kitty does
       const moved = Math.hypot(n.x - ox, n.z - oz);
       n.ry = angLerp(n.ry, Math.atan2(n.x - ox || dx, n.z - oz || dz), Math.min(1, dt * 8)); walking = moved > st * .2;
       n.stuck = moved < st * .35 ? (n.stuck || 0) + dt : 0;
       if (n.stuck > .5) { n.stuckN = (n.stuckN || 0) + 1; n.way = []; n.tx = n.x; n.tz = n.z; n.wait = .5 + Math.random(); }
     } else if (n.way && n.way.length) { [n.tx, n.tz] = n.way.shift(); }
-    else { n.wait -= dt; if (n.wait <= 0) { const p = Math.random() < .3 ? constrain(me.x + (Math.random() - .5) * 16, me.z + (Math.random() - .5) * 10) : randomSpot(); npcRoute(n, p[0], p[1]); n.wait = 2 + Math.random() * 5; } }
+    else { n.wait -= dt; if (n.wait <= 0) { const p = Math.random() < .3 ? npcSpot(me.x + (Math.random() - .5) * 16, me.z + (Math.random() - .5) * 10) : npcSpot(...randomSpot()); npcRoute(n, p[0], p[1]); n.wait = 2 + Math.random() * 5; } }
     n.cat.position.set(n.x, 0, n.z); n.cat.rotation.y = n.ry; animCat(n.cat, walking, t);
     if (labels.has(n)) placeLabel(n, n.cat, '');
   }
@@ -54712,15 +54717,15 @@ const bugsYard = makeBugs(houseScene, houseFLW, 4, 5, () => me);
 let last = 0;
 // a kitty that walks straight into a post, a table or a planter slides round it instead of stopping dead (v31, Demi):
 // when the step is mostly blocked, try turning it a little to either side and keep whichever gets furthest
-function slideStep(x0, z0, dx, dz, st, cons) {
+function slideStep(x0, z0, dx, dz, st, cons, who = me) {
   const q = cons(x0 + dx * st, z0 + dz * st), gain = (p) => (p[0] - x0) * dx + (p[1] - z0) * dz;
   if (gain(q) > st * .55) return q;
   // head-on into something round (the fountain) nothing gains ground, so moving along its edge counts too
   const score = p => gain(p) + .4 * Math.hypot(p[0] - x0, p[1] - z0);
-  let best = q, bs = score(q); const side = me.slide || 1;
+  let best = q, bs = score(q); const side = who.slide || 1;
   for (const a of [.55, -.55, 1.0, -1.0, 1.4, -1.4]) { const r = a * side, c = Math.cos(r), s = Math.sin(r), ex = dx * c + dz * s, ez = -dx * s + dz * c, p = cons(x0 + ex * st, z0 + ez * st), g = gain(p), sc = score(p);
-    if (g > -st * .1 && sc > bs + st * .05) { bs = sc; best = p; if (g > st * .3) { me.slide = Math.sign(r) || 1; break; } } }
-  if (best !== q) me.slide = Math.sign(((best[0] - x0) * dz - (best[1] - z0) * dx)) || side;
+    if (g > -st * .1 && sc > bs + st * .05) { bs = sc; best = p; if (g > st * .3) { who.slide = Math.sign(r) || 1; break; } } }
+  if (best !== q) who.slide = Math.sign(((best[0] - x0) * dz - (best[1] - z0) * dx)) || side;
   return best;
 }
 function stepWalk(dt, speed, cons) {
