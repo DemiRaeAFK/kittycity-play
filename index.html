@@ -18670,8 +18670,8 @@ const hHemi = new T.HemisphereLight(0xfff4e0, 0x8a7a5a, .66); houseScene.add(hHe
 const hSun = new T.DirectionalLight(0xfff0d8, .6); hSun.position.set(6, 14, 8); hSun.castShadow = true;
 Object.assign(hSun.shadow.camera, { left: -14, right: 14, top: 14, bottom: -14 }); hSun.shadow.mapSize.set(1536, 1536); hSun.target.position.set(0, 0, -5); houseScene.add(hSun, hSun.target);
 const HS = 5, YARD = { x0: -7.5, x1: 7.5, z0: -17, z1: -5.3 };   // HS is where the back wall of every room stands (z -HS), so the yard behind the living room and everything on the back walls stay put
-// v36.8 (Demi: "the rooms are all too big"): every room has its own size. [half width, z of the front wall]; the back wall is always at z -5. Drawing code asks kcHX() / kcHF() for the room on screen
-const KC_DIM = { living: [4, 3], kitchen: [3.5, 2], hallway: [2, 2], bathroom: [2.5, 0], bedroom: [3.5, 2], playroom: [3.5, 2], partyroom: [4, 2] };
+// v36.8 (Demi: "the rooms are all too big"): every room has its own size. v36.10 (Demi: "the living rooms in all the houses can be slightly bigger"): the living room went from 8 by 8 to 9 by 8.5. [half width, z of the front wall]; the back wall is always at z -5. Drawing code asks kcHX() / kcHF() for the room on screen
+const KC_DIM = { living: [4.5, 3.5], kitchen: [3.5, 2], hallway: [2, 2], bathroom: [2.5, 0], bedroom: [3.5, 2], playroom: [3.5, 2], partyroom: [4, 2] };
 let kcRoom = 'living';
 const kcDimOf = id => KC_DIM[id] || KC_DIM.living;
 function kcHX() { return kcDimOf(kcRoom)[0]; }        // half the width of the room on screen
@@ -18698,7 +18698,6 @@ const yardFenceG = new T.Group(); houseScene.add(yardFenceG);
   g.add(box('#e8dcc4', -LX + .12, 0, LC, .06, 1, LL), box('#e8dcc4', LX - .12, 0, LC, .06, 1, LL));
   // the fireplace and the windows are free wall pieces (fireplaces.js), so they can be moved
   // front: a full-height wall with the street door (drawn in frontWall below, so it can fade away)
-  g.add(box(M.wood('#7a4a2d'), 0, -.04, LF - .7, 1.8, .06, 1.1));
   // the yard
   g.add(box(M.grass('#a3bf72'), 0, -.12, -11.2, 15.4, .1, 12.2));
   g.add(box(M.grass('#a3bf72'), 0, -.13, 0, 80, .08, 80));
@@ -39035,7 +39034,7 @@ flames and the halos are separate. Needs b6.js and rooms-B.js (bRod, bArtFrame, 
   const hib = (g, x, y, z, c = TH.flower, k = 1) => { for (let i = 0; i < 5; i++) { const a = i / 5 * 6.283; g.add(sph(.07 * k, c, x + Math.cos(a) * .07 * k, y, z + Math.sin(a) * .07 * k, 1, .5, 1)); } g.add(sph(.03 * k, '#ffd84a', x, y + .03, z)); };
   reg({
     style: { name: 'Tropical hut', e: '🌴', price: 350, plaster: '#d8b068', trim: '#7a5232', roof: '#c8a050', pitch: 1.0, stone: '#8a7a62', wall: bambooWall, floor: strawFloor, themed: 1,
-      pal: { kf: ['#e0c488', '#c8a860'], bf: ['#8ad8e0', '#e8f8f0'], tile: '#f0e4c0', carpet: '#ff6a8a', bw: ['#e8d298', '#d8b878'], star: '#ff6a8a', kw: '#d9b46a' } },
+      pal: { kf: ['#e0c488', '#c8a860'], bf: ['#8ad8e0', '#e8f8f0'], tile: '#f0e4c0', carpet: '#3fb5a8', bw: ['#e8d298', '#d8b878'], star: '#ff6a8a', kw: '#d9b46a' } },
     hooks: {
       base: TH.woodD, band: TH.flower,
       patio: { frame: TH.wood, accent: TH.flower, handle: '#d9b23a' },
@@ -39610,14 +39609,34 @@ function kcRoomName(id) { return (KC_ROOMS.find(r => r.id === id) || KC_ROOMS[0]
     }
     return ch;
   }
-  function kcShrinkRooms() {
-    if (save.rmV >= 1 || !save.house) return false; save.rmV = 1; let ch = false;
-    if (kcHeld === 'living' && save.rooms && save.rooms.living && save.rooms.living !== save.house) { if (kcFitList('living', save.rooms.living)) ch = true; }
-    KC_ROOMS.forEach(r => { if (r.id === 'backyard') return; const a = roomItems(r.id); if (a && kcFitList(r.id, a)) ch = true; });
-    persist(); return ch;
+  /* v36.10 (Demi: "the living rooms in all the houses can be slightly bigger"): the living room's walls moved out (KC_DIM in b6.js, 8 by 8 to 9 by 8.5). One time (save.rmV 2) a wall piece that stands
+     on the old side wall or front wall of a saved living room moves out with its wall; nothing else is touched, no piece is ever moved inside the room. */
+  const OLD_LIVING = [4, 3];
+  function kcGrowLiving(list) {
+    if (!Array.isArray(list)) return false;
+    const [hx, hf] = kcDimOf('living'), near = (a, b) => Math.abs(a - b) < .011; let ch = false;
+    list.forEach(it => {
+      const f = it && FURN_BY_ID[it.i]; if (!f || !f.wall || it.z < -5.05) return;
+      const r = (it.r | 0) & 3;
+      if (r === 1 && near(it.x, -(OLD_LIVING[0] - .15))) { it.x = -(hx - .15); ch = true; }
+      else if (r === 3 && near(it.x, OLD_LIVING[0] - .15)) { it.x = hx - .15; ch = true; }
+      else if (r === 2 && near(it.z, OLD_LIVING[1] - .15)) { it.z = hf - .15; ch = true; }
+    });
+    return ch;
   }
-  window.kcShrinkRooms = kcShrinkRooms; window.kcFitList = kcFitList;
-  try { kcShrinkRooms(); } catch (e) { window.__rmErr = String(e.stack || e); }
+  function kcShrinkRooms() {
+    if (save.rmV >= 2 || !save.house) return false; let ch = false;
+    if (!(save.rmV >= 1)) {
+      if (kcHeld === 'living' && save.rooms && save.rooms.living && save.rooms.living !== save.house) { if (kcFitList('living', save.rooms.living)) ch = true; }
+      KC_ROOMS.forEach(r => { if (r.id === 'backyard') return; const a = roomItems(r.id); if (a && kcFitList(r.id, a)) ch = true; });
+    } else {
+      if (kcHeld === 'living' && save.rooms && save.rooms.living && save.rooms.living !== save.house) { if (kcGrowLiving(save.rooms.living)) ch = true; }
+      const a = roomItems('living'); if (a && kcGrowLiving(a)) ch = true;
+    }
+    save.rmV = 2; persist(); return ch;
+  }
+  window.kcShrinkRooms = kcShrinkRooms; window.kcFitList = kcFitList; window.kcGrowLiving = kcGrowLiving;
+  // the one-time fit runs from rooms-migrate.js (v36.10, Kyle #85): the hearth, windows and doors are registered by fireplaces.js, which loads after this file
   // put the player's own house list back to the living room without drawing anything (used when entering or leaving the house)
   // a visitor's room is the friend's: nothing of mine is in it, so only the name goes back
   function resetLiving() { if (kcHeld !== 'living') { save.rooms[kcHeld] = save.house; save.house = save.rooms.living || []; kcHeld = 'living'; } kcRoom = 'living'; }
@@ -53656,7 +53675,9 @@ Test handle: window.kcGarden. No text, no emoji. */
     [-1, 1].forEach(s => add('gy_lamp', s * 4.2, -7.6, 0, 3));
     return out.filter(d => d.min <= lv);
   }
-  const sig = it => it.i + '|' + it.x + '|' + it.z + '|' + (it.r | 0);
+  const sig = it => it.i + '|' + it.x + '|' + it.z + '|' + (it.r | 0) + (it.a ? '|a' : '');   // v36.10 (Kyle #78): a half turn counts as a change
+  const kt = it => it.a ? [it.i, it.x, it.z, it.r | 0, 1] : [it.i, it.x, it.z, it.r | 0];   // a hidden piece: [id, x, z, quarter turns] and a fifth 1 for the extra eighth turn (old four-column ones mean a quarter turn only)
+  const fromKt = a => ({ i: a[0], x: +a[1] || 0, z: +a[2] || 0, r: a[3] | 0, ...(a[4] ? { a: 1 } : {}) });
   // true when the pieces in the yard are exactly the ones the old yard of that level had (the kid has not touched them)
   const untouched = (L, lv) => { const a = L.filter(isGy).map(sig).sort().join(), b = layout(lv).map(sig).sort().join(); return a === b; };
   const kinds = lv => { Object.keys(MIN).forEach(id => { if (MIN[id] <= lv && (save.furn[id] | 0) < 99) save.furn[id] = 99; }); };
@@ -53683,9 +53704,9 @@ Test handle: window.kcGarden. No text, no emoji. */
     if (old >= 1 && (save.gyLv | 0) < old && !L.some(isGy) && !emptyOf()) put(L, layout(old));   // never walked in since the update: the old yard's pieces first
     if (emptyOf()) {
       if (Array.isArray(save.gyKeep)) {
-        const keep = save.gyKeep.filter(a => Array.isArray(a) && FURN_BY_ID[a[0]] && MIN[a[0]] <= newLv).map(a => ({ i: a[0], x: +a[1] || 0, z: +a[2] || 0, r: a[3] | 0 }));
+        const keep = save.gyKeep.filter(a => Array.isArray(a) && FURN_BY_ID[a[0]] && MIN[a[0]] <= newLv).map(fromKt);
         const grown = untouched(keep, old) ? layout(newLv) : keep.concat(layout(newLv).filter(d => d.min > old));
-        save.gyKeep = grown.map(it => [it.i, it.x, it.z, it.r | 0]);
+        save.gyKeep = grown.map(kt);
       } else delete save.gyKeep;
       save.gyLv = newLv; persist(); return;
     }
@@ -53696,10 +53717,10 @@ Test handle: window.kcGarden. No text, no emoji. */
   // Empty garden / Garden back (hs[3] has been set by the button first)
   function setEmpty(e) {
     const lv = lvOf(), L = living(); kinds(lv);
-    if (e) { save.gyKeep = L.filter(isGy).map(it => [it.i, it.x, it.z, it.r | 0]); strip(L); }
+    if (e) { save.gyKeep = L.filter(isGy).map(kt); strip(L); }
     else {
       const keep = Array.isArray(save.gyKeep) ? save.gyKeep.filter(a => Array.isArray(a) && FURN_BY_ID[a[0]] && MIN[a[0]] <= lv) : [];
-      if (keep.length) keep.forEach(a => L.push({ i: a[0], x: +a[1] || 0, z: +a[2] || 0, r: a[3] | 0 })); else put(L, layout(lv));
+      if (keep.length) keep.forEach(a => L.push(fromKt(a))); else put(L, layout(lv));
       delete save.gyKeep; save.gyLv = lv;
     }
     done();
@@ -57242,6 +57263,9 @@ Wraps: petFollow, petStep, renderHouse, houseFade. Needs: kcInteract (furniture-
   };
   window.kcHousePets = { build: k => buildPet(k), stats, step, hold: v => { hold = !!v; }, world: () => world(), pets: all, extras, inFrame, perches: () => world().per, homes: () => world().homes, mine: () => myPetM, slides: () => world().slides, K, SC };
 })();
+/* v36.10 (Kyle #85): the one-time fit of a saved house to the room sizes (kcShrinkRooms in rooms.js) runs here, after every plug-in has registered its wall pieces.
+   rooms.js loads before fireplaces.js, so when it ran at the end of rooms.js the hearth, windows and doors were not known yet: they were skipped and the check was marked done. */
+try { window.kcShrinkRooms(); } catch (e) { window.__rmErr = String(e.stack || e); }
 /* ================= half price (Demi, v33): "for all house and furniture items, lets drop the prices by 50%" =================
    Every house style and every furniture piece costs half now. Done once here, after every set and house module has added its items, so the lists in the
    files keep their original numbers (and a piece added later by a new module should be priced here at full and halved the same way). Whole coins, at least 1;
@@ -58259,7 +58283,7 @@ function applyBackup(v) {
   }
   ['pet', 'wallt', 'wallc'].forEach(k => { if (typeof v[k] === 'string' || typeof v[k] === 'number') save[k] = v[k]; });
   if (v.age != null) { const a = Math.round(+v.age); if (a >= 4 && a <= 8) save.age = a; }   // v36.3: the age picker
-  save.hwV = v.hwV >= 1 ? 1 : 0; save.rmV = v.rmV >= 1 ? 1 : 0;   // v36.8: a backup made before the smaller rooms is fitted to the new walls (the rooms' pieces that do not fit go to the box) when the page reloads
+  save.hwV = v.hwV >= 1 ? 1 : 0; save.rmV = v.rmV >= 2 ? 2 : v.rmV >= 1 ? 1 : 0;   // v36.8: a backup made before the smaller rooms is fitted to the new walls (the rooms' pieces that do not fit go to the box) when the page reloads
   // keep the mini city's version and saved pieces; older games could save more than 200, and the game checks every piece when it opens
   if (v.mini && typeof v.mini === 'object' && Array.isArray(v.mini.it)) save.mini = { v: v.mini.v === 2 ? 2 : 1, zo: v.mini.zo ? 1 : 0, it: v.mini.it.filter(r => Array.isArray(r) && r.length <= 6) };
   save.bike = clamp(+v.bike | 0, 0, 4);   // a bought bike (0 = none)
@@ -58272,7 +58296,7 @@ function applyBackup(v) {
   // garden migration and Empty garden's hidden arrangement belong to the backup, not this device
   delete save.gyLv; delete save.gyKeep;
   if (v.gyLv != null && typeof v.gyLv !== 'object') save.gyLv = clamp(v.gyLv | 0, 0, 3);
-  if (Array.isArray(v.gyKeep)) save.gyKeep = furnList(v.gyKeep.filter(a => Array.isArray(a) && typeof a[0] === 'string' && /^gy_/.test(a[0])).map(a => ({ i: a[0], x: a[1], z: a[2], r: a[3] }))).map(it => [it.i, it.x, it.z, it.r]);
+  if (Array.isArray(v.gyKeep)) save.gyKeep = furnList(v.gyKeep.filter(a => Array.isArray(a) && typeof a[0] === 'string' && /^gy_/.test(a[0])).map(a => ({ i: a[0], x: a[1], z: a[2], r: a[3], a: a[4] ? 1 : 0 }))).map(it => it.a ? [it.i, it.x, it.z, it.r, 1] : [it.i, it.x, it.z, it.r]);
   // blocked and muted kitties keep their safety: a backup only adds to this device's lists, it never lifts a block or a mute, and a backup that has none changes nothing
   const ids = m => m && typeof m === 'object' && !Array.isArray(m) ? Object.entries(m).filter(([k]) => /^[a-z0-9]{10}$/.test(k)).slice(0, 50) : [];
   ids(v.blocked).forEach(([k, b]) => { if (!save.blocked[k] && Object.keys(save.blocked).length < 50) save.blocked[k] = { n: safeName(b && b.n), t: Math.max(0, +(b && b.t) || 0) }; });
