@@ -22082,11 +22082,21 @@ function enterBuilding(s, spawn) {
     if (s.id === 'bank' && me.carry) returnGold();
   });
 }
+// leaving a shop (Demi, 10 Nov): she stands in the middle of the street right in front of it, facing the city square. The street is 4.5 m from every door; a spot that is not free slides a little along the street.
+function kcStreetSpot(s) {
+  const sx = typeof SQ !== 'undefined' ? SQ.cx : -4, sz = typeof SQ !== 'undefined' ? SQ.cz : 15.5, ox = Math.sin(s.out), oz = Math.cos(s.out);
+  for (const k of [0, 1, -1, 2, -2]) {
+    const x = s.door.x + ox * 4.5 + oz * k, z = s.door.z + oz * 4.5 - ox * k, c = constrain(x, z);
+    if (Math.hypot(c[0] - x, c[1] - z) < .05) return { x, z, ry: Math.atan2(sx - x, sz - z) };
+  }
+  return { x: s.door.x + ox * 2.4, z: s.door.z + oz * 2.4, ry: s.out };
+}
+window.kcStreetSpot = kcStreetSpot;
 function leaveBuilding() {
   const s = me.building; if (!s) return;
   if (mode === 'roof') return krfDown();
   if (s.id === 'loft') { const cf = SHOPS.find(x => x.id === 'coffee'); sfx.tap(); return enterBuilding(Object.assign(cf), { x: 4.2, z: -.4 }); }
-  fade(() => { stopClubMusic(); npcCust.forEach(n => dropLabel(n)); resetRole(); $('#order-pill').hidden = true; $('#deed').hidden = true; backToStreet(s.door.x + Math.sin(s.out) * 2.4, s.door.z + Math.cos(s.out) * 2.4, s.out); camYaw = s.out; me.leftShop = s; me.leftDoor = s.door; });
+  fade(() => { stopClubMusic(); npcCust.forEach(n => dropLabel(n)); resetRole(); $('#order-pill').hidden = true; $('#deed').hidden = true; const o = kcStreetSpot(s); backToStreet(o.x, o.z, o.ry); camYaw = o.ry; me.leftShop = s; me.leftDoor = s.door; });
   sfx.tap();
 }
 $('#inside-exit').onclick = leaveBuilding;
@@ -45584,7 +45594,7 @@ function krfUp() { if (mode !== 'inside') return; sfx.good(); fade(krfEnter); }
 function krfDown() { const s = KRF.shop; if (mode !== 'roof') return; sfx.tap(); enterBuilding(s, { x: 4, z: -.4 }); }
 // straight out to the street (the map, the house button): the same walk out as leaving the club
 function krfToStreet() {
-  const s = KRF.shop; fade(() => { npcCust.forEach(n => dropLabel(n)); resetRole(); backToStreet(s.door.x + Math.sin(s.out) * 2.4, s.door.z + Math.cos(s.out) * 2.4, s.out); camYaw = s.out; me.leftShop = s; me.leftDoor = s.door; });
+  const s = KRF.shop; fade(() => { npcCust.forEach(n => dropLabel(n)); resetRole(); const o = kcStreetSpot(s); backToStreet(o.x, o.z, o.ry); camYaw = o.ry; me.leftShop = s; me.leftDoor = s.door; });
 }
 // jump to a friend who is on the roof
 function krfGoRoof() {
@@ -49217,8 +49227,16 @@ function placeDock() {
     if (fl.top >= cb.bottom - 4 && fl.top < dk.bottom && fl.left - mg < dk.right + 8) fr.style.marginLeft = Math.ceil(dk.right + 8 - (fl.left - mg)) + 'px';
     else if (fl.top < cb.bottom - 4 && mg) fr.style.marginLeft = '';
   }
+  // the same in a house or a shop (Kyle #98): when the header wraps, the buttons on its second row (Undo, Clear room, Finish decorating) start under the coins, where the icon is: the first one on that row moves over to the right of the icon
+  const hd = ['#house-top', '#inside-top'].map(q => $(q)).find(e => e && e.getClientRects().length);
+  if (hd && c.parentElement === hd) {
+    const dk = dock.getBoundingClientRect(), cb = c.getBoundingClientRect(), kids = [...hd.children].filter(e => e.getClientRects().length && e.offsetWidth > 4);
+    const row2 = kids.filter(e => e.getBoundingClientRect().top >= cb.bottom - 4 && e.getBoundingClientRect().top < dk.bottom).sort((a, b) => a.getBoundingClientRect().left - b.getBoundingClientRect().left)[0];
+    kids.forEach(e => { if (e !== row2 && e.dataset.dockMg) { e.style.marginLeft = ''; delete e.dataset.dockMg; } });
+    if (row2) { const mg = parseFloat(row2.dataset.dockMg) || 0, l = row2.getBoundingClientRect().left - mg; if (l < dk.right + 8) { row2.dataset.dockMg = Math.ceil(dk.right + 8 - l); row2.style.marginLeft = row2.dataset.dockMg + 'px'; } else if (mg) { row2.style.marginLeft = ''; delete row2.dataset.dockMg; } }
+  }
 }
-addEventListener('resize', () => setTimeout(() => { const fr = $('#friends'); if (fr) fr.style.marginLeft = ''; placeDock(); }, 60));
+addEventListener('resize', () => setTimeout(() => { const fr = $('#friends'); if (fr) fr.style.marginLeft = ''; document.querySelectorAll('[data-dock-mg]').forEach(e => { e.style.marginLeft = ''; delete e.dataset.dockMg; }); placeDock(); }, 60));
 window.kcPlaceDock = placeDock;
 const mkPanel = id => { const p = h('div', 'panel'); p.id = id; p.hidden = true; app.append(p); return p; };
 const pPeople = mkPanel('kpeople'), pCard = mkPanel('kcard'), pCall = mkPanel('kcall'), pText = mkPanel('ktext'), pTexts = mkPanel('ktexts');
@@ -59379,6 +59397,8 @@ const KC_HOUSE_LAYOUTS = [
     if (!buttons()) return; const on = live();
     if (undoB.hidden === on) { undoB.hidden = !on; clearB.hidden = !on; if (!on) disarm(); }
     if (on) { undoB.classList.toggle('off', !canUndo()); clearB.classList.toggle('off', !save.house.some(goes)); }
+    // on a phone the two stand in a column under the top bar; when the bar wraps to a second row the column moves down with it (Kyle #98: nothing in the bar may be covered)
+    if (on) { const bar = $('#house-top'), narrow = innerWidth <= 1000, y = narrow && bar ? Math.max(72, Math.ceil(bar.getBoundingClientRect().bottom) + 6) : 0, t = y ? y + 'px' : '', t2 = y ? (y + 60) + 'px' : ''; if (undoB.style.top !== t) { undoB.style.top = t; clearB.style.top = t2; } }
   }
   setInterval(() => { try { sync(); paint(); } catch (e) { window.__huErr = String(e.stack || e); } }, 300);
   { const d = $('#deco'); if (d) d.addEventListener('click', () => setTimeout(() => { sync(); paint(); }, 30)); }
