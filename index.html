@@ -2498,6 +2498,12 @@ function standPose(c, t) {
   u.legs.forEach((l, i) => { l.rotation.x = i < 2 ? .9 + Math.sin(t * 2 + u.phase + i) * .15 : 1.25; l.scale.y = 1; });
   u.tail.rotation.x = 1;
 }
+
+/* v36.14.1 (Demi, 11 Nov: "the cats are slightly too big in the rest of the world and inside the buildings too"): every kitty drawn in the world (mine, friends, computer kitties, the band, the queue,
+   the driver...) is KC_CAT of the size she was; a house makes her smaller still (KC_HOUSE_CAT in c1.js). Previews (the kitty maker, the card) put her back to full size (setPreview). Wraps buildCat,
+   so this is the first wrapper; the file's own look is unchanged. Everything that used to put a kitty back to scale 1 puts her back to KC_CAT. */
+const KC_CAT = .9;
+{ const bc0 = buildCat; buildCat = function (look, style) { const g = bc0(look, style); g.scale.setScalar(KC_CAT); g.userData.kcCat = 1; return g; }; }
 /* Kitty City outfits v2: drop-in clothes for the kitten body. Load after the game's OUT/OUT_BY_ID exist and after kitty-cat.js.
    Adds a new slot 'body' plus extra hat/neck/back items, and OUTFIT_SETS (one tap = several slots). */
 (function () {
@@ -3267,7 +3273,7 @@ function standPose(c, t) {
     10: o => head(o, 0, (f, b) => `<path d="M12 62 C14 80 34 90 50 90 C66 90 86 80 88 62 C80 52 66 50 50 52 C34 50 20 52 12 62Z" fill="#f6ead4"/><ellipse cx="50" cy="62" rx="17" ry="19" fill="${f}" opacity=".95"/>`, { belly: '#f6ead4' }),
     11: o => head(o, 0, f => { const d = '#2b2118'; return [[28,42,4.6],[40,34,3.6],[60,34,3.6],[72,42,4.6],[50,31,3.2],[20,58,3.6],[80,58,3.6]].map(([x,y,r]) => `<ellipse cx="${x}" cy="${y}" rx="${r}" ry="${r*.85}" fill="${d}"/>`).join('') + `<path d="M34 66 Q31 76 36 82 M66 66 Q69 76 64 82" stroke="${d}" stroke-width="3.4" fill="none" stroke-linecap="round"/>`; }, { fur: '#e8b04a', belly: '#fbe9c4' }),
     12: o => head(o, 0, (f, b) => `<ellipse cx="50" cy="62" rx="26" ry="22" fill="${f}" opacity=".85"/><path d="M50 36 C45 46 40 56 33 76 L67 76 C60 56 55 46 50 36Z" fill="#fff"/><ellipse cx="50" cy="76" rx="17" ry="9" fill="#fff"/>`, { belly: '#ffffff' }),
-    13: o => head(o, 0, f => { const d = '#2b2118'; const ros = (x,y,r) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${shade(f,.9)}" stroke="${d}" stroke-width="2.6"/><circle cx="${x}" cy="${y}" r="${r*.28}" fill="${d}"/>`; return ros(28,44,6.4)+ros(72,44,6.4)+ros(50,33,5.4)+ros(18,62,4.4)+ros(82,62,4.4); }, { fur: '#e8b04a', belly: '#fbe9c4' }),
+    13: o => head(o, 0, f => { const d = '#2b2118'; const ros = (x,y,r) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${shade(f,.9)}" stroke="${d}" stroke-width="2.6"/><circle cx="${x}" cy="${y}" r="${r*.28}" fill="${d}"/>`; return ros(28,44,6.4)+ros(72,44,6.4)+ros(50,33,5.4)+ros(18,62,4.4)+ros(82,62,4.4); }),   // v36.14.1 (Demi: "these pictures dont match each other"): the leopard head no longer forces orange fur; the kitty is drawn in HER fur, like the 3D cat (cats2.js)
   };
   const ears = { 0: o => head(o, 0, null, { sc: .9, dy: 8, es: .7 }), 1: o => head(o, 1, null, { sc: .9, dy: 8, es: .7 }), 2: o => head(o, 2, (f, b) => { const pk = '#f7a6bd', one = m => `<path d="M${m(22)} 28 C${m(2)} 26 ${m(-4)} 56 ${m(6)} 76 C${m(14)} 88 ${m(28)} 76 ${m(32)} 50 C${m(32)} 38 ${m(28)} 30 ${m(22)} 28Z" ${S(4, f)}/><path d="M${m(8)} 44 C${m(16)} 38 ${m(26)} 40 ${m(30)} 48" fill="none" stroke="${INK}" stroke-width="3.5" stroke-linecap="round"/><path d="M${m(10)} 62 C${m(12)} 72 ${m(18)} 74 ${m(22)} 68 C${m(20)} 60 ${m(14)} 58 ${m(10)} 62Z" fill="${pk}"/>`; return `<path d="M8 50 L14 2 L50 34 Z" ${S(4, f)}/><path d="M19 40 L21 16 L38 33 Z" fill="${pk}"/>` + one(x => 100 - x); }, { sc: .9, dy: 6 }) };
   function tail(o, kind) {
@@ -16431,7 +16437,7 @@ const STOREFRONT = {
   'Hospital': { mat: () => M.checker('#ffffff', '#e8f2f2'), front(g, w, dx) {   // v36.3 (Demi: the hanging red cross covered the neon name): it hangs from the right end of the front, turned to stand out over the pavement with a cross on both faces
     const sg = new T.Group(); sg.position.set(w / 2 - .3, 4.1, .9); sg.rotation.y = Math.PI / 2; g.add(sg); sg.add(box('#ffffff', 0, -.6, 0, 1.3, 1.3, .2), box('#2f3330', .45, .12, 0, .9, .05, .05));
     [-1, 1].forEach(f => sg.add(box(glow('#ff4a3a'), 0, -.45, f * .11, .3, 1, .02), box(glow('#ff4a3a'), 0, -.1, f * .11, 1, .3, .02))); } },
-  'Police & Jail': { mat: () => M.stone('#8a9ab8'), front(g, w, dx, H, sp) { [-1, 1].forEach(s => g.add(lcyl('#26365e', dx + s * 1.3, 0, .8, .06, 2.4), box('#26365e', dx + s * 1.3, 2.4, .8, .36, .4, .36), box(glow('#4f8cff'), dx + s * 1.3, 2.45, .8, .3, .3, .38))); const st = mesh(new T.CylinderGeometry(.5, .5, .08, 5), '#f2c94c', dx, 3.95, .25); st.rotation.x = Math.PI / 2; g.add(st);
+  'Police & Jail': { mat: () => M.stone('#8a9ab8'), front(g, w, dx, H, sp) { [-1, 1].forEach(s => g.add(lcyl('#26365e', dx + s * 1.3, 0, .8, .06, 2.4), box('#26365e', dx + s * 1.3, 2.4, .8, .36, .4, .36), box(glow('#4f8cff'), dx + s * 1.3, 2.45, .8, .3, .3, .38))); /* v36.14.1 (Demi: "something blocking sign"): the gold five-sided badge that hung in front of the neon sign and covered the & is gone */
     // jail bars on the upstairs windows and the right shop window (Demi v31)
     const BAR = '#26365e', bars = (x, y, wd, h, z) => { const n = Math.max(3, Math.round(wd / .16)); for (let k = 0; k < n; k++) g.add(lcyl(BAR, x - wd / 2 + (k + .5) * wd / n, y, z, .028, h)); g.add(box(BAR, x, y + h * .5, z, wd + .06, .06, .06), box(BAR, x, y, z, wd + .06, .06, .06), box(BAR, x, y + h - .03, z, wd + .06, .06, .06)); };
     const nw = Math.max(1, Math.round(w / 2.4)), fl = sp.floors || 2; for (let f = 1; f < fl; f++) for (let i = 0; i < nw; i++) bars(-w / 2 + (i + .5) * w / nw, FLOOR1 + (f - 1) * FLOORN + .5, .84, 1.5, .16);
@@ -16560,7 +16566,7 @@ function makeBuilding(sp) {
     const hi = sp.signUp, sw = hi ? w + .2 : w - 1.3, sh = hi ? .6 : .74, sg = new T.Mesh(new T.PlaneGeometry(sw, sh), new T.MeshBasicMaterial({ map: textTex(sp.name, Math.min(2048, Math.round(140 * sw / sh)), 140, sp.signBg || shade(trim, .9), sp.signFg || '#fdf3dc', '#d9b23a', big) }));
     sg.position.set(0, hi ? 3.61 : 2.87, hi ? .94 : .16); g.add(sg); if (kind === 'filler') FILLER_MATS.push(sg.material);
     if (sp.awn !== false) {
-      const aw = new T.Group(); aw.position.set(0, 2.5, .16); aw.rotation.x = .5;
+      const aw = new T.Group(); aw.position.set(0, 2.85, .16); aw.rotation.x = .4;   // v36.14.1 (Demi: "tops of windows are going through the awnings of every building"): the awning starts higher and slopes less, so the window header (top at y 2.47) stays under it
       const am = M.stripes(...(sp.awn || ['#fdf8ee', trim]));
       aw.add(box(am, 0, 0, .52, w - 1.1, .05, 1.04), box(am, 0, -.14, 1.04, w - 1.1, .24, .03)); g.add(aw);
     }
@@ -21165,7 +21171,7 @@ let busRoof;
     const tx = new T.Mesh(new T.PlaneGeometry(.46, .16), deco(new T.MeshBasicMaterial({ map: textTex('STOP', 128, 44, '#d62828', '#ffffff'), transparent: false }), -4)); tx.position.set(2.9, 1.0, -1.31); tx.rotation.y = Math.PI;
     bus.add(ring, ss, tx, box(dark, 3.12, .98, -1.28, .22, .05, .06)); }
   for (let i = 0; i < 6; i++) { const x = -2.6 + (i % 3) * 1.25, z = i < 3 ? -.6 : .6; const st = new T.Group(); st.position.set(x, 0, z); bus.add(st); st.add(box('#c2453a', 0, .9, 0, .7, .2, .7), box('#c2453a', -.3, 1.1, 0, .12, .6, .7)); const hb = hitBox(st, .9, 1.4, .9, 0, .6, 0, { kind: 'seat', i }); busSeats.push({ g: st, x, z, ring: null }); const r = new T.Mesh(new T.RingGeometry(.3, .42, 24), new T.MeshBasicMaterial({ color: '#f2c94c', transparent: true })); r.rotation.x = -Math.PI / 2; r.position.set(x, 1.12, z); r.visible = false; bus.add(r); busSeats[i].ring = r; }
-  const driver = buildCat({ fur: 7, eye: 1, pat: 0, ear: 0, tail: 0, hat: 'beanie', neck: 'bowtie', face: 'round', back: '' }); driver.position.set(2.85, .62, .5); driver.rotation.y = Math.PI / 2; driver.scale.setScalar(.85); bus.add(driver);
+  const driver = buildCat({ fur: 7, eye: 1, pat: 0, ear: 0, tail: 0, hat: 'beanie', neck: 'bowtie', face: 'round', back: '' }); driver.position.set(2.85, .85, .5); driver.rotation.y = Math.PI / 2; driver.scale.setScalar(.85); bus.add(driver);
   // the driver's own seat and the big steering wheel (v31: the driver sits now)
   bus.add(box('#3a3a40', 2.85, .35, .5, .7, .45, .7), box('#4a5a8a', 2.85, .8, .5, .72, .16, .72), box('#4a5a8a', 2.45, .8, .5, .14, .9, .72), box('#3a3a40', 2.45, 1.55, .5, .1, .2, .5));
   bus.add(lcyl('#2b2b2b', 3.4, .45, .5, .05, .75)); { const wh = new T.Mesh(TOR, mat('#2b2b2b')); wh.scale.setScalar(.22); wh.rotation.y = Math.PI / 2; wh.rotation.x = .5; wh.position.set(3.35, 1.25, .5); bus.add(wh); }
@@ -21377,7 +21383,7 @@ const prevR = new T.WebGLRenderer({ canvas: prevCanvas, antialias: true, alpha: 
 const prevScene = new T.Scene(); lights(prevScene);
 const prevCam = new T.PerspectiveCamera(35, 1, .1, 50);
 let prevObj = null;
-function setPreview(obj, camY = 1.7, camZ = 4.6, lookY = .8, keep) { if (prevObj) prevScene.remove(prevObj); prevObj = obj; if (obj) prevScene.add(obj); if (!keep) prevFocus = null; if (!prevFocus) { prevCam.position.set(0, camY, camZ); prevCam.lookAt(0, lookY, 0); prevLook.set(0, lookY, 0); } }
+function setPreview(obj, camY = 1.7, camZ = 4.6, lookY = .8, keep) { if (obj && obj.userData && obj.userData.kcCat) obj.scale.setScalar(1); if (prevObj) prevScene.remove(prevObj); prevObj = obj; if (obj) prevScene.add(obj); if (!keep) prevFocus = null; if (!prevFocus) { prevCam.position.set(0, camY, camZ); prevCam.lookAt(0, lookY, 0); prevLook.set(0, lookY, 0); } }
 // while a kid changes one part of the kitty, the preview stops spinning and turns to show that part (Demi v31):
 // eyes and lashes up close from the front, hats and ears at the head, tails and back items from behind. A drag turns it by hand.
 const PREV_VIEWS = { body: { ry: .45, d: 4.6, y: 1.7, ly: .8 }, side: { ry: 1.25, d: 4.3, y: 1.6, ly: .75 }, face: { ry: 0, head: 1, d: 1.9 }, head: { ry: .5, head: 1, d: 2.6, up: .35 }, back: { ry: 2.6, d: 4.2, y: 1.8, ly: .85 }, tail: { ry: 2.35, d: 4, y: 1.35, ly: .6 } };
@@ -21456,7 +21462,7 @@ function drawMaker() {
   focusPreview({ fur: 'body', pat: 'side', eye: 'face', ear: 'head', tail: 'tail' }[makerTab]);
 }
 function refreshPreviewCat(look = save.look) { setPreview(buildCat(look), undefined, undefined, undefined, true); }
-function hideAll() { ['#hud-top', '#hud-bot', '#house-top', '#inside-top', '#tray', '#shop', '#joy', '#hint', '#phrases', '#fmenu', '#settings', '#map', '#club-bot', '#busq', '#deed', '#music', '#bus-timer', '#yay', '#fpanel', '#grown', '#order-pill'].forEach(s => $(s).hidden = true); }
+function hideAll() { ['#hud-top', '#hud-bot', '#house-top', '#inside-top', '#tray', '#shop', '#joy', '#hint', '#phrases', '#fmenu', '#settings', '#map', '#club-bot', '#busq', '#deed', '#music', '#bus-timer', '#yay', '#fpanel', '#grown', '#order-pill'].forEach(s => $(s).hidden = true); if (typeof me === 'object' && me) me.busq = null; }
 function showStart() {
   kcBootDone(); mode = 'start'; hideAll(); stopClubMusic(); stopBand(); $('#ticker').hidden = true;
   $('#cat-name').value = save.name;
@@ -21489,6 +21495,7 @@ let mode = 'start'; // start | town | inside | house | shop | bus
 const me = { x: -40, z: 0, ry: 0, tx: -40, tz: 0, go: null, cat: null, catKey: '', loc: 'town', houseOwner: null, sit: null, bus: null, seat: null, swing: null, building: null, carry: false };
 let camYaw = Math.PI / 2, joyVec = null, nowT = 0;
 const labels = new Map();
+const KC_HOUSE_CAT = .8;   // KC_CAT (cats2.js) is the kitty's size in the town and the shops, a house makes her smaller still   // inside a house every kitty is a fifth smaller, so the rooms look roomier (Demi, 11 Nov: the kitty is too big for the house)
 const lookNow = () => mission && mission.joined ? Object.assign({}, save.look, { hat: 'police' })
   : me.role === 'w' && me.building && THEMES[me.building.id].clerk && THEMES[me.building.id].clerk[3].hat ? Object.assign({}, save.look, { hat: THEMES[me.building.id].clerk[3].hat }) : save.look;
 function myCatModel() {
@@ -21746,7 +21753,7 @@ const _v = new T.Vector3();
 function placeLabel(o, obj, name) {
   const l = getLabel(o);
   const nm = l.querySelector('.nm'); if (nm.textContent !== name) nm.textContent = name;
-  obj.getWorldPosition(_v); _v.y += mode === 'house' ? 1.3 : 1.95; _v.project(camera); // the house camera sits low, so the tag stays close over the head
+  obj.getWorldPosition(_v); _v.y += mode === 'house' ? 1.3 * KC_HOUSE_CAT : 1.95; _v.project(camera); // the house camera sits low, so the tag stays close over the head
   const vis = _v.z < 1 && Math.abs(_v.x) < 1.2 && Math.abs(_v.y) < 1.2;
   l.style.display = vis ? '' : 'none';
   if (vis) l.style.transform = `translate(${(_v.x + 1) / 2 * innerWidth}px,${(1 - _v.y) / 2 * innerHeight}px) translate(-50%,-100%)`;
@@ -24943,7 +24950,9 @@ KCG.level = () => KCG.age() >= 6 ? 2 : 1;
     };
     const encCol = it => { const o = {}; if (it.col) for (const k in it.col) { const n = PAL.indexOf(it.col[k]); if (n >= 0 && it.d.parts && k in it.d.parts) o[k] = n; } return Object.keys(o).length ? o : null; };
     const decCol = (d, o) => { const c = {}; if (o && typeof o === 'object') for (const k in o) if (d.parts && k in d.parts && PAL[o[k] | 0]) c[k] = PAL[o[k] | 0]; return Object.keys(c).length ? c : null; };
-    const keep = () => { clearTimeout(saveT); saveT = setTimeout(() => { try { save.mini = { v: 2, zo: nearNow() ? 0 : 1, rd: [...UR].map(k => { const q = k.split(',').map(Number); return q[0] * N + q[1]; }), rs: strokes.map(x => x.length), it: items.map(i => { const r = [i.d.id, i.d.cat === 'k' ? i.node : i.c, i.d.cat === 'k' ? 0 : i.r, i.rot], c = encCol(i); if (c) r.push(c); return r; }) }; persist(); } catch (e) {} }, 300); };
+    const doSave = () => { try { save.mini = { v: 2, zo: nearNow() ? 0 : 1, rd: [...UR].map(k => { const q = k.split(',').map(Number); return q[0] * N + q[1]; }), rs: strokes.map(x => x.length), it: items.map(i => { const r = [i.d.id, i.d.cat === 'k' ? i.node : i.c, i.d.cat === 'k' ? 0 : i.r, i.rot], c = encCol(i); if (c) r.push(c); return r; }) }; persist(); } catch (e) {} };
+    const keep = () => { clearTimeout(saveT); saveT = setTimeout(() => { saveT = 0; doSave(); }, 300); };
+    L.cleanup(() => { if (saveT) { clearTimeout(saveT); saveT = 0; doSave(); } });   // v36.14.1 (Kyle #104): Back inside the 300 ms wait still saves the new road, so a quick reopen does not load the old city
     const STARTER = [['cot1', 12, 15, 0], ['tree', 16, 15, 0], ['v_car', 11, 19, 0], ['me', sk(14, 18, 's'), 0, 1]];
     const MAXP = 200, OLD_OFF = 9;     // new pieces stop at 200; a city saved on the old 13 by 13 map (v 1) is moved to the middle of the new one
     const spotNear = (d, c, r) => {      // the free spot closest to (c, r) for a piece that is being moved over
@@ -34667,10 +34676,13 @@ ${leg('lA', 72, 94, 124)}${leg('lB', 150, 94, 124)}
 })();
 /* ================= Music Grotto, drums: Copy the drums (Demi, 27 Oct) =================
    "Drums: a memory game. The drum top glows and plays, then you have to copy it, then it adds another step for you to copy, and so on."
-   Pads laid out like a real kit (30 Oct, Demi: "add symbals and make the graphics better"): chrome-hooped drums in a row (kick, snare, high tom, low tom) under gold cymbals on stands (crash, and a rose-gold ride at level 2), on a stage with velvet curtains, spotlights and boards. Each pad has its own color and sound. The drums light up one by one and play ("Watch!"), then it is the kid's turn ("Your turn!"): tap them in the same
+   A real drum kit (10 Nov, Demi: "make this look cooler, we dont need the checkered background, you can make the drum look like a real drum"): the kick drum with a paw on its front head, a snare drum on its stand, a rack tom
+   on the kick and a floor tom on legs (age 4 to 5: kick, snare and one tom on legs), chrome hoops, lugs and rods, and cymbals on stands that reach the stage floor, on a rug under a rig of stage lights. Each drum keeps its own color
+   (kick red, snare yellow, tom green, floor tom blue) and sound. A drumstick taps the head each time a drum plays and the stage lights flash in that drum's color. The page behind the stage is one dark plum, no checks.
+   The drums light up one by one and play ("Watch!"), then it is the kid's turn ("Your turn!"): tap them in the same
    order. A right round makes the next one one step longer. A wrong drum only plays a soft oops and the same steps play again; nothing is lost and there is no limit on tries. A kid who has gone wrong twice
    in a round at level 1 sees the next drum glow softly, and any kid who waits 8 seconds does. Ages 4 to 6 (KCG.level() 1): 3 drums and a crash cymbal, rounds grow to 6 steps, one step every .78 s. Level 2: 4 drums and 2 cymbals, 9 steps,
-   one every .5 s (28 Oct: a little harder, Demi). Stars: 3 for 3 (level 2: 2) mistakes or fewer, else 2. Fair coins: a medium game (16 or 24). The drums the kitty plays are also played by her kitty on the stage (KGS.perf.hit).
+   one every .5 s (28 Oct: a little harder, Demi). After a right round the bar says "One more!" only when the next round is the last one, else "Now a longer one!" (10 Nov, Demi). Stars: 3 for 3 (level 2: 2) mistakes or fewer, else 2. Fair coins: a medium game (16 or 24). The drums the kitty plays are also played by her kitty on the stage (KGS.perf.hit).
    Needs kcg-core.js and grotto-snd.js. */
 (() => {
   const K = KCG.ink, W = 960, H = 600, DCOL = ['#ff5a6e', '#ffd23f', '#5fcf6a', '#4aa3ff'];
@@ -34678,65 +34690,126 @@ ${leg('lA', 72, 94, 124)}${leg('lB', 150, 94, 124)}
   if (!document.getElementById('kgs-drum-css')) {
     const st = document.createElement('style'); st.id = 'kgs-drum-css';
     st.textContent = `.kgs-drum{position:absolute;border-radius:50%;touch-action:none;cursor:pointer;transition:transform .09s,filter .09s}
-.kgs-drum.lit{transform:scale(1.1);filter:brightness(1.3) drop-shadow(0 0 22px var(--g))}
+.kgs-drum.lit{transform:scale(1.07);filter:brightness(1.22) drop-shadow(0 0 22px var(--g))}
 .kgs-drum.kgs-cym.lit{transform:none}
 .kgs-cym .cy{transform-origin:130px 62px;transform:rotate(-6deg)}
 .kgs-cym.lit .cy{animation:kgsCym .42s ease-out}
+.kgs-drum .stk{opacity:0}
+.kgs-drum.lit .stk{animation:kgsStick .3s ease-out}
+.kgs-drum.lit .hd{animation:kgsHead .2s ease-out}
 .kgs-drum.bad{animation:kgsShake .32s}
-.kgs-drum:active{transform:scale(.96)}
-.kgs-rip{position:absolute;border-radius:50%;border:8px solid var(--g);pointer-events:none;animation:kgsRip .55s ease-out forwards}
-@keyframes kgsRip{from{transform:scale(.8);opacity:.9}to{transform:scale(1.55);opacity:0}}
+.kgs-drum:active{transform:scale(.97)}
+.kgs-bm{opacity:.1}
+.kgs-bms.flash .kgs-bm{animation:kgsBeam .6s ease-out}
+.kgs-rip{position:absolute;border-radius:50%;border:7px solid var(--g);pointer-events:none;animation:kgsRip .55s ease-out forwards}
+@keyframes kgsRip{from{transform:scale(.8);opacity:.9}to{transform:scale(1.5);opacity:0}}
+@keyframes kgsBeam{0%{opacity:.46}100%{opacity:.1}}
+@keyframes kgsStick{0%{opacity:0;transform:rotate(62deg)}25%{opacity:1}52%{opacity:1;transform:rotate(30deg)}100%{opacity:0;transform:rotate(44deg)}}
+@keyframes kgsHead{0%{transform:scale(1)}35%{transform:scale(1,.84)}100%{transform:scale(1)}}
 @keyframes kgsCym{0%{transform:rotate(-6deg)}18%{transform:rotate(8deg)}42%{transform:rotate(-10deg)}68%{transform:rotate(4deg)}100%{transform:rotate(-6deg)}}`;
     document.head.appendChild(st);
   }
   let uid = 0;
-  // a drum seen from the front and above: a lacquered shell with a pearly shine, chrome hoops and lugs, a creamy head with a colored ring
-  const drumSvg = c => { const n = ++uid, tint = sh(c, 1.35), lugs = [34, 64, 100, 136, 166].map(x => `<rect x="${x - 5}" y="110" width="10" height="36" rx="4" fill="url(#hp${n})" stroke="${K}" stroke-width="2.5"/><circle cx="${x}" cy="117" r="2.6" fill="#59607a"/><circle cx="${x}" cy="139" r="2.6" fill="#59607a"/>`).join(''),
-      rods = Array.from({ length: 16 }, (_, k) => { const a = k / 16 * Math.PI * 2; return `<circle cx="${(100 + 92 * Math.cos(a)).toFixed(1)}" cy="${(96 + 41 * Math.sin(a)).toFixed(1)}" r="3.3" fill="#59607a" stroke="${K}" stroke-width="1.5"/>`; }).join('');
-    return `<svg viewBox="0 0 200 200" width="100%" height="100%" style="overflow:visible"><defs><linearGradient id="sh${n}" x1="0" x2="1"><stop offset="0" stop-color="${sh(c, .62)}"/><stop offset=".3" stop-color="${c}"/><stop offset=".5" stop-color="${sh(c, 1.22)}"/><stop offset="1" stop-color="${sh(c, .58)}"/></linearGradient><linearGradient id="hp${n}" x1="0" x2="1"><stop offset="0" stop-color="#8e96aa"/><stop offset=".3" stop-color="#f7f9fd"/><stop offset=".6" stop-color="#b3bacb"/><stop offset="1" stop-color="#7d869b"/></linearGradient><radialGradient id="hd${n}" cx=".42" cy=".38" r=".75"><stop offset="0" stop-color="#fffdf5"/><stop offset="1" stop-color="#eadfc8"/></radialGradient></defs>
-<ellipse cx="100" cy="190" rx="94" ry="10" fill="#000" opacity=".32"/>
-<path d="M10 96V150Q10 188 100 188Q190 188 190 150V96Z" fill="url(#sh${n})" stroke="${K}" stroke-width="5" stroke-linejoin="round"/>
-<path d="M26 112V150Q26 172 50 180" fill="none" stroke="#fff" stroke-opacity=".4" stroke-width="7" stroke-linecap="round"/><path d="M50 108L56 176M84 112L86 184M118 112L116 184M152 108L146 176" stroke="#fff" stroke-opacity=".16" stroke-width="5" stroke-linecap="round"/>
-<path d="M10 150Q10 188 100 188Q190 188 190 150" fill="none" stroke="${K}" stroke-width="13"/><path d="M10 150Q10 188 100 188Q190 188 190 150" fill="none" stroke="url(#hp${n})" stroke-width="7"/>${lugs}
-<ellipse cx="100" cy="96" rx="92" ry="41" fill="url(#sh${n})" stroke="${K}" stroke-width="5"/><ellipse cx="100" cy="96" rx="92" ry="41" fill="none" stroke="${K}" stroke-width="14"/><ellipse cx="100" cy="96" rx="92" ry="41" fill="none" stroke="url(#hp${n})" stroke-width="8"/>${rods}
-<ellipse cx="100" cy="96" rx="83" ry="35" fill="url(#hd${n})" stroke="${K}" stroke-width="3"/><ellipse cx="100" cy="97" rx="50" ry="20" fill="${tint}" fill-opacity=".38" stroke="${c}" stroke-width="4.5"/><ellipse cx="100" cy="97" rx="9" ry="3.6" fill="${c}" fill-opacity=".5"/>
-<path d="M36 90Q60 64 112 64" fill="none" stroke="#fff" stroke-opacity=".75" stroke-width="6" stroke-linecap="round"/><path d="M128 126Q152 124 166 108" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="4" stroke-linecap="round"/></svg>`; };
-  // a cymbal on its stand: a tilted brass disc with lathe rings, a raised bell and a shine; the disc (class cy) wobbles when it is hit
-  const cymSvg = tone => { const n = ++uid, d = sh(tone, .72), b = sh(tone, 1.25);
+  const CHR = n => `<linearGradient id="cr${n}" x1="0" x2="1"><stop offset="0" stop-color="#7a8399"/><stop offset=".3" stop-color="#f7f9fd"/><stop offset=".62" stop-color="#a9b1c4"/><stop offset="1" stop-color="#6a738a"/></linearGradient>`;
+  const SHL = (n, c) => `<linearGradient id="sg${n}" x1="0" x2="1"><stop offset="0" stop-color="${sh(c, .5)}"/><stop offset=".2" stop-color="${sh(c, .86)}"/><stop offset=".36" stop-color="${sh(c, 1.12)}"/><stop offset=".56" stop-color="${c}"/><stop offset=".86" stop-color="${sh(c, .7)}"/><stop offset="1" stop-color="${sh(c, .46)}"/></linearGradient>`;
+  const HDG = n => `<radialGradient id="hg${n}" cx=".4" cy=".36" r=".8"><stop offset="0" stop-color="#ffffff"/><stop offset=".7" stop-color="#f4efe3"/><stop offset="1" stop-color="#d8d0bc"/></radialGradient>`;
+  // a straight chrome tube: brown outline, light metal, a thin shine
+  const tube = (d, w, cap = 'round') => `<path d="${d}" fill="none" stroke="${K}" stroke-width="${w + 5}" stroke-linecap="${cap}" stroke-linejoin="round"/><path d="${d}" fill="none" stroke="#c9cfdc" stroke-width="${w}" stroke-linecap="${cap}" stroke-linejoin="round"/>`;
+  // the drumstick that taps the head when the drum plays (hidden until then); the tip rests on the head, the stick swings in from the right
+  const stick = (x, y) => `<g class="stk" style="transform-origin:${x}px ${y}px;transform:rotate(30deg)"><path d="M${x - 3.6} ${y}L${x - 6} ${y - 128}Q${x} ${y - 134} ${x + 6} ${y - 128}L${x + 3.6} ${y}Z" fill="#e6b06a" stroke="${K}" stroke-width="3" stroke-linejoin="round"/><circle cx="${x}" cy="${y}" r="5.2" fill="#f3d29a" stroke="${K}" stroke-width="3"/><path d="M${x - 1.6} ${y - 14}L${x - 3} ${y - 112}" stroke="#fff" stroke-opacity=".6" stroke-width="2" stroke-linecap="round"/></g>`;
+
+  // a drum seen from the front and a little above: a lacquered shell, chrome hoops, tension lugs and rods, a coated head. mode: rack (on a post), snare (on a stand) or floor (on legs)
+  const tomSvg = (c, mode) => {
+    const n = ++uid, P = { rack: [78, 25, 84, 38, 200], snare: [90, 28, 44, 36, 240], floor: [92, 29, 96, 36, 206] }[mode], [rx, ry, Hh, cy, VH] = P, cx = 100, bot = cy + Hh;
+    const fy = x => cy + ry * Math.sqrt(Math.max(0, 1 - ((x - cx) / rx) ** 2));   // where the front edge of the top hoop is at x
+    const lugs = [-62, -31, 0, 31, 62].map(a => { const r = a * Math.PI / 180, x = cx + (rx - 3) * Math.sin(r), w = 5 + 7 * Math.cos(r), y0 = fy(x), lh = Math.min(Hh * .54, 36), ly = y0 + Hh * .24;
+      return `<path d="M${x.toFixed(1)} ${(y0 + 2).toFixed(1)}V${(ly + 2).toFixed(1)}" stroke="${K}" stroke-width="6" stroke-linecap="round"/><path d="M${x.toFixed(1)} ${(y0 + 2).toFixed(1)}V${(ly + 2).toFixed(1)}" stroke="#d6dbe7" stroke-width="2.6" stroke-linecap="round"/><rect x="${(x - w / 2).toFixed(1)}" y="${ly.toFixed(1)}" width="${w.toFixed(1)}" height="${lh.toFixed(1)}" rx="3.5" fill="url(#cr${n})" stroke="${K}" stroke-width="2.5"/><rect x="${(x - w / 2 + 1.8).toFixed(1)}" y="${(ly + lh * .42).toFixed(1)}" width="${Math.max(2, w - 3.6).toFixed(1)}" height="3" rx="1.5" fill="#4d5570"/>`; }).join('');
+    const claws = [-62, -31, 0, 31, 62].map(a => { const x = cx + (rx - 3) * Math.sin(a * Math.PI / 180); return `<rect x="${(x - 6).toFixed(1)}" y="${(fy(x) - 3).toFixed(1)}" width="12" height="9" rx="3" fill="url(#cr${n})" stroke="${K}" stroke-width="2.4"/>`; }).join('');
+    let under = '', over = '';
+    if (mode === 'rack') over = tube(`M${cx} ${bot + ry - 3}V190`, 9) + `<rect x="${cx - 13}" y="160" width="26" height="15" rx="4" fill="url(#cr${n})" stroke="${K}" stroke-width="3"/><rect x="${cx - 18}" y="184" width="36" height="9" rx="4" fill="#4d5570" stroke="${K}" stroke-width="3"/>`;
+    if (mode === 'snare') {
+      under = `<ellipse cx="${cx}" cy="230" rx="76" ry="8" fill="#000" opacity=".3"/>` + tube(`M${cx - 52} ${bot + 14}L${cx} 146M${cx + 52} ${bot + 14}L${cx} 146M${cx} 146V184M${cx} 184L36 228M${cx} 184L164 228M${cx} 184V232`, 7)
+        + `<rect x="${cx - 10}" y="140" width="20" height="14" rx="4" fill="url(#cr${n})" stroke="${K}" stroke-width="3"/>`;
+      over = `<rect x="${cx - rx - 9}" y="${bot - 24}" width="15" height="24" rx="5" fill="url(#cr${n})" stroke="${K}" stroke-width="3"/><path d="M${cx - rx - 14} ${bot - 6}h9" stroke="${K}" stroke-width="5" stroke-linecap="round"/>`
+        + `<path d="M${cx - rx + 16} ${bot + ry * .72}Q${cx} ${bot + ry + 5} ${cx + rx - 16} ${bot + ry * .72}" fill="none" stroke="#8d95a8" stroke-width="3.2" stroke-dasharray="2.6 3.4" stroke-linecap="round"/>`;
+    }
+    if (mode === 'floor') {
+      under = `<ellipse cx="${cx}" cy="199" rx="92" ry="8" fill="#000" opacity=".3"/>`;
+      over = [[-1, 66, 78], [1, 66, 78]].map(([s, a, b]) => tube(`M${cx + s * a} 100L${cx + s * b} 194`, 6.5) + `<rect x="${cx + s * a - 6}" y="98" width="12" height="30" rx="4" fill="url(#cr${n})" stroke="${K}" stroke-width="2.6"/><ellipse cx="${cx + s * b}" cy="196" rx="10" ry="5.5" fill="#3a3036" stroke="${K}" stroke-width="2.5"/>`).join('');
+    }
+    return `<svg viewBox="0 0 200 ${VH}" width="100%" height="100%" style="overflow:visible"><defs>${CHR(n)}${SHL(n, c)}${HDG(n)}</defs>${under}
+<path d="M${cx - rx} ${cy}V${bot}A${rx} ${ry} 0 0 0 ${cx + rx} ${bot}V${cy}Z" fill="url(#sg${n})" stroke="${K}" stroke-width="5" stroke-linejoin="round"/>
+<path d="M${cx - rx + 14} ${cy + 16}V${bot - 2}" stroke="#fff" stroke-opacity=".42" stroke-width="7" stroke-linecap="round"/><path d="M${cx + 8} ${cy + 22}V${bot + 14}M${cx + 34} ${cy + 18}V${bot + 10}" stroke="#fff" stroke-opacity=".12" stroke-width="5" stroke-linecap="round"/>
+<path d="M${cx - rx} ${bot}A${rx} ${ry} 0 0 0 ${cx + rx} ${bot}" fill="none" stroke="${K}" stroke-width="13"/><path d="M${cx - rx} ${bot}A${rx} ${ry} 0 0 0 ${cx + rx} ${bot}" fill="none" stroke="url(#cr${n})" stroke-width="7"/>${lugs}${over}
+<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="none" stroke="${K}" stroke-width="15"/><ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="none" stroke="url(#cr${n})" stroke-width="9"/>${claws}
+<g class="hd" style="transform-origin:${cx}px ${cy}px"><ellipse cx="${cx}" cy="${cy + 1}" rx="${rx - 8}" ry="${ry - 6}" fill="url(#hg${n})" stroke="${K}" stroke-width="3"/><ellipse cx="${cx}" cy="${cy + 1}" rx="${rx - 8}" ry="${ry - 6}" fill="${c}" fill-opacity=".13"/><ellipse cx="${cx}" cy="${cy + 2}" rx="${(rx - 8) * .5}" ry="${(ry - 6) * .5}" fill="#000" opacity=".05"/><ellipse cx="${cx}" cy="${cy + 1}" rx="${rx - 15}" ry="${ry - 11}" fill="none" stroke="#cfc6b0" stroke-width="2"/>
+<path d="M${cx - rx + 18} ${cy - 2}Q${cx - rx * .55} ${cy - ry + 9} ${cx - 6} ${cy - ry + 7}" fill="none" stroke="#fff" stroke-opacity=".85" stroke-width="4.5" stroke-linecap="round"/></g>${stick(cx, cy + 3)}</svg>`;
+  };
+  // the kick drum seen from the front: a painted hoop, a chrome ring, a big white head with a paw on it, lugs round the edge, two spurs
+  const kickSvg = c => {
+    const n = ++uid, cx = 124, cy = 130, R = 108, lugs = Array.from({ length: 8 }, (_, k) => { const a = (k * 45 + 22.5) * Math.PI / 180, x = cx + 106 * Math.sin(a), y = cy - 106 * Math.cos(a);
+      return `<rect x="${(x - 6.5).toFixed(1)}" y="${(y - 13).toFixed(1)}" width="13" height="26" rx="4" fill="url(#cr${n})" stroke="${K}" stroke-width="2.6" transform="rotate(${k * 45 + 22.5} ${x.toFixed(1)} ${y.toFixed(1)})"/><rect x="${(x - 3).toFixed(1)}" y="${(y - 3).toFixed(1)}" width="6" height="5" rx="2" fill="#4d5570" transform="rotate(${k * 45 + 22.5} ${x.toFixed(1)} ${y.toFixed(1)})"/>`; }).join('');
+    return `<svg viewBox="0 0 260 276" width="100%" height="100%" style="overflow:visible"><defs>${CHR(n)}${SHL(n, c)}${HDG(n)}<radialGradient id="kf${n}" cx=".35" cy=".3" r=".9"><stop offset="0" stop-color="${sh(c, 1.14)}"/><stop offset=".6" stop-color="${c}"/><stop offset="1" stop-color="${sh(c, .62)}"/></radialGradient></defs>
+<ellipse cx="130" cy="268" rx="106" ry="9" fill="#000" opacity=".32"/>${tube('M62 206L26 262M200 206L236 262', 8)}
+<circle cx="140" cy="136" r="${R}" fill="url(#sg${n})" stroke="${K}" stroke-width="5"/>
+<circle cx="${cx}" cy="${cy}" r="${R}" fill="url(#kf${n})" stroke="${K}" stroke-width="5"/><circle cx="${cx}" cy="${cy}" r="${R - 16}" fill="none" stroke="${K}" stroke-width="12"/><circle cx="${cx}" cy="${cy}" r="${R - 16}" fill="none" stroke="url(#cr${n})" stroke-width="6"/>${lugs}
+<g class="hd" style="transform-origin:${cx}px ${cy}px"><circle cx="${cx}" cy="${cy}" r="${R - 22}" fill="url(#hg${n})" stroke="${K}" stroke-width="3"/><circle cx="${cx}" cy="${cy}" r="${R - 22}" fill="${c}" fill-opacity=".1"/><circle cx="${cx}" cy="${cy}" r="${R - 34}" fill="none" stroke="${c}" stroke-opacity=".55" stroke-width="5"/>
+<g fill="${c}" stroke="${K}" stroke-width="3.5" stroke-linejoin="round"><ellipse cx="${cx}" cy="${cy + 14}" rx="27" ry="22"/><ellipse cx="${cx - 33}" cy="${cy - 10}" rx="10" ry="13" transform="rotate(-18 ${cx - 33} ${cy - 10})"/><ellipse cx="${cx - 12}" cy="${cy - 27}" rx="10" ry="13" transform="rotate(-6 ${cx - 12} ${cy - 27})"/><ellipse cx="${cx + 12}" cy="${cy - 27}" rx="10" ry="13" transform="rotate(6 ${cx + 12} ${cy - 27})"/><ellipse cx="${cx + 33}" cy="${cy - 10}" rx="10" ry="13" transform="rotate(18 ${cx + 33} ${cy - 10})"/></g>
+<path d="M${cx - 66} ${cy - 22}Q${cx - 52} ${cy - 58} ${cx - 14} ${cy - 70}" fill="none" stroke="#fff" stroke-opacity=".85" stroke-width="6" stroke-linecap="round"/></g>${stick(cx, cy - 18)}</svg>`;
+  };
+  // a cymbal: a tilted brass disc with lathe rings, a raised bell and a shine; the disc (class cy) wobbles when it is hit. Its pole stops at the bottom edge of the picture; stageSvg carries it down to the floor
+  const cymSvg = tone => { const n = ++uid, d = sh(tone, .72);
     return `<svg viewBox="0 0 260 150" width="100%" height="100%" style="overflow:visible"><defs><linearGradient id="cg${n}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${sh(tone, 1.5)}"/><stop offset=".35" stop-color="${tone}"/><stop offset=".7" stop-color="${d}"/><stop offset="1" stop-color="${sh(tone, 1.3)}"/></linearGradient><radialGradient id="cb${n}" cx=".4" cy=".35" r=".8"><stop offset="0" stop-color="${sh(tone, 1.6)}"/><stop offset="1" stop-color="${d}"/></radialGradient></defs>
-<ellipse cx="130" cy="146" rx="62" ry="5" fill="#000" opacity=".3"/><path d="M130 66V142M130 142L96 148M130 142L164 148" fill="none" stroke="${K}" stroke-width="11" stroke-linecap="round"/><path d="M130 66V142M130 142L96 148M130 142L164 148" fill="none" stroke="#c4cad8" stroke-width="5" stroke-linecap="round"/><path d="M127 80V138" stroke="#fff" stroke-opacity=".7" stroke-width="2" stroke-linecap="round"/>
+${tube('M130 66V154', 8, 'butt')}<path d="M127 84V148" stroke="#fff" stroke-opacity=".7" stroke-width="2" stroke-linecap="round"/>
 <g class="cy"><ellipse cx="130" cy="69" rx="118" ry="34" fill="${sh(tone, .55)}" stroke="${K}" stroke-width="5"/><ellipse cx="130" cy="62" rx="118" ry="34" fill="url(#cg${n})" stroke="${K}" stroke-width="5"/>
 <g fill="none" stroke="${sh(tone, .5)}" stroke-opacity=".38" stroke-width="2"><ellipse cx="130" cy="62" rx="100" ry="28.5"/><ellipse cx="130" cy="62" rx="82" ry="23"/><ellipse cx="130" cy="62" rx="64" ry="17.5"/><ellipse cx="130" cy="62" rx="46" ry="12"/></g>
 <path d="M30 52Q62 28 132 27" fill="none" stroke="#fff" stroke-opacity=".7" stroke-width="5" stroke-linecap="round"/><path d="M214 74Q190 90 150 92" fill="none" stroke="#fff" stroke-opacity=".28" stroke-width="4" stroke-linecap="round"/>
-<ellipse cx="130" cy="60" rx="30" ry="13" fill="url(#cb${n})" stroke="${K}" stroke-width="4"/><ellipse cx="122" cy="55" rx="11" ry="4.5" fill="#fff" fill-opacity=".6"/><circle cx="130" cy="61" r="3.4" fill="${K}" fill-opacity=".7"/></g></svg>`; };
-  // the stage behind the kit: velvet curtains tied back with gold cords, soft spotlights and a light pool under every pad, boards that run away from the front
-  const stageSvg = pads => { const folds = x0 => Array.from({ length: 6 }, (_, i) => `<rect x="${x0 + i * 20}" y="0" width="${i % 2 ? 10 : 14}" height="510" fill="#000" opacity="${i % 2 ? .18 : .08}"/>`).join(''),
+<ellipse cx="130" cy="60" rx="30" ry="13" fill="url(#cb${n})" stroke="${K}" stroke-width="4"/><ellipse cx="122" cy="55" rx="11" ry="4.5" fill="#fff" fill-opacity=".6"/></g>${stick(150, 52)}</svg>`; };
+
+  // where everything stands. x is the middle of a pad, top its top edge, w and h its picture (always its own size), rp the oval of its head for the ripple, base the floor under it
+  const BOX = { kick: [260, 276, [124, 130, 108, 108]], rack: [200, 200, [100, 38, 78, 25]], snare: [200, 240, [100, 36, 90, 28]], floor: [200, 206, [100, 36, 92, 29]], cym: [260, 150, [130, 62, 118, 34]] };
+  const layout = lv => {
+    const P = [], add = (k, x, top, col, snd, base) => { const [w, h, rp] = BOX[k]; P.push({ k, x, l: x - w / 2, top, w, h, rp, col, snd, base }); };
+    if (lv > 1) { add('kick', 480, 304, DCOL[0], 0, 574); add('snare', 185, 330, DCOL[1], 1, 562); add('rack', 480, 146, DCOL[2], 2, 0); add('floor', 775, 352, DCOL[3], 3, 552); add('cym', 195, 112, '#f2c342', 4, 492); add('cym', 765, 112, '#f0a07c', 6, 492); }
+    else { add('kick', 480, 304, DCOL[0], 0, 574); add('snare', 185, 330, DCOL[1], 1, 562); add('floor', 775, 352, DCOL[2], 2, 552); add('cym', 195, 112, '#f2c342', 4, 492); }
+    return P;
+  };
+  // the stage behind the kit: a plum wall with rays of light, a rig of stage lights whose beams flash in the color of the drum that plays, velvet curtains tied back with gold cords, wooden boards and a rug
+  const stageSvg = pads => {
+    const folds = x0 => Array.from({ length: 6 }, (_, i) => `<rect x="${x0 + i * 20}" y="0" width="${i % 2 ? 10 : 14}" height="510" fill="#000" opacity="${i % 2 ? .18 : .08}"/>`).join(''),
       boards = Array.from({ length: 13 }, (_, i) => { const x0 = -240 + i * 100; return `<path d="M${x0} 600L${480 + (x0 - 480) * .62} 488" stroke="#5c3a1f" stroke-width="3" opacity=".55"/>`; }).join(''),
-      bokeh = [[200, 60, 22, '#ff9ad5'], [330, 110, 14, '#ffe27a'], [610, 70, 18, '#7fd4ff'], [740, 120, 24, '#ffb36b'], [470, 40, 12, '#ffffff'], [150, 190, 16, '#ffe27a'], [820, 220, 14, '#ff9ad5'], [560, 160, 10, '#ffffff']].map(([x, y, r, c]) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}" opacity=".16"/>`).join(''),
-      pools = pads.map(q => `<ellipse cx="${q.x}" cy="${q.t === 'c' ? 492 : q.y + q.h * .42}" rx="${q.w * .64}" ry="${q.t === 'c' ? 20 : q.h * .2}" fill="url(#pool)"/>`).join('');
-    return `<svg width="960" height="600" style="position:absolute;left:0;top:0"><defs><radialGradient id="pool"><stop offset="0" stop-color="#ffe9b0" stop-opacity=".5"/><stop offset="1" stop-color="#ffe9b0" stop-opacity="0"/></radialGradient><radialGradient id="wall" cx=".5" cy=".35" r=".8"><stop offset="0" stop-color="#7a46b0"/><stop offset=".7" stop-color="#2b1650"/><stop offset="1" stop-color="#170a30"/></radialGradient><linearGradient id="vel" x1="0" x2="1"><stop offset="0" stop-color="#7a1426"/><stop offset=".5" stop-color="#a81f36"/><stop offset="1" stop-color="#5e0f1e"/></linearGradient></defs>
-<rect width="960" height="600" fill="url(#wall)"/>${bokeh}<path d="M150 0L330 520H60Z" fill="#ffe6f6" opacity=".12"/><path d="M810 0L900 520H630Z" fill="#cfe9ff" opacity=".12"/><path d="M420 0L560 0L700 520H280Z" fill="#fff6d8" opacity=".07"/>
-<g fill="#fff" opacity=".7"><circle cx="300" cy="40" r="2"/><circle cx="640" cy="26" r="2.4"/><circle cx="880" cy="90" r="1.8"/><circle cx="90" cy="120" r="2"/><circle cx="520" cy="96" r="1.6"/></g>
-<rect y="486" width="960" height="114" fill="#8a5a36"/>${boards}<rect y="486" width="960" height="12" fill="#c99a52"/><rect y="498" width="960" height="5" fill="#5c3a1f"/><path d="M0 548H960M0 584H960" stroke="#6b4423" stroke-width="3" opacity=".5"/>${pools}
+      rays = Array.from({ length: 11 }, (_, i) => { const a0 = -88 + i * 17.6, a1 = a0 + 8.8, X = a => (480 + Math.tan(a * Math.PI / 180) * 700).toFixed(0); return `<path d="M480 600L${X(a0)} -100L${X(a1)} -100Z" fill="#fff" opacity=".045"/>`; }).join(''),
+      lamps = [235, 325, 410, 550, 635, 725].map(x => { const tx = x + (480 - x) * .35; return `<path class="kgs-bm" style="fill:var(--c,#ffeec2)" d="M${x - 13} 90L${x + 13} 90L${tx + 100} 520L${tx - 100} 520Z"/>`; }).join(''),
+      cans = [235, 325, 410, 550, 635, 725].map(x => `<rect x="${x - 5}" y="50" width="10" height="9" rx="2" fill="#3b3b4a"/><path d="M${x - 11} 58L${x + 11} 58L${x + 15} 84L${x - 15} 84Z" fill="#23232e" stroke="${K}" stroke-width="2.5" stroke-linejoin="round"/><path d="M${x - 6} 62L${x - 8} 80" stroke="#fff" stroke-opacity=".35" stroke-width="2.5" stroke-linecap="round"/><ellipse cx="${x}" cy="85" rx="15" ry="4.8" fill="#fff3c4" stroke="${K}" stroke-width="2"/>`).join(''),
+      stands = pads.filter(q => q.k === 'cym').map(q => { const x = q.l + 130, y0 = q.top + 150, fy = q.base;
+        return `<path d="M${x} ${y0}V${fy}M${x} ${fy - 6}L${x - 52} ${fy + 8}M${x} ${fy - 6}L${x + 52} ${fy + 8}M${x} ${fy - 6}L${x} ${fy + 16}" fill="none" stroke="${K}" stroke-width="13" stroke-linecap="round"/><path d="M${x} ${y0}V${fy}M${x} ${fy - 6}L${x - 52} ${fy + 8}M${x} ${fy - 6}L${x + 52} ${fy + 8}M${x} ${fy - 6}L${x} ${fy + 16}" fill="none" stroke="#c9cfdc" stroke-width="8" stroke-linecap="round"/>`; }).join(''),
+      pools = pads.filter(q => q.k !== 'cym' && q.k !== 'rack').map(q => `<ellipse cx="${q.x}" cy="${q.base - 4}" rx="${q.w * .62}" ry="19" fill="url(#pool)"/>`).join('');
+    return `<svg width="960" height="600" style="position:absolute;left:0;top:0"><defs><radialGradient id="pool"><stop offset="0" stop-color="#ffe9b0" stop-opacity=".5"/><stop offset="1" stop-color="#ffe9b0" stop-opacity="0"/></radialGradient><radialGradient id="wall" cx=".5" cy=".55" r=".85"><stop offset="0" stop-color="#6d3aa6"/><stop offset=".55" stop-color="#2c1553"/><stop offset="1" stop-color="#130a2c"/></radialGradient><radialGradient id="halo" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ff7be0" stop-opacity=".34"/><stop offset="1" stop-color="#ff7be0" stop-opacity="0"/></radialGradient><linearGradient id="fog" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b58cf0" stop-opacity="0"/><stop offset="1" stop-color="#b58cf0" stop-opacity=".3"/></linearGradient><radialGradient id="vig" cx=".5" cy=".5" r=".75"><stop offset=".6" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".45"/></radialGradient><linearGradient id="vel" x1="0" x2="1"><stop offset="0" stop-color="#7a1426"/><stop offset=".5" stop-color="#a81f36"/><stop offset="1" stop-color="#5e0f1e"/></linearGradient><linearGradient id="rug" x1="0" x2="1"><stop offset="0" stop-color="#4a1030"/><stop offset=".5" stop-color="#6a1a3c"/><stop offset="1" stop-color="#4a1030"/></linearGradient></defs>
+<rect width="960" height="600" fill="url(#wall)"/>${rays}<ellipse cx="480" cy="360" rx="470" ry="270" fill="url(#halo)"/><rect y="380" width="960" height="108" fill="url(#fog)"/>
+<rect x="120" y="50" width="720" height="6" rx="3" fill="#2a2a38" stroke="${K}" stroke-width="2"/><g class="kgs-bms">${lamps}</g>${cans}
+<rect y="486" width="960" height="114" fill="#8a5a36"/>${boards}<rect y="486" width="960" height="12" fill="#c99a52"/><rect y="498" width="960" height="5" fill="#5c3a1f"/><path d="M0 548H960M0 584H960" stroke="#6b4423" stroke-width="3" opacity=".5"/>
+<ellipse cx="480" cy="558" rx="456" ry="46" fill="#000" opacity=".28"/><ellipse cx="480" cy="552" rx="446" ry="42" fill="url(#rug)" stroke="#e0b252" stroke-width="4"/><ellipse cx="480" cy="552" rx="418" ry="36" fill="none" stroke="#f0cf82" stroke-opacity=".6" stroke-width="3"/><ellipse cx="480" cy="552" rx="384" ry="31" fill="none" stroke="#f0cf82" stroke-opacity=".38" stroke-width="3" stroke-dasharray="26 12"/>${pools}${stands}
+<rect width="960" height="600" fill="url(#vig)"/>
 <g><path d="M0 0H128Q118 250 96 486H0Z" fill="url(#vel)"/>${folds(4)}<path d="M960 0H832Q842 250 864 486H960Z" fill="url(#vel)"/>${folds(840)}
 <path d="M0 0H960V30Q930 44 900 30Q870 44 840 30Q810 44 780 30Q750 44 720 30Q690 44 660 30Q630 44 600 30Q570 44 540 30Q510 44 480 30Q450 44 420 30Q390 44 360 30Q330 44 300 30Q270 44 240 30Q210 44 180 30Q150 44 120 30Q90 44 60 30Q30 44 0 30Z" fill="#8f1a2e" stroke="${K}" stroke-width="3"/><rect y="0" width="960" height="8" fill="#e9b948"/>
-<path d="M0 300Q60 318 112 296" fill="none" stroke="#e9b948" stroke-width="9" stroke-linecap="round"/><circle cx="104" cy="304" r="9" fill="#e9b948" stroke="${K}" stroke-width="3"/><path d="M960 300Q900 318 848 296" fill="none" stroke="#e9b948" stroke-width="9" stroke-linecap="round"/><circle cx="856" cy="304" r="9" fill="#e9b948" stroke="${K}" stroke-width="3"/></g></svg>`; };
+<path d="M0 300Q60 318 112 296" fill="none" stroke="#e9b948" stroke-width="9" stroke-linecap="round"/><circle cx="104" cy="304" r="9" fill="#e9b948" stroke="${K}" stroke-width="3"/><path d="M960 300Q900 318 848 296" fill="none" stroke="#e9b948" stroke-width="9" stroke-linecap="round"/><circle cx="856" cy="304" r="9" fill="#e9b948" stroke="${K}" stroke-width="3"/></g></svg>`;
+  };
+  KGS.drumArt = { tomSvg, kickSvg, cymSvg, stageSvg, layout };
 
   KGS.games.drums = (root, done) => {
     const L = KCG.life(root, 'drums'), lv = KGS.level(), TARGET = lv > 1 ? 9 : 6, STEP = lv > 1 ? .5 : .78, FORGIVE = lv > 1 ? 2 : 3;
     const ban = KCG.banner(root, 'Watch the drums. Then copy them!', KCG.ico('gs-drums', 62));
+    // the page behind the stage is one dark plum instead of the shops' checks; the shop's own look comes back when the game closes
+    const shop = document.querySelector('#shop'), bg0 = shop && [shop.style.backgroundImage, shop.style.backgroundColor, shop.style.backgroundSize];
+    if (shop) { shop.style.backgroundImage = 'radial-gradient(ellipse at 50% 42%,#3b1d60,#1f0f38 62%,#12081f)'; shop.style.backgroundColor = '#1f0f38'; shop.style.backgroundSize = '100% 100%'; L.cleanup(() => { shop.style.backgroundImage = bg0[0]; shop.style.backgroundColor = bg0[1]; shop.style.backgroundSize = bg0[2]; }); }
     const S = KCG.stage(root, L, W, H), el = S.el; el.style.background = '#170a30';
-    // the pads, laid out like a kit: cymbals on stands in the back, drums in front. snd is the drum sound (0 kick, 1 snare, 2 high tom, 3 low tom, 4 crash, 6 ride)
-    const D = lv > 1 ? 196 : 224, dy = 330, cw = 250, ch = 135, cyy = 148;
-    const PADS = [];
-    const nDr = lv > 1 ? 4 : 3;
-    for (let i = 0; i < nDr; i++) { const x = lv > 1 ? 480 + (i - 1.5) * 232 : 480 + (i - 1) * 250; PADS.push({ t: 'd', x, y: dy, w: D, h: D, col: DCOL[i], snd: i }); }
-    PADS.push({ t: 'c', x: lv > 1 ? 255 : 480, y: cyy, w: cw, h: ch, col: '#f2c342', snd: 4 });
-    if (lv > 1) PADS.push({ t: 'c', x: 705, y: cyy, w: cw, h: ch, col: '#f0a07c', snd: 6 });
+    // the pads: a kit with cymbals on stands, drums in front. snd is the drum sound (0 kick, 1 snare, 2 high tom, 3 low tom, 4 crash, 6 ride)
+    const PADS = layout(lv);
     el.insertAdjacentHTML('afterbegin', stageSvg(PADS));
+    const beams = el.querySelector('.kgs-bms');
     const nd = PADS.length, drumEl = [];
     PADS.forEach((q, i) => {
-      const d = h('div', 'kgs-drum' + (q.t === 'c' ? ' kgs-cym' : ''), q.t === 'c' ? cymSvg(q.col) : drumSvg(q.col)); d.style.cssText += `left:${q.x - q.w / 2}px;top:${q.y}px;width:${q.w}px;height:${q.h}px;--g:${q.col}`;
+      const d = h('div', 'kgs-drum' + (q.k === 'cym' ? ' kgs-cym' : ''), q.k === 'cym' ? cymSvg(q.col) : q.k === 'kick' ? kickSvg(q.col) : tomSvg(q.col, q.k)); d.style.cssText += `left:${q.l}px;top:${q.top}px;width:${q.w}px;height:${q.h}px;--g:${q.col}`;
       d.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); tap(i); }); el.append(d); drumEl.push(d);
     });
     const badge = h('div', 'kgs-abs kgs-bob', ''); badge.style.cssText += 'left:440px;top:34px;width:80px;height:80px'; el.append(badge);
@@ -34744,9 +34817,10 @@ ${leg('lA', 72, 94, 124)}${leg('lB', 150, 94, 124)}
     let seq = [], idx = 0, phase = 'wait', mistakes = 0, roundMistakes = 0, idle = 0, ended = false;
     const showDots = () => { dots.innerHTML = ''; seq.forEach((_, i) => { const d = h('div', '', ''); d.style.cssText = `width:26px;height:26px;border-radius:50%;border:4px solid ${K};background:${i < idx ? '#ffd23f' : '#fff'};opacity:${i < idx ? 1 : .8}`; dots.append(d); }); };
     const play = (d, ms = 300) => {
-      const e = drumEl[d], q = PADS[d]; e.classList.add('lit'); KGS.snd.drum(q.snd); KGS.perf.hit(1, q.snd);
-      const r = h('div', 'kgs-rip'); r.style.cssText += `left:${q.x - q.w / 2}px;top:${q.y}px;width:${q.w}px;height:${q.t === 'c' ? 90 : q.h}px;--g:${q.col}`; el.append(r); setTimeout(() => r.remove(), 600);
-      KCG.burst(S, q.x, q.y + (q.t === 'c' ? 50 : 40), ['sparkle', 'star'], 4, 60, 20); L.later(ms, () => e.classList.remove('lit'));
+      const e = drumEl[d], q = PADS[d], [hx, hy, hrx, hry] = q.rp; e.classList.remove('lit'); void e.offsetWidth; e.classList.add('lit'); KGS.snd.drum(q.snd); KGS.perf.hit(1, q.snd);
+      const r = h('div', 'kgs-rip'); r.style.cssText += `left:${q.l + hx - hrx}px;top:${q.top + hy - hry}px;width:${hrx * 2}px;height:${hry * 2}px;--g:${q.col}`; el.append(r); setTimeout(() => r.remove(), 600);
+      beams.style.setProperty('--c', q.col); beams.classList.remove('flash'); void beams.getBoundingClientRect(); beams.classList.add('flash');
+      KCG.burst(S, q.l + hx, q.top + hy - 8, ['sparkle', 'star'], 4, 60, 20); L.later(ms, () => e.classList.remove('lit'));
     };
     const setBadge = ic => { badge.innerHTML = KCG.ico(ic, 80); };
     const watch = () => {
@@ -34764,7 +34838,7 @@ ${leg('lA', 72, 94, 124)}${leg('lB', 150, 94, 124)}
         if (idx >= seq.length) {
           phase = 'cheer'; KCG.snd.ding(); KCG.burst(S, 480, 100, ['star', 'heart', 'sparkle'], 12, 140, 28);
           if (seq.length >= TARGET) { ended = true; L.later(1300, () => KCG.finish(L, done, mistakes <= FORGIVE ? 3 : 2, 'What a drummer!')); }
-          else { ban.set('Great! One more!'); L.later(1500, nextRound); }
+          else { ban.set(TARGET - seq.length === 1 ? 'Great! One more!' : 'Great! Now a longer one!'); L.later(1500, nextRound); }   // "One more" only when the next round is the last (Demi, 10 Nov)
         }
       } else {
         mistakes++; roundMistakes++; phase = 'watch'; KGS.snd.oops(); const e = drumEl[d]; e.classList.remove('bad'); void e.offsetWidth; e.classList.add('bad');
@@ -35987,7 +36061,7 @@ ${leg('lA', 72, 94, 124)}${leg('lB', 150, 94, 124)}
   const duckArt = (col, bill, s, x, y) => `<g transform="translate(${x} ${y}) scale(${s})"><path d="M26 -8Q34 -14 32 -22Q22 -14 20 -10Z" fill="${col}" ${S(2.6)}/><ellipse cx="2" cy="-8" rx="26" ry="14" fill="${col}" ${S(3)}/><path d="M-6 -6Q6 4 22 -8" fill="none" stroke="${K}" stroke-width="2.4" opacity=".4" stroke-linecap="round"/><path d="M-12 -16Q2 -22 16 -14" fill="none" stroke="#fff" stroke-width="3.2" opacity=".6" stroke-linecap="round"/><path d="M-14 -16Q-14 -24 -16 -30" fill="none" stroke="${K}" stroke-width="0"/><circle cx="-16" cy="-26" r="11.5" fill="${col}" ${S(3)}/><path d="M-26 -24q-10 2-12 7q8 4 14 0Z" fill="${bill}" ${S(2.6)}/><circle cx="-18.5" cy="-29" r="3.6" fill="#fff" ${S(1.6)}/><circle cx="-19.2" cy="-28.6" r="2.1" fill="#26202a"/><circle cx="-19.9" cy="-29.4" r=".8" fill="#fff"/><ellipse cx="-12" cy="-21" rx="3.4" ry="2.2" fill="#ff8aa0" opacity=".5"/></g>`;
   const ducksArt = () => `<svg viewBox="-60 -64 300 76" width="300" height="76" style="overflow:visible">${duckArt('#fff8e8', '#ff9a2a', 1.05, 0, 4)}${duckArt('#ffe36a', '#ff9a2a', .52, 78, 4)}${duckArt('#ffe36a', '#ff9a2a', .46, 112, 5)}${duckArt('#ffe36a', '#ff9a2a', .5, 144, 4)}</svg>`;
   /* ---------- the game ---------- */
-  KCG.TIER.fishing = 'medium';   // v36.13: fair coins like every game (16 or 24 for 2 or 3 stars); the fish values are points on the day's tally now, not coins
+  KCG.TIER.fishing = 'quick';   // v36.14.1 (Demi, 11 Nov: yes, Quick): fair coins like every game (10 or 15 for 2 or 3 stars); the fish values are points on the day's tally now, not coins
   GAMES.fishing = (root, done) => {
     const L = KCG.life(root, 'fishing');
     const look = Object.assign({ fur: '#8e98a8', muz: '#f4f1ea', eye: '#4caf62', stripes: 1 }, KCG.angler || {});
@@ -36794,7 +36868,8 @@ $('#inside-home').onclick = () => { sfx.tap(); fromInside(() => enterHouse(myPee
 function mapJump(x, z, go, ry) {
   if (mode === 'inside' || mode === 'roof' || mode === 'house') { $('#map').hidden = true; return fromInside(() => mapJump(x, z, go, ry)); }
   if (mode !== 'town') return;
-  fade(() => { standUp(); me.go = null; joyVec = null; const q = constrain(x, z); me.x = me.tx = q[0]; me.z = me.tz = q[1]; if (ry != null) me.ry = camYaw = ry; camera.position.set(me.x - Math.sin(me.ry) * 7, 3.05, me.z - Math.cos(me.ry) * 7); pushPresence(true); if (go) arrive(go); });
+  me.busq = null; $('#busq').hidden = true;   // the old Ride button cannot be tapped while the map jump fades (Kyle #103)
+  fade(() => { standUp(); me.go = null; joyVec = null; me.busq = null; $('#busq').hidden = true; const q = constrain(x, z); me.x = me.tx = q[0]; me.z = me.tz = q[1]; if (ry != null) me.ry = camYaw = ry; camera.position.set(me.x - Math.sin(me.ry) * 7, 3.05, me.z - Math.cos(me.ry) * 7); pushPresence(true); if (go) arrive(go); });
 }
 // pins that land on top of each other are nudged apart so every one is easy to tap
 function spreadPins(box) {
@@ -37539,8 +37614,8 @@ new MutationObserver(() => { const p = $('#deed'); if (p.hidden) p.classList.rem
         <path d="M${(x - 15).toFixed(1)} ${(y - 11).toFixed(1)}Q${(x - 9).toFixed(1)} ${(y - 20).toFixed(1)} ${(x + 1).toFixed(1)} ${(y - 21).toFixed(1)}" stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round" opacity=".9"/>
         <text x="${x.toFixed(1)}" y="${(y + (k > 9 ? 10 : 12)).toFixed(1)}" text-anchor="middle" fill="#3b2a24" style="font:800 ${k > 9 ? 30 : 35}px var(--display)">${k}</text></g><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="38" fill="#fff" fill-opacity="0"/></g>`; }
     // the little screen (dark glass, lime digits)
-    s += `<g><rect x="${C - 54}" y="304" width="108" height="34" rx="9" fill="#2b3328" stroke="${O}" stroke-width="4.4"/><rect x="${C - 50}" y="308" width="100" height="8" rx="4" fill="#fff" opacity=".12"/>
-      <text id="sclT" x="${C + 14}" y="331" text-anchor="end" fill="#e4f56a" style="font:800 25px var(--display);letter-spacing:.5px">7:00</text><text id="sclAP" x="${C + 20}" y="331" fill="#e4f56a" style="font:800 15px var(--display)">AM</text></g>`;
+    s += `<g><rect x="${C - 68}" y="304" width="136" height="34" rx="9" fill="#2b3328" stroke="${O}" stroke-width="4.4"/><rect x="${C - 64}" y="308" width="128" height="8" rx="4" fill="#fff" opacity=".12"/>
+      <text id="sclT" x="${C + 24}" y="331" text-anchor="end" fill="#e4f56a" style="font:800 25px var(--display);letter-spacing:.5px">7:00</text><text id="sclAP" x="${C + 30}" y="331" fill="#e4f56a" style="font:800 15px var(--display)">AM</text></g>`;
     s += `<g id="sclMin" transform="rotate(0 ${C} ${C})"><g transform="translate(${C} ${C})">${hand(118, 5.5, 14, 40, '#5aaaf0')}</g></g>
       <g id="sclHr" transform="rotate(0 ${C} ${C})"><g transform="translate(${C} ${C})">${hand(80, 7.5, 19, 36, '#ef6f5a')}</g></g>
       <circle cx="${C}" cy="${C}" r="15" fill="url(#sclGold)" stroke="${O}" stroke-width="4.6"/><circle cx="${C - 4}" cy="${C - 5}" r="4.4" fill="#fff" opacity=".85"/>`;
@@ -40672,6 +40747,45 @@ function kcBackTick(dt) {
     door = path = null; mats = []; leaves = []; geos = [];
   }
 
+  // the street side (Demi, 10 Nov: "when the door opens it is only flat grass"): where the stone path ends a picket fence with an open gate, a mailbox and a gas lamp outside it,
+  // a lavender hedge inside it, a row of trees and a few cottage roofs on the horizon. Same fence, hedge and tree looks as the back yard (yardFenceG in b6.js). Drawn once, the same for every house; decoration only.
+  {
+    const st = new T.Group(); root.add(st);
+    const FZ = LF + 4.75, GW = .9, add = (...o) => o.forEach(m => st.add(m));
+    // picket fence along the street with a gap for the gate, 2 rails, same pickets as the yard
+    [[-15, -GW], [GW, 15]].forEach(([x0, x1]) => {
+      const n = Math.round((x1 - x0) / .3);
+      for (let i = 0; i <= n; i++) add(box('#f6f1e6', x0 + (x1 - x0) * i / n, 0, FZ, .08, .8, .05));
+      [.25, .6].forEach(y => add(box('#f6f1e6', (x0 + x1) / 2, y, FZ, x1 - x0, .06, .04)));
+    });
+    // gate posts and the two gate leaves standing open (swung toward the house)
+    [-GW, GW].forEach(s => {
+      add(box('#f6f1e6', s * 1.0, 0, FZ, .14, 1.05, .14), lsph(.1, '#f6f1e6', s * 1.0, 1.08, FZ));
+      const g = new T.Group(); g.position.set(s * GW, 0, FZ); g.rotation.y = -Math.sign(s) * 1.35; st.add(g);
+      for (let i = 0; i < 3; i++) g.add(box('#f6f1e6', -Math.sign(s) * (.08 + i * .27), 0, 0, .08, .75, .05));
+      [.22, .55].forEach(y => g.add(box('#f6f1e6', -Math.sign(s) * .42, y, 0, .8, .05, .04)));
+    });
+    add(box('#a7a092', 0, -.08, FZ - .1, 1.0, .05, .5));   // the last stone, in the gateway
+    // the lavender hedge inside the fence, with the path left open
+    for (let x = -13; x <= 13; x += .8) if (Math.abs(x) > 1.7) add(lsph(.4, x % 1.6 ? '#9b86c4' : '#8a74b8', x, .35, FZ - .45, 1, .8, 1));
+    // a mailbox on a post (blue, with a red flag) and a gas lamp, outside the fence by the gate
+    {
+      const mx = 1.7, mz = FZ + .7;
+      add(lcyl('#6b4a32', mx, 0, mz, .05, 1.05), box('#3f6fb5', mx, 1.02, mz, .26, .22, .46), lsph(.13, '#3f6fb5', mx, 1.13, mz, 1, 1, 1.75), box('#d8453a', mx + .15, 1.1, mz - .12, .03, .2, .05));
+      const lx = -1.9, lz = FZ + .7, glow = new T.MeshBasicMaterial({ color: '#ffe08a' });
+      add(lcyl('#2f3a3a', lx, 0, lz, .06, 1.9), lcyl('#2f3a3a', lx, 0, lz, .13, .18), box('#2f3a3a', lx, 1.88, lz, .3, .05, .3), box(glow, lx, 1.93, lz, .22, .34, .22), mesh(new T.ConeGeometry(1, 1, 4), '#2f3a3a', lx, 2.37, lz, .24, .22, .24));
+    }
+    // trees along the street (the yard's trunk and dark leaves) and a farther row, then cottage roofs on the horizon
+    [-11, -7, -3.6, 3.6, 7, 11].forEach((x, i) => add(lcyl('#6b4a32', x, 0, FZ + 3 + (i % 2) * .8, .18, 1.5), lsph(1.3, i % 2 ? '#6f9a4e' : '#5f8a45', x, 2.5, FZ + 3 + (i % 2) * .8, 1, .95, 1), lsph(.9, i % 2 ? '#7fae5a' : '#6f9a4e', x + .5, 3.3, FZ + 3 + (i % 2) * .8 - .2)));
+    [-15, -9, -1, 6, 13].forEach((x, i) => add(lcyl('#6b4a32', x, 0, FZ + 11, .2, 1), lsph(1, i % 2 ? '#3f5a34' : '#4f7a3f', x, 3.2, FZ + 11, 1.1, 3.1, 1.1)));
+    [[-10, '#b5654a', '#f1e4c8'], [-2.5, '#6a7a98', '#e8d4d8'], [5, '#8a5a4a', '#d8e4d0'], [12, '#b5654a', '#efe0b8']].forEach(([x, roof, wall], i) => {
+      const z = FZ + 22 + (i % 2) * 3, rf = new T.Mesh(new T.ConeGeometry(1, 1, 4), mat(roof));
+      add(box(wall, x, 0, z, 4.2, 2.6, 3.2), box('#8a5a4a', x + 1.2, 2.6, z + .4, .5, 1.2, .5));
+      rf.position.set(x, 2.6 + .95, z); rf.scale.set(3, 1.9, 3); rf.rotation.y = Math.PI / 4; add(rf);
+    });
+    root.updateMatrixWorld(true); bake(st, false);
+  }
+
   const prevInterior = applyHouseInterior;
   applyHouseInterior = function (hs) {
     const r = prevInterior(hs);
@@ -41236,7 +41350,7 @@ renderer.domElement.addEventListener('pointerdown', e => {
     const st = HOUSE_STYLES[(curHS || (typeof save !== 'undefined' && save.hs) || [0, 1])[0]] || {}, tg = new T.Group();
     if (st.portholeWin) st.portholeWin(tg, -1, 0);
     else { const w = kcWindow({ frame: '#ffffff', w: 1.3, h: 1.5, curtain: '#fdf3d8', tie: '#e8a050' }); w.position.set(-(kcHX() - .14), 0, 0); w.rotation.y = Math.PI / 2; tg.add(w); }
-    tg.rotation.y = -Math.PI / 2; tg.position.z = kcHX() - .14; g.add(tg);
+    tg.rotation.y = -Math.PI / 2; tg.position.z = kcHX() - .14 + .05; g.add(tg);   // v36.14.1 (Demi: curtains on a blank wall): the whole window (frame, glass, curtains, rod, sill) stands .05 m further into the room, so no wall band, board or trim of any look can cover the frame while the curtains show
   }, fp: [.9, .3] };
   if (!FURN_BY_ID.roomwindow) { WIN.i = FURN.length; FURN.push(WIN); FURN_BY_ID.roomwindow = WIN; const tab = FURN_CATS.find(c => c.name === 'Decor'); if (tab) tab.items.push(WIN); }
   // where each room's two starter windows go: [wall (-1 left, 1 right), z]. v36.8: the walls are at kcDimOf(room)[0] - .15 now, and a window must stay clear of the room's door
@@ -42076,7 +42190,7 @@ function endTruck(done) {
   const park = () => {
     me.truck = false; OBST[m.ob] = [m.P.x, m.P.z, 1.5]; m.goal.g.visible = false; m.arrow.visible = false; m.spot.g.visible = true; m.spot.armed = false;
     m.truck.position.set(m.P.x, 0, m.P.z); m.truck.rotation.y = m.P.ry; $('#truck-out').hidden = true;
-    const c = myCatModel(); c.scale.setScalar(1);
+    const c = myCatModel(); c.scale.setScalar(KC_CAT);
     me.x = me.tx = m.spot.x; me.z = me.tz = m.spot.z; me.go = null; pushPresence(true);
   };
   if (done) { park(); pay(3, 'All the mail is delivered!', KCG.fairBase('mailtruck', 3)); $('#again').hidden = true; }
@@ -42221,7 +42335,7 @@ function fcOut() {
   if (me.car == null) return;
   const p = fcPose(me.carI), side = FC.seats[me.car][0] > 0 ? 1 : -1, sn = Math.sin(p.ry), cs = Math.cos(p.ry);
   me.car = me.carI = null; const q = constrain(p.x + cs * side * 1.6, p.z - sn * side * 1.6);
-  me.x = me.tx = q[0]; me.z = me.tz = q[1]; me.go = null; myCatModel().scale.setScalar(1);
+  me.x = me.tx = q[0]; me.z = me.tz = q[1]; me.go = null; myCatModel().scale.setScalar(KC_CAT);
   $('#car-out').hidden = true; pushPresence(true, { fc: null });
 }
 // my kitty in the car, after walking/driving has moved me this frame
@@ -42256,7 +42370,9 @@ const lemon = { on: false, queue: [], next: 0, pour: 0 };
   for (let i = 0; i < 5; i++) g.add(box(dk, -.88 + i * .44, .05, .405, .03, .9, .01));
   [-1.12, 1.12].forEach(x => g.add(box(dk, x, 1.0, -.3, .08, 1.5, .08)));
   const aw = box(M.stripes(YEL, W), 0, 2.45, .05, 2.6, .07, 1.25); aw.rotation.x = .22; g.add(aw);
-  for (let i = 0; i < 9; i++) { const sc = mesh(new T.CylinderGeometry(.15, .15, .05, 12, 1, false, 0, Math.PI), i % 2 ? W : YEL, -1.2 + i * .3, 2.3, .68); sc.rotation.set(Math.PI / 2, 0, Math.PI / 2); g.add(sc); }
+  // v36.14.1 (Demi, 11 Nov: "fix the awning"): the scallops are ONE connected valance (nine yellow and white tabs side by side that touch, each a strip with a round bottom), hung plumb from the front edge of the awning (y 2.28, z .65)
+  for (let i = 0; i < 9; i++) { const x = -1.2 + i * .3, sh = new T.Shape(); sh.moveTo(x - .15, .02); sh.lineTo(x + .15, .02); sh.lineTo(x + .15, -.08); sh.absarc(x, -.08, .15, 0, -Math.PI, true); sh.lineTo(x - .15, .02);
+    const sc = new T.Mesh(new T.ShapeGeometry(sh, 10), new T.MeshLambertMaterial({ color: i % 2 ? W : YEL, side: T.DoubleSide })); sc.position.set(0, 2.28, .652); g.add(sc); }
   // the hand-painted sign on the front, with a lemon on each side
   const sg = new T.Mesh(new T.PlaneGeometry(1.7, .45), new T.MeshBasicMaterial({ map: textTex('Lemonade', 600, 160, '#fff6c8', '#e08a1a', '#7fb84a', { f: '"Pacifico",cursive', w: 400, k: 1.3 }) }));
   sg.position.set(0, .62, .42); g.add(sg);
@@ -42400,7 +42516,7 @@ function bikeOn(col) {
 }
 function bikeOff() {
   if (!me.bike) return;
-  me.bike = 0; BIKE.ride.visible = false; $('#bike-off').hidden = true; try { myCatModel().scale.setScalar(1); myCatModel().position.y = 0; } catch (e) {}
+  me.bike = 0; BIKE.ride.visible = false; $('#bike-off').hidden = true; try { myCatModel().scale.setScalar(KC_CAT); myCatModel().position.y = 0; } catch (e) {}
   pushPresence(true, { bk: null });
 }
 // my kitty on my bike, after walking has moved me this frame
@@ -42426,7 +42542,7 @@ function bikeTick(t) {
     const d = e.last ? Math.hypot(c.position.x - e.last[0], c.position.z - e.last[1]) : 0; e.last = [c.position.x, c.position.z]; e.spin += d / .33; e.g.userData.wheels.forEach(w => w.rotation.x = e.spin);
     c.scale.setScalar(.72); c.userData.onBike = 1; animCat(c, false, t, true); c.position.set(c.position.x - sn * .2, .3, c.position.z - cs * .2);
   }
-  for (const [o, e] of BIKE.others) if (!live.has(o)) { town.remove(e.g); BIKE.others.delete(o); if (o.cat && o.cat.userData.onBike) { o.cat.userData.onBike = 0; o.cat.scale.setScalar(1); o.cat.position.y = 0; } }
+  for (const [o, e] of BIKE.others) if (!live.has(o)) { town.remove(e.g); BIKE.others.delete(o); if (o.cat && o.cat.userData.onBike) { o.cat.userData.onBike = 0; o.cat.scale.setScalar(KC_CAT); o.cat.position.y = 0; } }
 }
 { const _ao = animOthers; animOthers = function (dt, t) { _ao(dt, t); bikeTick(t); }; }
 { const _fs = friendSignals; friendSignals = function (o, pr) { o.bk = typeof pr.bk === 'number' ? clamp(pr.bk | 0, 0, 4) : 0; return _fs(o, pr); }; }
@@ -43450,7 +43566,7 @@ const KGC = {};
       }); g.add(b);
       ticks.push(t => { b.rotation.z = Math.sin(t * 1.7) * .05; b.rotation.x = Math.sin(t * 1.3 + 1) * .04; });
     } else if (kind === 'spoiler') {
-      const z = R[2] - .08, y = R[1] + .02; [-1, 1].forEach(s => g.add(box('#3a3d46', s * .5, y + .12, z, .06, .26, .08), box(tc, s * .73, y + .39, z - .02, .05, .17, .3)));
+      const z = R[2] - .08, y = R[1] + .02; [-1, 1].forEach(s => g.add(box('#3a3d46', s * .5, y - .22, z, .06, .58, .08), box(tc, s * .73, y + .39, z - .02, .05, .17, .3)));   // v36.14.1 (Demi: the bar floats above the car): the posts reach down into the body, base y is the BOTTOM of a box
       g.add(mesh(BOX, P.trim, 0, y + .33, z - .02, 1.5, .06, .34), mesh(BOX, '#ffffff', 0, y + .363, z - .02, .5, .008, .3));
     } else if (kind === 'surfboard') {
       const b = new T.Group(); b.position.set(-.28, R[1] - .04, R[2] - .02); b.rotation.x = -.26;
@@ -44560,7 +44676,7 @@ const sfrStripeTex = (c1, c2, scallop) => {
 // one sloping awning with a scalloped edge, centred at x with width aw, sloping from the wall out over the pavement
 function sfrAwning(g, x, aw, stripe) {
   const t1 = sfrStripeTex(stripe[0], stripe[1]), t2 = sfrStripeTex(stripe[0], stripe[1], true); t1.repeat.set(aw / .7, 1); t2.repeat.set(aw / .7, 1);
-  const y0 = 2.5, z0 = .22, y1 = 2.0, z1 = 1.2, L = Math.hypot(y0 - y1, z1 - z0);
+  const y0 = 2.85, z0 = .22, y1 = 2.4, z1 = 1.2, L = Math.hypot(y0 - y1, z1 - z0);
   const slope = new T.Mesh(new T.PlaneGeometry(aw, L), new T.MeshLambertMaterial({ map: t1, side: T.DoubleSide })); slope.position.set(x, (y0 + y1) / 2, (z0 + z1) / 2); slope.rotation.x = Math.atan2(z1 - z0, y1 - y0); g.add(slope);
   const val = new T.Mesh(new T.PlaneGeometry(aw, .35), new T.MeshLambertMaterial({ map: t2, alphaTest: .5, side: T.DoubleSide })); val.position.set(x, y1 - .175, z1); g.add(val);
   [-1, 1].forEach(s => g.add(sqBar([x + s * aw / 2, y0, z0], [x + s * aw / 2, y1, z1], '#2f3330', .02)));
@@ -44636,7 +44752,7 @@ function dress(sp) {
   }
   // the four shops with their own awnings, words on the glass and flower boxes
   if (S.stripe) {
-    g.children.filter(o => o.isGroup && Math.abs(o.position.y - 2.5) < .01 && Math.abs(o.rotation.x - .5) < .01).forEach(o => g.remove(o));
+    g.children.filter(o => o.isGroup && Math.abs(o.position.y - 2.85) < .01 && Math.abs(o.rotation.x - .4) < .01).forEach(o => g.remove(o));
     const name = sp.name, wins = [[-(w / 2 - .75), Math.min(dx - .72, dx - 1.15)], [Math.max(dx + .72, dx + 1.15), w / 2 - .75]].map(([a, b]) => [(a + b) / 2, b - a]);
     if (name === 'School') wins.forEach(([cx, ww]) => sfrAwning(g, cx, ww + .3, S.stripe)); else sfrAwning(g, 0, w - 1.1, S.stripe);
     wins.forEach(([cx, ww], i) => {
@@ -45560,7 +45676,7 @@ function krfSeg(ax, ay, az, bx, by, bz, f) { // does the straight line from the 
 function roofStep(dt, t) {
   const c = myCatModel(), R = KRF.ring;
   const walking = stepWalk(dt, 3, roofConstrain);
-  c.rotation.x = c.rotation.z = 0; c.scale.setScalar(1); c.position.set(me.x, KRF.y, me.z); c.rotation.y = me.ry; animCat(c, walking, t, false); applyDance(c, me.dance, t);
+  c.rotation.x = c.rotation.z = 0; c.scale.setScalar(KC_CAT); c.position.set(me.x, KRF.y, me.z); c.rotation.y = me.ry; animCat(c, walking, t, false); applyDance(c, me.dance, t);
   if (walking) camYaw = angLerp(camYaw, me.ry, Math.min(1, dt * 1.6));
   // behind her and above: the first of these spots from which she is not hidden behind (or inside) one of the taller houses next door
   const sx = Math.sin(camYaw), sz = Math.cos(camYaw), hy = KRF.y + 1.2; let cx, cz, ht;
@@ -49227,16 +49343,28 @@ function placeDock() {
     if (fl.top >= cb.bottom - 4 && fl.top < dk.bottom && fl.left - mg < dk.right + 8) fr.style.marginLeft = Math.ceil(dk.right + 8 - (fl.left - mg)) + 'px';
     else if (fl.top < cb.bottom - 4 && mg) fr.style.marginLeft = '';
   }
-  // the same in a house or a shop (Kyle #98): when the header wraps, the buttons on its second row (Undo, Clear room, Finish decorating) start under the coins, where the icon is: the first one on that row moves over to the right of the icon
+  // the same in a house or a shop (Kyle #98, #101): when the header wraps, the buttons of its second row (Undo, Clear room, Finish decorating) can run under the icon: the first one that does moves to the right of the icon, or, when it would not fit there, down below the icon.
+  // It is worked out on the header WITHOUT our own margins and only when the header or the icon changed, so one pass cannot undo the next (a button that wrapped because of its margin used to be measured again as "not under the icon" and flip back and forth).
   const hd = ['#house-top', '#inside-top'].map(q => $(q)).find(e => e && e.getClientRects().length);
   if (hd && c.parentElement === hd) {
-    const dk = dock.getBoundingClientRect(), cb = c.getBoundingClientRect(), kids = [...hd.children].filter(e => e.getClientRects().length && e.offsetWidth > 4);
-    const row2 = kids.filter(e => e.getBoundingClientRect().top >= cb.bottom - 4 && e.getBoundingClientRect().top < dk.bottom).sort((a, b) => a.getBoundingClientRect().left - b.getBoundingClientRect().left)[0];
-    kids.forEach(e => { if (e !== row2 && e.dataset.dockMg) { e.style.marginLeft = ''; delete e.dataset.dockMg; } });
-    if (row2) { const mg = parseFloat(row2.dataset.dockMg) || 0, l = row2.getBoundingClientRect().left - mg; if (l < dk.right + 8) { row2.dataset.dockMg = Math.ceil(dk.right + 8 - l); row2.style.marginLeft = row2.dataset.dockMg + 'px'; } else if (mg) { row2.style.marginLeft = ''; delete row2.dataset.dockMg; } }
+    const dk = dock.getBoundingClientRect(), kids = [...hd.children].filter(e => e.getClientRects().length && e.offsetWidth > 4);
+    const sig = [innerWidth, innerHeight, hd.id, Math.round(dk.left), Math.round(dk.right), Math.round(dk.top), Math.round(dk.bottom), kids.map(e => e.id + ':' + e.offsetWidth + ':' + e.offsetHeight).join(',')].join('|');
+    if (hd.dataset.dockSig !== sig) {
+      [...hd.children].forEach(e => { if (e.dataset.dockMg) { e.style.marginLeft = ''; e.style.transform = ''; delete e.dataset.dockMg; } });
+      const cb = c.getBoundingClientRect(), rects = new Map(kids.map(e => [e, e.getBoundingClientRect()])), lim = hd.getBoundingClientRect().right - 4;
+      const unders = kids.filter(e => { const r = rects.get(e); return r.top >= cb.bottom - 4 && r.top < dk.bottom && r.right > dk.left - 8 && r.left < dk.right + 8; }).sort((x, y) => rects.get(x).left - rects.get(y).left), under = unders[0];
+      if (under) { const r = rects.get(under), need = Math.ceil(dk.right + 8 - r.left);
+        if (r.right + need <= lim) { under.style.marginLeft = need + 'px'; under.dataset.dockMg = need; }
+        else {   // v36.14.1 (Kyle #101 follow-up): not enough room to the right of the icon (320 wide with the mute and hang-up buttons): every button under the dock goes down to the left edge, in a row below the other buttons of the header, as transforms (a margin made the row taller)
+          const stay = kids.filter(e => !unders.includes(e) && rects.get(e).top >= cb.bottom - 4 && rects.get(e).bottom <= dk.bottom + 120), base = (stay.length ? Math.max(...stay.map(e => rects.get(e).bottom)) : dk.bottom) + 6; let cx = hd.getBoundingClientRect().left + 12;
+          let top = base, rowH = 0, x0 = hd.getBoundingClientRect().left + 12;
+          unders.forEach(e => { const q = rects.get(e); if (cx + q.width > dk.left - 8 && top < dk.bottom && cx > x0) { cx = x0; top += rowH + 6; rowH = 0; }   // a row that would run into the dock wraps to the next one
+            e.style.transform = 'translate(' + Math.round(cx - q.left) + 'px,' + Math.ceil(top - q.top) + 'px)'; e.dataset.dockMg = 'down'; cx += q.width + 8; rowH = Math.max(rowH, q.height); }); } }
+      hd.dataset.dockSig = [innerWidth, innerHeight, hd.id, Math.round(dk.left), Math.round(dk.right), Math.round(dk.top), Math.round(dk.bottom), kids.map(e => e.id + ':' + e.offsetWidth + ':' + e.offsetHeight).join(',')].join('|');
+    }
   }
 }
-addEventListener('resize', () => setTimeout(() => { const fr = $('#friends'); if (fr) fr.style.marginLeft = ''; document.querySelectorAll('[data-dock-mg]').forEach(e => { e.style.marginLeft = ''; delete e.dataset.dockMg; }); placeDock(); }, 60));
+addEventListener('resize', () => setTimeout(() => { const fr = $('#friends'); if (fr) fr.style.marginLeft = ''; document.querySelectorAll('[data-dock-mg]').forEach(e => { e.style.marginLeft = ''; e.style.transform = ''; delete e.dataset.dockMg; }); document.querySelectorAll('[data-dock-sig]').forEach(e => delete e.dataset.dockSig); placeDock(); }, 60));
 window.kcPlaceDock = placeDock;
 const mkPanel = id => { const p = h('div', 'panel'); p.id = id; p.hidden = true; app.append(p); return p; };
 const pPeople = mkPanel('kpeople'), pCard = mkPanel('kcard'), pCall = mkPanel('kcall'), pText = mkPanel('ktext'), pTexts = mkPanel('ktexts');
@@ -49590,7 +49718,7 @@ function peopleIcon(list) {
   const key = [two, faceKey(save.look), two ? faceKey(lk(other)) : ''].join('|');
   if (key === ppKey && ic.querySelector('svg g')) return;
   const head = (l, x, y, s) => { let h = ''; try { h = kcrCatHead(l).svg; } catch (e) { return ''; } return '<g transform="translate(' + x + ' ' + y + ') scale(' + s + ')">' + h + '</g>'; };
-  const inner = two ? head(save.look, -21, -1, .82) + head(lk(other), 39, 13, .82) : head(save.look, 2.5, 3, .95);   // the picture box is only 1.2 em wide, the faces may spill out of it
+  const inner = two ? head(save.look, -22, 15, .7) + head(lk(other), 52, 15, .7) : head(save.look, 2.5, 3, .95);   // the picture box is only 1.2 em wide, the faces may spill out of it
   if (!inner) return;
   ppKey = key; ic.innerHTML = '<svg viewBox="0 0 100 100" width="100" height="100" stroke-linejoin="round" stroke-linecap="round">' + inner + '</svg><i>👥</i>';
 }
@@ -51633,7 +51761,7 @@ Game hooks used: houseTap, kcPartyTick (runs every frame in a house), renderHous
     const w = {}, p = spotWorld(ia.idx, ia.slot, w); let x = me.x, z = me.z;
     if (p && p.s.path) { const e = p.s.path[p.s.path.length - 1].p, q = new T.Vector3(e[0], 0, e[2]); p.g.localToWorld(q); x = q.x; z = q.z; const h = houseConstrain(x, z); x = h[0]; z = h[1]; }
     else if (p) { const th = p.ry; x = p.x + Math.sin(th) * .75; z = p.z + Math.cos(th) * .75; const q = houseConstrain(x, z); x = q[0]; z = q[1]; }
-    const c = myCatModel(); c.rotation.x = c.rotation.z = 0; c.scale.setScalar(1); if (c.userData.hy0 != null) c.userData.head.position.y = c.userData.hy0;
+    const c = myCatModel(); c.rotation.x = c.rotation.z = 0; c.scale.setScalar(KC_HOUSE_CAT); if (c.userData.hy0 != null) c.userData.head.position.y = c.userData.hy0;
     me.x = me.tx = x; me.z = me.tz = z; ia = null; if (!quiet) { sfx.tap(); } push();
   }
   const oldTap = houseTap;
@@ -51701,15 +51829,15 @@ Game hooks used: houseTap, kcPartyTick (runs every frame in a house), renderHous
     const w = {}, p = spotWorld(idx, slot, w); if (!p) return false;
     const s = p.s, el = t - st.t0, k = Math.min(1, el / .55);
     let y = p.y, x = p.x, z = p.z;
-    c.rotation.x = c.rotation.z = 0; c.scale.setScalar(1);
+    c.rotation.x = c.rotation.z = 0; const K = KC_HOUSE_CAT; c.scale.setScalar(K);   // v36.14.1: a kitty in a house is smaller, so every sit and lie offset below is scaled with her
     let ry = p.ry; const hopping = k < 1;
     if (hopping) { const e = k * k * (3 - 2 * k); x = st.from.x + (x - st.from.x) * e; z = st.from.z + (z - st.from.z) * e; y = (st.from.y || 0) + (y - (st.from.y || 0)) * e + Math.sin(e * Math.PI) * .5; ry = angLerp(st.ry0 == null ? ry : st.ry0, ry, e); }
     const pz = s.pose, hu = c.userData; if (hu.hy0 == null) hu.hy0 = hu.head.position.y; if (pz !== 'sleep') hu.head.position.y = hu.hy0;
-    if (pz === 'sit') { c.position.set(x, y - .25, z); c.rotation.y = ry; animCat(c, false, t, true); }
-    else if (pz === 'tub') { c.position.set(x, y - .35, z); c.rotation.y = ry; animCat(c, false, t, true); }
+    if (pz === 'sit') { c.position.set(x, y - .25 * K, z); c.rotation.y = ry; animCat(c, false, t, true); }
+    else if (pz === 'tub') { c.position.set(x, y - .35 * K, z); c.rotation.y = ry; animCat(c, false, t, true); }
     else if (pz === 'lie') { // on her side, like a sleeping cat: roll about her own length, then move her body (which hangs .45 to one side after the roll) back over the spot
       c.rotation.y = ry; animCat(c, false, t, false); const br = 1 + Math.sin(t * 1.7) * .02;
-      if (hopping) c.position.set(x, y, z); else { c.rotation.z = Math.PI / 2; c.scale.set(1, br, 1); if (s.small && c.userData.lids) c.userData.lids.forEach(l => { l.visible = true; l.scale.y = 1; }); c.position.set(x + Math.cos(ry) * (s.small ? .3 : .38), y + (s.small ? .13 : .17), z - Math.sin(ry) * (s.small ? .3 : .38)); }
+      if (hopping) c.position.set(x, y, z); else { c.rotation.z = Math.PI / 2; c.scale.set(K, br * K, K); if (s.small && c.userData.lids) c.userData.lids.forEach(l => { l.visible = true; l.scale.y = 1; }); c.position.set(x + Math.cos(ry) * (s.small ? .3 : .38) * K, y + (s.small ? .13 : .17) * K, z - Math.sin(ry) * (s.small ? .3 : .38) * K); }
     }
     else if (pz === 'sleep') { // on her back with her head on the pillow and her eyes shut; the blanket (see drive) covers her
       const u = c.userData, r = clamp((el - .5) / .7, 0, 1), e = r * r * (3 - 2 * r);
@@ -51717,11 +51845,11 @@ Game hooks used: houseTap, kcPartyTick (runs every frame in a house), renderHous
       if (hopping) c.position.set(x, y, z);
       else {
         if (s.tub) {
-          c.rotation.z = Math.PI * e; c.position.set(x, y + .66 * e, z);
+          c.rotation.z = Math.PI * e; c.position.set(x, y + .66 * K * e, z);
           u.head.rotation.x = 1.45 * e; u.head.position.y = u.hy0 - .35 * e; u.head.rotation.z = 0; u.legs.forEach(l => { l.scale.y = Math.max(.001, 1 - e); });
         } else {   // in a bed she curls up on her side like a sleeping cat, so a skirt or dress lies along her instead of standing up round her; the quilt covers her
           u.head.position.y = u.hy0; u.head.rotation.x = u.head.rotation.z = 0; u.legs.forEach(l => { l.scale.y = 1; });
-          c.rotation.z = Math.PI / 2 * e; c.position.set(x + Math.cos(ry) * .38 * e, y + .17 * e, z - Math.sin(ry) * .38 * e);
+          c.rotation.z = Math.PI / 2 * e; c.position.set(x + Math.cos(ry) * .38 * K * e, y + .17 * K * e, z - Math.sin(ry) * .38 * K * e);
           if (u.lids && e > .5) u.lids.forEach(l => { l.visible = true; l.scale.y = 1; });
         }
       }
@@ -51731,13 +51859,13 @@ Game hooks used: houseTap, kcPartyTick (runs every frame in a house), renderHous
       if (e2 >= tot) st.done = true;
       let acc = 0, i = 1; while (i < path.length - 1 && e2 > acc + path[i].d) { acc += path[i].d; i++; }
       const a = path[i - 1], b = path[i], k2 = clamp((e2 - acc) / b.d, 0, 1), e = k2 * k2 * (3 - 2 * k2), q = VEC.set(a.p[0] + (b.p[0] - a.p[0]) * e, a.p[1] + (b.p[1] - a.p[1]) * e, a.p[2] + (b.p[2] - a.p[2]) * e);
-      p.g.localToWorld(q); c.position.set(q.x, q.y - (b.m === 'sit' ? .25 : 0), q.z); c.rotation.y = p.th + b.ry; animCat(c, b.m === 'walk' && k2 < 1, t, b.m === 'sit');
+      p.g.localToWorld(q); c.position.set(q.x, q.y - (b.m === 'sit' ? .25 * K : 0), q.z); c.rotation.y = p.th + b.ry; animCat(c, b.m === 'walk' && k2 < 1, t, b.m === 'sit');
       if (b.m === 'sit' && a.m === 'sit') c.rotation.x = -.45 * Math.min(1, k2 * 4); x = q.x; z = q.z; ry = p.th + b.ry;
     }
     else if (pz === 'slide') { c.position.set(x, y, z); c.rotation.y = ry; animCat(c, false, t, false); }
     else if (pz === 'bounce') { const a = Math.abs(Math.sin(t * 5 + (mine ? 0 : slot))) * (s.amp || .4); c.position.set(x, y + (hopping ? 0 : a), z); c.rotation.y = ry; animCat(c, !hopping, t, false); }
     else if (pz === 'dance') { c.position.set(x, y, z); c.rotation.y = ry + Math.sin(t * 2) * .5; animCat(c, false, t, false); applyDance(c, { k: (slot + 1) % 3, t0: st.t0 }, t); }
-    else if (pz === 'piano') { c.position.set(x, y - .25, z); c.rotation.y = ry; animCat(c, false, t, true); }
+    else if (pz === 'piano') { c.position.set(x, y - .25 * K, z); c.rotation.y = ry; animCat(c, false, t, true); }
     else if (pz === 'dig') { c.position.set(x, y + Math.abs(Math.sin(t * 4)) * .05, z); c.rotation.y = ry + Math.sin(t * 4) * .3; animCat(c, true, t, false); }
     else { c.position.set(x, y, z); c.rotation.y = ry; animCat(c, false, t, false); }
     if (mine) { me.x = me.tx = x; me.z = me.tz = z; me.ry = ry; }
@@ -51757,30 +51885,13 @@ Game hooks used: houseTap, kcPartyTick (runs every frame in a house), renderHous
     }
     for (const o of others.values()) {
       const k = o.ia && o.cat && o.cat.parent && sameRoom(o) ? iaIdxOf(o) : -1;
-      if (k < 0) { if (o.iaS) { o.iaS = null; o.cat && (o.cat.rotation.x = o.cat.rotation.z = 0, o.cat.scale.setScalar(1), o.cat.userData.hy0 != null && (o.cat.userData.head.position.y = o.cat.userData.hy0)); } continue; }
+      if (k < 0) { if (o.iaS) { o.iaS = null; o.cat && (o.cat.rotation.x = o.cat.rotation.z = 0, o.cat.scale.setScalar(KC_HOUSE_CAT), o.cat.userData.hy0 != null && (o.cat.userData.head.position.y = o.cat.userData.hy0)); } continue; }
       if (!o.iaS) o.iaS = { t0: t, from: { x: o.cat.position.x, y: 0, z: o.cat.position.z }, ry0: o.cat.rotation.y };
       pose(o.cat, k, o.ia[3], o.iaS, t, false);
       o.x = o.tx = o.cat.position.x; o.z = o.tz = o.cat.position.z;
     }
     if (t - lastTv > .16) { lastTv = t; tvTick(t); }
   }
-  // the piece a kitty is using must not go see-through just because the camera looks past it at her (same code as the game's houseFade, minus those pieces)
-  houseFade = function (t, c) {
-    const mine = new Set(); if (ia && furnGroup.children[ia.idx]) mine.add(furnGroup.children[ia.idx]);
-    if (t - (houseFade.at || 0) > .3) {
-      houseFade.at = t; const head = _v.set(c.position.x, .8, c.position.z), d = camera.position.distanceTo(head);
-      _fr.origin.copy(camera.position); _fr.direction.copy(head).sub(camera.position).normalize();
-      furnGroup.children.forEach(p => { p.userData.fade = !deco && !mine.has(p) && _fb.setFromObject(p).expandByScalar(.05) && _fr.intersectBox(_fb, _v2) && _v2.distanceTo(camera.position) < d - .4; });
-    }
-    furnGroup.children.forEach(p => {
-      const want = p.userData.fade ? .28 : 1, k = p.userData.fk == null ? 1 : p.userData.fk; if (k === want) return;
-      const nk = k + (want - k) * .25; p.userData.fk = Math.abs(nk - want) < .02 ? want : nk;
-      p.traverse(m => { if (!m.isMesh || !m.material || Array.isArray(m.material)) return;
-        if (!m.userData.om) { m.userData.om = m.material; m.material = m.material.clone(); m.material.transparent = true; }
-        m.material.opacity = (m.userData.om.opacity == null ? 1 : m.userData.om.opacity) * p.userData.fk; m.material.depthWrite = p.userData.fk > .9;
-        if (p.userData.fk >= 1) { m.material.dispose(); m.material = m.userData.om; delete m.userData.om; } });
-    });
-  };
   const oldTick = kcPartyTick; kcPartyTick = function (t) { oldTick(t); perFrame(t, .016 + 0); };
 
   /* ---------- TV: seven little cartoons (no words). Channel 0 is the original kitten show. ---------- */
@@ -55172,7 +55283,7 @@ Test handle: window.kcGarden. No text, no emoji. */
     // the three things every yard has from the start (Demi, 30 Oct: "i cant get the rest of the backyard items to leave"): they were drawn into the house itself, now they are pieces too, in the same places
     ['gy_oldtree', 0, g => { g.add(lcyl('#7a5a3c', 0, 0, 0, .25, 2.2), lsph(1.6, '#6f8f4a', 0, 3.2, 0), lsph(1.1, '#7d9b55', .8, 3.6, .6)); for (let i = 0; i < 8; i++) g.add(lsph(.12, '#d9434f', Math.cos(i) * 1.4, 2.8 + (i % 3) * .4, Math.sin(i) * 1.4)); }, [.5, .5]],
     ['gy_oldpond', 0, g => { g.add(cyl(M.stone(), 0, 0, 0, 1.6, .25), cyl('#7fb2c8', 0, .05, 0, 1.4, .22)); for (let i = 0; i < 3; i++) g.add(lsph(.22, '#5f8a46', Math.cos(i * 2) * .7, .3, Math.sin(i * 2) * .7, 1, .25, 1)); }, [1.7, 1.7]],
-    ['gy_oldswing', 0, g => { g.add(lcyl('#c2453a', -1, 0, 0, .07, 2.6), lcyl('#c2453a', 1, 0, 0, .07, 2.6)); const bar = lcyl('#c2453a', 0, 2.6, 0, .07, 2.2); bar.rotation.z = Math.PI / 2; g.add(bar);
+    ['gy_oldswing', 0, g => { g.add(lcyl('#c2453a', -1, 0, 0, .07, 2.6), lcyl('#c2453a', 1, 0, 0, .07, 2.6)); const bar = lcyl('#c2453a', 0, 1.43, 0, .07, 2.3); bar.rotation.z = Math.PI / 2; g.add(bar);   // v36.14.1 (Demi: "swing is messed up"): lcyl takes the BASE height, so the bar used to float 1.1 m above the posts; now its middle sits on the post tops
       g.add(box('#8a8a8a', -.3, .5, 0, .03, 2.1, .03), box('#8a8a8a', .3, .5, 0, .03, 2.1, .03), box(M.wood('#d9a441'), 0, .45, 0, .8, .06, .45)); }, [1.3, .5]],
     ['gy_tree_green', 1, g => B.tree(g, 0, 0, 1, 'green'), [.6, .6]],
     ['gy_tree_blossom', 1, g => B.tree(g, 0, 0, 1, 'blossom'), [.6, .6]],
@@ -55214,7 +55325,7 @@ Test handle: window.kcGarden. No text, no emoji. */
   function layout(lv) {
     const Y = KC_YARD[lv], hx = Y.half, XH = Y.fence, ZB = Y.fback, out = [];
     const add = (i, x, z, r, min) => out.push({ i, x: q(x), z: q(z), r: r || 0, min });
-    add('gy_oldtree', -5, -14, 0, 0); add('gy_oldpond', 4.5, -9.5, 0, 0); add('gy_oldswing', 3, -14.5, 0, 0);
+    add('gy_oldtree', -5, -14, 0, 0); add('gy_oldpond', 4.5, -9.5, 0, 0); add('gy_oldswing', 4.5, -14.5, 0, 0);   // was x 3, which stood in the flower beds
     for (let i = 0; i < 4; i++) [-1, 1].forEach(s => add('gy_bed', s * 2.4, -8.2 - i * 2.6, 0, 1));
     for (let z = -7; z > ZB + 1; z -= 3.2) [-1, 1].forEach(s => add('gy_bed', s * (XH - .8), z, 1, 1));
     [-8, -12.5].forEach(z => [-1, 1].forEach(s => add('gy_lamp', s * 1.2, z, 0, 1)));
@@ -55251,6 +55362,12 @@ Test handle: window.kcGarden. No text, no emoji. */
   // a save that already has a bigger yard: put every piece where it stood, once
   function migrate() {
     const lv = lvOf(), L = living(); let ch = false; kinds(lv);
+    if (!save.gySw) {   // v36.14.1, once: the swing that still stands in its old place (x 3, in the flower beds) moves to the clear corner; one the kid moved stays
+      const mv = it => { if (it && it.i === 'gy_oldswing' && it.x === 3 && it.z === -14.5 && !(it.r | 0) && !it.a) { it.x = 4.5; return true; } return false; };
+      L.forEach(it => { if (mv(it)) ch = true; });
+      if (Array.isArray(save.gyKeep)) save.gyKeep.forEach(a => { if (Array.isArray(a) && a[0] === 'gy_oldswing' && a[1] === 3 && a[2] === -14.5 && !(a[3] | 0) && !a[4]) { a[1] = 4.5; ch = true; } });
+      save.gySw = 1; ch = true;
+    }
     if (lv >= 1 && !emptyOf() && (save.gyLv | 0) < lv && !L.some(isGy)) { put(L, layout(lv)); save.gyLv = lv; save.gyOld = 1; ch = true; }
     else {
       if (lv >= 1 && (save.gyLv | 0) < lv && (emptyOf() || L.some(isGy))) { save.gyLv = lv; ch = true; }
@@ -57081,7 +57198,7 @@ window.kcBank = Object.assign(window.kcBank || {}, { photoAt: kcPhotoAt, photo: 
     st.props.forEach(p => { if (p.parent) p.parent.remove(p); p.traverse && p.traverse(m => { if (m.isSprite && m.material) { m.material.dispose(); } }); });
     st.hid.forEach(h => { h.visible = true; });
     unswapHat(st);
-    const c = st.o.cat; if (c) { c.rotation.x = c.rotation.z = 0; c.scale.setScalar(1); if (c.userData.head && c.userData.hy0 != null) c.userData.head.position.y = c.userData.hy0; }
+    const c = st.o.cat; if (c) { c.rotation.x = c.rotation.z = 0; c.scale.setScalar(c.parent === houseScene ? KC_HOUSE_CAT : KC_CAT); if (c.userData.head && c.userData.hy0 != null) c.userData.head.position.y = c.userData.hy0; }
   }
 
   // follow the path: sets st.x, st.z, st.y, st.ry and returns whether she is walking
@@ -57689,11 +57806,25 @@ window.kcBank = Object.assign(window.kcBank || {}, { photoAt: kcPhotoAt, photo: 
   const bulb = (g, x, y, z, r = .05) => { const m = lsph(r, LAMPGLOW, x, y, z); g.add(m); return m; };
 
   // a guitar to hold; used again for the guitar a kitty plays (grotto-perform.js)
-  G.makeGuitar = (col = '#ff7aa8') => {
+  G.makeGuitar = (col = '#ff7aa8') => {   // v36.14.1 (Demi, 11 Nov: "this guitar is sad looking"): a real acoustic guitar, flat in x and y with the neck toward +x and the face toward +z: a shaped body, sound hole with a ring, bridge, six strings, a neck with frets and a headstock with tuning pegs
     const g = new T.Group(); g.userData.dyn = 1;
-    g.add(lsph(.23, col, -.05, 0, 0, 1, 1.05, .22), lsph(.18, col, .13, .02, 0, 1, 1, .22), lsph(.07, '#3a2a22', .02, 0, .045, 1, 1, .3), lsph(.2, lite(col, .2), -.05, 0, .03, .92, 1, .1));
-    g.add(box('#8a5a38', .52, -.03, -.02, .75, .06, .06).translateY(0), box('#6b4630', .96, -.05, -.02, .2, .09, .06), box('#fffaf0', .5, 0, .01, .72, .008, .008), box('#3a2a22', -.1, -.12, .04, .1, .02, .02));
-    [-.015, 0, .015].forEach(z => g.add(box('#fffaf0', .45, .004, .036 + z * .3, .98, .004, .004)));
+    const half = [[-.30, 0], [-.292, .06], [-.255, .14], [-.19, .205], [-.1, .24], [-.02, .225], [.05, .165], [.085, .15], [.14, .175], [.215, .19], [.27, .155], [.305, .08], [.31, .04]];
+    const pts = new T.SplineCurve(half.map(a => new T.Vector2(a[0], a[1]))).getPoints(70), poly = pts.concat(pts.slice(1, -1).reverse().map(q => new T.Vector2(q.x, -q.y)), [new T.Vector2(pts[pts.length - 1].x, -pts[pts.length - 1].y)]);
+    const eg = new T.ExtrudeGeometry(new T.Shape(poly), { depth: .07, bevelEnabled: true, bevelThickness: .012, bevelSize: .012, bevelSegments: 2, steps: 1, curveSegments: 4 }); eg.translate(0, 0, -.035);
+    const faceM = new T.MeshLambertMaterial({ color: col }), sideM = new T.MeshLambertMaterial({ color: new T.Color(col).multiplyScalar(.62) });
+    g.add(new T.Mesh(eg, [faceM, sideM]));
+    const flat = (geo, c, z) => { const m = new T.Mesh(geo, new T.MeshLambertMaterial({ color: c, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 })); m.position.z = z; return m; };
+    const hole = flat(new T.CircleGeometry(.058, 28), '#2a1c16', .0485); hole.position.x = .1;
+    const ring = flat(new T.RingGeometry(.062, .076, 28), '#fff3dc', .0485); ring.position.x = .1; g.add(ring, hole);
+    const bx = (c, x, y, z, w, h, d) => box(c, x, y - h / 2, z, w, h, d);   // a box by its middle
+    g.add(bx('#3a2a22', -.17, 0, .055, .05, .14, .016), bx('#fffaf0', -.158, 0, .0645, .008, .12, .006));   // the bridge and its saddle
+    g.add(bx('#8a5a38', .27, 0, .03, .66, .07, .035), bx('#2e211b', .3, 0, .0515, .6, .066, .008));   // the neck and its fretboard (it starts inside the body and ends at the nut)
+    for (let n = 1; n <= 12; n++) g.add(bx('#e9e3d3', .9 - 1.07 * (1 - Math.pow(2, -n / 12)), 0, .0575, .006, .066, .004));   // frets: each one a little closer than the last
+    g.add(bx('#fffaf0', .9, 0, .0575, .012, .066, .01));   // the nut
+    for (let k = -2.5; k <= 2.5; k += 1) g.add(bx('#f4efe6', .371, k * .0105, .0645, 1.058, .0026, .0026));   // six strings from the saddle to the nut
+    const hs = new T.Shape(); hs.moveTo(0, -.035); hs.lineTo(.17, -.045); hs.lineTo(.17, .045); hs.lineTo(0, .035); hs.closePath();
+    const head = new T.Mesh(new T.ExtrudeGeometry(hs, { depth: .03, bevelEnabled: false }), new T.MeshLambertMaterial({ color: '#6b4630' })); head.position.set(.9, 0, .015); g.add(head);
+    for (let k = 0; k < 3; k++) [-1, 1].forEach(q => g.add(bx('#e6c25a', .93 + k * .045, q * .056, .03, .014, .02, .014), bx('#f4efe6', .93 + k * .045, q * .07, .03, .014, .016, .008)));   // three tuning pegs on each side
     return g;
   };
   // the doorways in the side walls, built facing +z and turned to face into the room (a plain door, a gold frame, two velvet panels and a half-round window)
@@ -57825,8 +57956,12 @@ window.kcBank = Object.assign(window.kcBank || {}, { photoAt: kcPhotoAt, photo: 
         gg.add(dc('#8e97a6', .9, 0, .3, .02, 1.3)); const cr = dc(GOLD, .9, 1.3, .3, .3, .015); cr.rotation.z = .15; gg.add(cr, lsph(.04, PM(SHINE), .9, 1.34, .3));
         gg.add(dc('#8e97a6', 0, 0, .7, .03, .38), dc(TERRA, 0, .36, .7, .3, .09), dc('#f1e2c2', 0, .45, .7, .26, .02), dc('#6a6f7e', 0, 0, .7, .26, .03)); }   // the drummer's stool
       { G.standGuitar = new T.Group(); G.standGuitar.position.set(SPX[2], SH, 14.45); G.standGuitar.userData.dyn = 1; STC.add(G.standGuitar);
-        const gt = G.makeGuitar('#ff7aa8'); gt.rotation.z = PI / 2 - .08; gt.position.set(0, .75, 0); gt.scale.setScalar(1.15); G.standGuitar.add(gt);
-        [[-.3, 0], [.3, .1], [.0, -.28]].forEach(([a, b]) => { const l = lcyl('#2f3340', a * .8, 0, b * .8 + .05, .016, .5); l.rotation.set(b * .6, 0, -a * .6); G.standGuitar.add(l); });
+        const gt = G.makeGuitar('#ff7aa8'); gt.rotation.set(0, PI, PI / 2); gt.position.set(0, .8, 0); G.standGuitar.add(gt);   // upright (neck up, face toward the audience, which is local -z here), tail at .5 m
+        const SC = '#2f3340', RB = '#1d1f26';   // a real guitar stand: three feet round a post, a tray and two prongs under the body, a neck rest
+        [0, 2.094, 4.189].forEach(a => { const f = new T.Group(); f.position.set(0, 0, .09); f.rotation.y = a + 1.57; G.standGuitar.add(f); f.add(box(SC, .2, .02, 0, .4, .03, .03), box(RB, .39, 0, 0, .05, .03, .045)); });
+        G.standGuitar.add(lcyl(SC, 0, .04, .09, .016, 1.3), box(SC, 0, .42, .09, .05, .03, .05));
+        G.standGuitar.add(box(SC, 0, .44, .045, .03, .02, .09), box(RB, 0, .46, 0, .2, .03, .09), box(RB, -.115, .46, 0, .02, .09, .07), box(RB, .115, .46, 0, .02, .09, .07));
+        G.standGuitar.add(box(SC, 0, 1.28, .055, .03, .02, .07), box(RB, -.06, 1.26, -.02, .025, .16, .03), box(RB, .06, 1.26, -.02, .025, .16, .03));
         const amp = new T.Group(); amp.position.set(-37.9, SH, 14.4); amp.rotation.y = .25; S_(amp);
         amp.add(box(PM('#f3e7d3'), 0, 0, 0, .72, .62, .36), box(PM('#3a8f7a'), 0, .06, -.185, .6, .4, .02), box(PM(GOLD), 0, .5, -.185, .64, .06, .03));
         [-.22, -.11, 0, .11, .22].forEach(x => amp.add(lsph(.025, '#fff', x, .56, -.2)));
@@ -59030,19 +59165,53 @@ Wraps: petFollow, petStep, renderHouse, houseFade. Needs: kcInteract (furniture-
   petStep = function (dt, t) { if (!hold) step(dt, t); };
   const oldRender = renderHouse;
   renderHouse = function (items) { oldRender(items); W = null; };
-  // furniture between the camera and a pet goes see-through, like it does for the kitty
-  const oldFade = houseFade;
-  houseFade = function (t, c) {
-    const due = t - (houseFade.at || 0) > .3; oldFade(t, c);
-    if (!due || deco || !W) return;
-    const pets = all(); if (!pets.length) return;
-    pets.forEach(m => {
-      const hp = m.userData.hp; V.set(hp.x, hp.y + .3, hp.z); const d = camera.position.distanceTo(V);
-      FR.origin.copy(camera.position); FR.direction.copy(V).sub(camera.position).normalize();
-      furnGroup.children.forEach((p, i) => { const bx = W.boxes[i]; if (!bx || (hp.perch && hp.perch.idx === i) || p.userData.fade) return; if (FR.intersectBox(bx, V2) && V2.distanceTo(camera.position) < d - .45) p.userData.fade = true; });
-    });
-  };
   window.kcHousePets = { build: k => buildPet(k), stats, step, hold: v => { hold = !!v; }, world: () => world(), pets: all, extras, inFrame, perches: () => world().per, homes: () => world().homes, mine: () => myPetM, slides: () => world().slides, K, SC };
+})();
+/* ================= petcar.js (Demi, 11 Nov: "if im driving, put my pet in a mini matching car that follows behind my car") =================
+   While a kitty drives her own car from the Car Garage (seat 0 of an owned car, index 2 and up in FC.cars, see mycar.js), her pet does not trot beside the car (it used to clip through the
+   side of it): it sits in a small copy of her car (the same design from KGC.build: body, paint, wheels, sticker, extra) that rolls along behind her car, a little more than a car length back,
+   and turns toward her car. When she hops out the mini car goes away and the pet walks beside her again. Friends see it too: the same wrap runs for their pets (their `fc` says who drives).
+   Wraps petFollow, so it loads after housepets.js (last wrapper). Nothing is sent over the network: every iPad draws the mini car from the design it already has. Test handle: window.kcPetCar. */
+(function kcPetCar() {
+  if (typeof KGC === 'undefined' || typeof FC === 'undefined' || typeof petFollow === 'undefined') return;
+  const SC = .42, GAP = 3.2, PET = .5, SEAT = [0, .62, .1];   // the mini car's size, how far behind the driven car it rolls (middle to middle), the pet's size, where the pet sits (car-sized units)
+  // the owned car this pet's owner drives right now, or null
+  const driven = m => {
+    if (m === myPetM) return mode === 'town' && me.car === 0 && me.carI != null && me.carI >= 2 ? me.carI : null;
+    for (const o of others.values()) if (o.pet === m) return o.loc === 'town' && o.fc != null && (o.fc & 3) === 0 && (o.fc >> 2) >= 2 ? o.fc >> 2 : null;
+    return null;
+  };
+  function dropCar(m) {
+    const ud = m.userData, pc = ud.pcar; if (!pc) return;
+    if (pc.g.parent) pc.g.parent.remove(pc.g);
+    pc.g.traverse(q => { if (q.geometry && q.geometry.dispose) q.geometry.dispose(); });
+    ud.pcar = null; ud.x = null;   // the pet finds its place beside its kitty again
+  }
+  const old = petFollow;
+  petFollow = function (m, ox, oz, ory, dt, t, fix, om) {
+    const i = driven(m), k = i != null ? FC.cars[i] : null, d = k && k.g && k.g.userData.design;
+    if (!d || !m.parent) { if (m.userData.pcar) dropCar(m); return old.apply(this, arguments); }
+    const ud = m.userData, p = fcPose(i), key = KGC.key(d), sn = Math.sin(p.ry), cs = Math.cos(p.ry);
+    let pc = ud.pcar;
+    if (pc && (pc.key !== key || pc.g.parent !== m.parent)) { dropCar(m); pc = null; }
+    if (!pc) {
+      const g = KGC.build(d); g.scale.setScalar(SC); g.userData.veh = SC * 1; g.traverse(q => { q.userData.dyn = 1; }); m.parent.add(g);
+      pc = ud.pcar = { g, key, x: p.x - sn * GAP, z: p.z - cs * GAP, ry: p.ry };
+    }
+    // roll after the driven car: head for the spot behind it, never closer than the gap, and turn toward the car
+    const tx = p.x - sn * GAP, tz = p.z - cs * GAP, ease = Math.min(1, dt * 4.5);
+    let nx = pc.x + (tx - pc.x) * ease, nz = pc.z + (tz - pc.z) * ease;
+    if (fix) { const q = fix(nx, nz); nx = q[0]; nz = q[1]; }
+    const mv = Math.hypot(nx - pc.x, nz - pc.z); pc.x = nx; pc.z = nz;
+    const toCar = Math.atan2(p.x - pc.x, p.z - pc.z); pc.ry = angLerp(pc.ry, Math.hypot(p.x - pc.x, p.z - pc.z) > 1.2 ? toCar : p.ry, Math.min(1, dt * (mv > .004 ? 6 : 2)));
+    pc.g.position.set(pc.x, 0, pc.z); pc.g.rotation.y = pc.ry; if (pc.g.userData.tick) pc.g.userData.tick(t);
+    // the pet sits inside, facing the way the car drives
+    m.scale.setScalar(PET); m.rotation.y = pc.ry; petAnim(m, t, false);
+    const a = Math.sin(pc.ry), b = Math.cos(pc.ry);
+    m.position.set(pc.x + a * SEAT[2] * SC, SEAT[1] * SC, pc.z + b * SEAT[2] * SC);
+    ud.x = pc.x; ud.z = pc.z; ud.ry = pc.ry; ud.spd = 0;
+  };
+  window.kcPetCar = { SC, GAP, PET, SEAT, driven, drop: dropCar };
 })();
 /* v36.10 (Kyle #85): the one-time fit of a saved house to the room sizes (kcShrinkRooms in rooms.js) runs here, after every plug-in has registered its wall pieces.
    rooms.js loads before fireplaces.js, so when it ran at the end of rooms.js the hearth, windows and doors were not known yet: they were skipped and the check was marked done. */
@@ -59196,7 +59365,7 @@ const KC_HOUSE_LAYOUTS = [
   const r2 = v => Math.round(v * 100) / 100;
   // what a room holds, as a short code: pieces and where they stand, doors left out. save.hl[room] keeps the code of the room as a layout made it, so a room that still has it was never changed by the kid
   const sig = list => {
-    const s = list.filter(it => !/^door_/.test(it.i)).map(it => it.i + ':' + r2(it.x) + ':' + r2(it.z) + ':' + ((it.r | 0) & 3) + (it.a ? 'a' : '')).sort().join('|');
+    const s = list.filter(it => !/^door_/.test(it.i)).map(it => it.i + ':' + r2(it.x) + ':' + r2(it.z) + ':' + ((it.r | 0) & 3) + (it.a ? 'a' : '') + (it.s === 1 || it.s === 2 ? 's' + it.s : '')).sort().join('|');
     let h = 2166136261; for (let k = 0; k < s.length; k++) { h ^= s.charCodeAt(k); h = Math.imul(h, 16777619); } return (h >>> 0).toString(16);
   };
   const sigRoom = (room, list) => sig(list.filter(it => indoor(room, it)));
@@ -59755,7 +59924,7 @@ function openBusQ(bc) {
   const p = $('#busq'); p.textContent = ''; p.hidden = false; ['#phrases', '#fmenu', '#settings', '#deed'].forEach(s => $(s).hidden = true);
   me.busq = bc.key;
   const go = btn('', bc.s === 0 ? '🏠 Ride home' : '🏫 Ride to school');
-  go.onclick = () => { p.hidden = true; boardBus(); };
+  go.onclick = () => { if (me.busq !== bc.key) return; p.hidden = true; boardBus(); };
   const x = btn('', '✖️'); x.onclick = () => { p.hidden = true; me.busq = null; };
   p.append(go, x);
   speak(bc.s === 0 ? 'Do you want to ride the bus home?' : 'Do you want to ride the bus to school?');
@@ -59770,7 +59939,7 @@ function boardBus() {
 }
 function getOffBus(atStop) {
   const bc = busCycle; const s = atStop != null ? atStop : bc ? bc.s : 0;
-  me.loc = 'town'; me.seat = null; me.bus = null; const c = myCatModel(); c.visible = true; c.scale.setScalar(1); c.rotation.set(0, 0, 0);
+  me.loc = 'town'; me.seat = null; me.bus = null; const c = myCatModel(); c.visible = true; c.scale.setScalar(KC_CAT); c.rotation.set(0, 0, 0);
   backToStreet(SHELTER_X[s] + (s === 0 ? 2.2 : -1.2), s === 0 ? -3.0 : -3.9, 0);
 }
 function busSeatTap() {
@@ -59807,7 +59976,7 @@ function updateBus(now, dt, t) {
     if (!bc) { getOffBus(); return; }
     const c = myCatModel();
     if (me.seat == null && bc.phase !== 'wait' && bc.phase !== 'arrive') { const taken = seatsTaken(); for (let i = 0; i < 6; i++) if (!taken.has(i)) { me.seat = i; break; } c.visible = true; pushPresence(true); }
-    if (me.seat != null) { const s = busSeats[me.seat]; c.position.set(s.x, .55, s.z); c.rotation.set(0, Math.PI / 2, 0); c.scale.setScalar(.85); animCat(c, false, t, true); }
+    if (me.seat != null) { const s = busSeats[me.seat]; c.position.set(s.x, .7, s.z); c.rotation.set(0, Math.PI / 2, 0); c.scale.setScalar(.85); animCat(c, false, t, true); }
     const tm = $('#bus-timer');
     if (bc.phase === 'wait') { tm.textContent = '🚌 Leaving in ' + Math.max(0, Math.ceil((bc.dep - now) / 1000)); if (!$('#busq').hidden === false && !me.getOffShown) { me.getOffShown = true; const p = $('#busq'); p.textContent = ''; p.hidden = false; const off = btn('', '🚪 Get off'); off.onclick = () => { p.hidden = true; me.getOffShown = false; getOffBus(bc.s); }; p.append(off); } }
     else { tm.textContent = bc.phase === 'ride' ? (me.rideHome ? '🚌 Going home 🏡' : '🚌 Going to school 🏫') : '🚌 Here we are!'; if (me.getOffShown) { $('#busq').hidden = true; me.getOffShown = false; } }
@@ -59818,7 +59987,7 @@ function updateBus(now, dt, t) {
     }
   }
   // riders from other iPads sit in their seats
-  for (const o of others.values()) if (o.loc === 'bus' && o.cat.parent === bus) { const s = busSeats[o.se != null ? o.se : 5]; o.cat.position.set(s.x, .55, s.z); o.cat.rotation.set(0, Math.PI / 2, 0); o.cat.scale.setScalar(.85); animCat(o.cat, false, t, true); }
+  for (const o of others.values()) if (o.loc === 'bus' && o.cat.parent === bus) { const s = busSeats[o.se != null ? o.se : 5]; o.cat.position.set(s.x, .7, s.z); o.cat.rotation.set(0, Math.PI / 2, 0); o.cat.scale.setScalar(.85); animCat(o.cat, false, t, true); }
   // sitting on the bus-stop bench calls the bus
   if (mode === 'town' && me.sit && me.sit.stop) {
     const st = me.sit.stop.i;
@@ -59893,7 +60062,7 @@ function updateCar(dt, t) {
   const fx = Math.sin(p.ry), fz = Math.cos(p.ry);
   camera.position.set(p.x - fx * 6 + Math.sin(t * .7) * .2, 3.2 + Math.sin(t * 1.1) * .05, p.z - fz * 6); camera.lookAt(p.x + fx * 3, 1, p.z + fz * 3);
   if (k >= 1 && !carEnded) {
-    carEnded = true; c.scale.setScalar(1); me.loc = 'town';
+    carEnded = true; c.scale.setScalar(KC_CAT); me.loc = 'town';
     enterBuilding(SHOPS.find(s => s.id === 'bank')); setTimeout(() => { pcar.visible = false; }, 300);
   }
 }
@@ -60168,7 +60337,7 @@ function animOthers(dt, t) {
     if (o.pet && (!o.cat || !o.cat.parent || o.cat.parent === bus || !o.pe)) { if (o.pet.parent) o.pet.parent.remove(o.pet); if (!o.pe) o.pet = null; }
     if (!o.cat || !o.cat.parent || o.cat.parent === bus) continue;
     o.x += (o.tx - o.x) * Math.min(1, dt * 8); o.z += (o.tz - o.z) * Math.min(1, dt * 8); o.ry = angLerp(o.ry, o.try, Math.min(1, dt * 10));
-    o.cat.position.set(o.x, o.rf ? KRF.y : o.sit && !o.walk ? sitLift(o.x, o.z) : 0, o.z); o.cat.rotation.y = o.ry; o.cat.scale.setScalar(1); animCat(o.cat, o.walk, t, o.sit); applyDance(o.cat, o.dance, t);
+    o.cat.position.set(o.x, o.rf ? KRF.y : o.sit && !o.walk ? sitLift(o.x, o.z) : 0, o.z); o.cat.rotation.y = o.ry; o.cat.scale.setScalar(o.cat.parent === houseScene ? KC_HOUSE_CAT : KC_CAT); animCat(o.cat, o.walk, t, o.sit); applyDance(o.cat, o.dance, t);
     // a friend walking a lost kitty: it trots along behind them
     if (o.lf && o.cat.parent === town) { if (!o.lost) { o.lost = buildCat(Object.assign(cleanLook(o.lf[2]), { lod: 0 })); o.lostP = { x: +o.lf[0] || 0, z: +o.lf[1] || 0 }; }
       if (o.lost.parent !== town) town.add(o.lost); const lx = +o.lf[0] || 0, lz = +o.lf[1] || 0, ddx = lx - o.lostP.x, ddz = lz - o.lostP.z, mvd = Math.hypot(ddx, ddz);
@@ -60234,7 +60403,7 @@ function loopStep(ms) {
       } else {
         walking = stepWalk(dt, me.truck || me.car === 0 ? 4.4 : me.bike ? BIKE.speed : 3.4, (x, z) => { const q = constrain(x, z); if (night > .5) for (const o of NIGHT_OBST) { const dx = q[0] - o[0], dz = q[1] - o[1], d = Math.hypot(dx, dz); if (d < o[2] && d > 1e-4) { q[0] = o[0] + dx / d * o[2]; q[1] = o[1] + dz / d * o[2]; } } return q; });
         if (walking && me.sit) me.sit = null;
-        c.rotation.x = c.rotation.z = 0; c.position.set(me.x, me.sit && !walking ? sitLift(me.x, me.z) : 0, me.z); c.rotation.y = me.ry; animCat(c, walking, t, !!me.sit); applyDance(c, me.dance, t);
+        c.rotation.x = c.rotation.z = 0; if (!me.bike && me.car == null && !me.truck) c.scale.setScalar(KC_CAT); c.position.set(me.x, me.sit && !walking ? sitLift(me.x, me.z) : 0, me.z); c.rotation.y = me.ry; animCat(c, walking, t, !!me.sit); applyDance(c, me.dance, t);
       }
       swings.forEach(sw => { if (sw !== me.swing) sw.p.rotation.x *= .97; });
       if (me.truck) truckFollow(c, t); else if (me.car != null) fcFollow(c, t); else if (me.bike) bikeFollow(c, t);
@@ -60273,6 +60442,7 @@ function loopStep(ms) {
       }
       d.door.position.x += ((d.cellShut ? 4.1 : 5.2) - d.door.position.x) * Math.min(1, dt * 10);
     }
+    c.scale.setScalar(KC_CAT);
     if (!d.cellShut || t - d.shutAt < .9) { c.position.set(me.x, me.sit && !walking ? sitLift(me.x, me.z) : 0, me.z); c.rotation.y = me.ry; animCat(c, walking, t, !!me.sit); }
     else c.position.set(me.x, 0, me.z);
     applyDance(c, me.dance, t);
@@ -60316,17 +60486,23 @@ function loopStep(ms) {
     animOthers(dt, t);
     // through the open bank vault's doorway the camera floats over the wall and looks down into the little room behind it (d.vcam: from z, eye, look-at)
     const vc = d.vcam, vk = vc ? clamp((vc.from - me.z) / 1.4, 0, 1) : 0, A = vc ? vc.eye : [0, 0, 0], B = vc ? vc.at : [0, 0, 0], mx = (a, b) => a + (b - a) * vk;
-    const zm = (camera.aspect >= 1.2 ? .85 : 1) * (innerWidth < innerHeight ? 1 : roomInfo.camK || 1);   // v36.2: 15% closer on a wide screen so the kitties are bigger (a tall phone keeps the whole room)
-    camera.position.lerp(_v.set(mx(me.x * .45, A[0]), mx(.8 + 6.4 * zm, A[1]) + Math.sin(vk * Math.PI) * 2.4, mx(me.z - 1.4 + 8.8 * zm, A[2])), Math.min(1, dt * 4));
-    camera.lookAt(mx(me.x * .45, B[0]), mx(.8, B[1]), mx(me.z - 1.4, B[2]));
+    // v36.14.1 (Demi, 11 Nov: "when in a building, i want the camera to stay just like this and not follow the kitty around"): a fixed high view of the whole room from the front, like a dollhouse. It is worked out once for each room and screen shape: the camera backs off until the four floor corners and the top of the back wall are on screen
+    if (!d.fixCam || d.fixCam.asp !== camera.aspect || d.fixCam.rd !== RD) {
+      let k = (camera.aspect >= 1.2 ? .85 : 1) * (innerWidth < innerHeight ? 1 : roomInfo.camK || 1) * .9; const pts = [[-RW, 0, -RD], [RW, 0, -RD], [-RW, 0, RD], [RW, 0, RD], [-RW, 3.2, -RD], [RW, 3.2, -RD]].map(q => new T.Vector3(...q)), save0 = [camera.position.clone(), camera.quaternion.clone()];
+      for (let i = 0; i < 40; i++, k *= 1.04) { camera.position.set(0, .8 + 6.4 * k, 8.8 * k); camera.lookAt(0, .8, 0); camera.updateMatrixWorld(true); if (pts.every(q => { const n = q.clone().project(camera); return Math.abs(n.x) < .93 && Math.abs(n.y) < .93; })) break; }
+      d.fixCam = { asp: camera.aspect, rd: RD, k }; camera.position.copy(save0[0]); camera.quaternion.copy(save0[1]); camera.updateMatrixWorld(true);
+    }
+    const zm = d.fixCam.k;
+    camera.position.lerp(_v.set(mx(0, A[0]), mx(.8 + 6.4 * zm, A[1]) + Math.sin(vk * Math.PI) * 2.4, mx(8.8 * zm, A[2])), Math.min(1, dt * 4));
+    camera.lookAt(mx(0, B[0]), mx(.8, B[1]), mx(0, B[2]));
   } else if (mode === 'house') {
     applyDayNight(0, -5);
     const c = myCatModel();
     const walking = deco ? false : stepWalk(dt, 2.9, houseConstrain);
-    c.position.set(me.x, 0, me.z); c.rotation.y = me.ry; animCat(c, walking, t); applyDance(c, me.dance, t);
+    c.position.set(me.x, 0, me.z); c.rotation.y = me.ry; c.scale.setScalar(KC_HOUSE_CAT); animCat(c, walking, t); applyDance(c, me.dance, t);
     const ed = Math.hypot(me.x, me.z - (kcHF() - .6));
     if (ed > 1.6) me.exitArmed = true;
-    if (ed < .7 && me.exitArmed && !deco) { me.exitArmed = false; leaveHouse(); }
+    if (ed < .7 && me.exitArmed && !deco && kcRoomOf() === 'living') { me.exitArmed = false; leaveHouse(); }   // only the living room's front door leads outside: the upstairs rooms have a front wall too, and walking to it used to throw her out of the house (Demi, 11 Nov)
     backWallMat.opacity += ((me.z < -4.8 ? .25 : 1) - backWallMat.opacity) * Math.min(1, dt * 5);
     backWallMat.depthWrite = backWallMat.opacity > .9;
     if (camera.position.z > kcHF() + .1) kcFrontOut = true; else if (camera.position.z < kcHF() - .5) kcFrontOut = false;
@@ -60373,21 +60549,13 @@ function barTick(d, t) {
     d.pour.visible = true; d.pour.position.set(gl.position.x + .02, gl.position.y + .2 + .2, gl.position.z); d.pour.scale.set(.018, .4, .018); f.scale.y = Math.max(.02, e); f.position.y = .01 + e * .1; }
   else { const e = (k - .85) / .15; d.pour.visible = false; sh.position.set(gl.position.x + .12 + (hx - gl.position.x - .12) * e, hy + .35 - e * .1, gl.position.z + (hz - gl.position.z) * e); sh.rotation.set(0, 0, 1.9 * (1 - e)); }
 }
-// furniture standing between the low camera and the kitty goes see-through, so the kitty is always in view
 const _fr = new T.Ray(), _fb = new T.Box3(), _v2 = new T.Vector3(), _look = new T.Vector3();
+// Demi 11 Nov: "i dont want furniture to be see-through ever". Nothing in a house goes see-through any more; this only gives back
+// the look of a piece that an earlier frame had faded (a save never has one, so it is a no-op and kept as a safety net).
 function houseFade(t, c) {
-  if (t - (houseFade.at || 0) > .3) {
-    houseFade.at = t; const head = _v.set(c.position.x, .8, c.position.z), d = camera.position.distanceTo(head);
-    _fr.origin.copy(camera.position); _fr.direction.copy(head).sub(camera.position).normalize();
-    furnGroup.children.forEach(p => { p.userData.fade = !deco && _fb.setFromObject(p).expandByScalar(.05) && _fr.intersectBox(_fb, _v2) && _v2.distanceTo(camera.position) < d - .4; });
-  }
   furnGroup.children.forEach(p => {
-    const want = p.userData.fade ? .28 : 1, k = p.userData.fk == null ? 1 : p.userData.fk; if (k === want) return;
-    const nk = k + (want - k) * .25; p.userData.fk = Math.abs(nk - want) < .02 ? want : nk;
-    p.traverse(m => { if (!m.isMesh || !m.material || Array.isArray(m.material)) return;
-      if (!m.userData.om) { m.userData.om = m.material; m.material = m.material.clone(); m.material.transparent = true; }
-      m.material.opacity = (m.userData.om.opacity == null ? 1 : m.userData.om.opacity) * p.userData.fk; m.material.depthWrite = p.userData.fk > .9;
-      if (p.userData.fk >= 1) { m.material.dispose(); m.material = m.userData.om; delete m.userData.om; } });
+    const k = p.userData.fk; if (k == null || k === 1) return; p.userData.fk = 1;
+    p.traverse(m => { if (m.userData.om) { m.material.dispose(); m.material = m.userData.om; delete m.userData.om; } });
   });
 }
 function loop(ms) { try { loopStep(ms); } catch (e) { noteErr(e); } requestAnimationFrame(loop); }
@@ -60466,8 +60634,9 @@ function applyBackup(v) {
   save.seenTx = {}; if (v.seenTx && typeof v.seenTx === 'object' && !Array.isArray(v.seenTx)) Object.entries(v.seenTx).forEach(([k, t]) => { if (/^[a-z0-9]{10}:\d{1,16}$/.test(k) && Number.isFinite(+t)) save.seenTx[k] = +t; });
   ['c500', 'c1500', 'fbonus', 'start50', 'starterV2', 'bankAt'].forEach(k => { if (v[k] != null && typeof v[k] !== 'object') save[k] = v[k]; });
   // garden migration and Empty garden's hidden arrangement belong to the backup, not this device
-  delete save.gyLv; delete save.gyKeep; delete save.gyOld;
+  delete save.gyLv; delete save.gyKeep; delete save.gyOld; delete save.gySw;
   if (v.gyOld === 1) save.gyOld = 1;
+  if (v.gySw === 1) save.gySw = 1;
   if (v.gyLv != null && typeof v.gyLv !== 'object') save.gyLv = clamp(v.gyLv | 0, 0, 3);
   if (Array.isArray(v.gyKeep)) save.gyKeep = furnList(v.gyKeep.filter(a => Array.isArray(a) && typeof a[0] === 'string' && /^gy_/.test(a[0])).map(a => ({ i: a[0], x: a[1], z: a[2], r: a[3], a: a[4] ? 1 : 0 }))).map(it => it.a ? [it.i, it.x, it.z, it.r, 1] : [it.i, it.x, it.z, it.r]);
   // blocked and muted kitties keep their safety: a backup only adds to this device's lists, it never lifts a block or a mute, and a backup that has none changes nothing
