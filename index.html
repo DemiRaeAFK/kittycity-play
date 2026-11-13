@@ -21175,7 +21175,7 @@ let busRoof;
   // the driver's own seat and the big steering wheel (v31: the driver sits now)
   bus.add(box('#3a3a40', 2.85, .35, .5, .7, .45, .7), box('#4a5a8a', 2.85, .8, .5, .72, .16, .72), box('#4a5a8a', 2.45, .8, .5, .14, .9, .72), box('#3a3a40', 2.45, 1.55, .5, .1, .2, .5));
   bus.add(lcyl('#2b2b2b', 3.4, .45, .5, .05, .75)); { const wh = new T.Mesh(TOR, mat('#2b2b2b')); wh.scale.setScalar(.22); wh.rotation.y = Math.PI / 2; wh.rotation.x = .5; wh.position.set(3.35, 1.25, .5); bus.add(wh); }
-  animCat(driver, false, 0, true); driver.userData.head.rotation.x = 0;
+  animCat(driver, false, 0, true); driver.userData.head.rotation.x = -(driver.userData.sit || { rx: -.95 }).rx;   // the sitting body leans back, so the head tips forward by the same angle and she looks straight ahead (Demi, 13 Nov)
   hitBox(bus, 7.4, 2.8, 2.5, 0, 0, 0, { kind: 'bus' });
 }
 let busCycle = null; // the bus everyone agrees on
