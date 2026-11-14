@@ -1698,6 +1698,7 @@ function speak(text) {
 let renderer;
 try { renderer = new T.WebGLRenderer({ canvas: $('#gl'), antialias: true }); } catch (e) { kcBootDone(); $('#start').hidden = true; $('#nogl').hidden = false; return; }
 renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 1.6));
+renderer.domElement.addEventListener('webglcontextrestored', () => { try { KC_LEAN.slice().forEach(f => f()); } catch (e) {} });
 renderer.shadowMap.enabled = true; renderer.shadowMap.type = T.PCFSoftShadowMap;
 const camera = new T.PerspectiveCamera(55, 1, .1, 400);
 const SPH = new T.SphereGeometry(1, 20, 14), HALF = new T.SphereGeometry(1, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2);
@@ -1719,13 +1720,29 @@ function lights(scene, warm = 1) {
   return d;
 }
 function blob(r = .55) { const m = new T.Mesh(new T.CircleGeometry(r, 24), new T.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: .16, depthWrite: false })); m.rotation.x = -Math.PI / 2; m.position.y = .03; m.userData.dyn = 1; return m; }
+// v36.14.5 (Demi, 14 Nov: the grass in the backyard and the floors in buildings were still black on her iPad). iOS Safari goes blank on EVERY NEW canvas once the page holds about 256 MB of canvases, and this page held over 200 MB of them
+// (the shop sign sheets and window pictures, 176 painted floors, walls and lawns); a floor or a lawn is painted late, when a house or shop is first opened, so it came out blank and showed black. kcLean gives a canvas's memory back as soon as the
+// graphics card has its picture, and paints it again only when somebody needs it: a sign whose font just arrived (its painter calls the returned wake first), the small preview renderer (lazy: reading t.image paints it) or a graphics context that was lost.
+let KC_DEAD = 0; const KC_LEAN = [], KC_UP = [];   // KC_UP: pictures the graphics card has not seen yet (a sign nobody has walked past): a few go up every moment, so their canvases are given back too
+setInterval(() => { if (window.__kcNoUp) return; for (let i = 0; i < 2 && KC_UP.length; i++) { const t = KC_UP.shift(); try { if (!t.kcDead) renderer.initTexture(t); } catch (e) {} } }, 120);   // window.__kcNoUp: a test that counts textures stops this
+function kcLean(t, c, w, h, paint, lazy) {
+  let freed = false;
+  const wake = () => { if (freed) { freed = false; c.width = w; c.height = h; if (!lazy && KC_UP.indexOf(t) < 0) KC_UP.push(t); } };   // painted again: send it up again soon
+  const redo = () => { wake(); paint(); };
+  t.onUpdate = () => { freed = true; c.width = c.height = 1; };
+  if (lazy) Object.defineProperty(t, 'image', { configurable: true, get() { if (freed) redo(); return c; }, set() {} });
+  KC_UP.push(t); t.addEventListener('dispose', () => { t.kcDead = 1; KC_DEAD++; });
+  if (!lazy) { KC_LEAN.push(redo); t.addEventListener('dispose', () => { const i = KC_LEAN.indexOf(redo); if (i >= 0) KC_LEAN.splice(i, 1); }); }   // a lost graphics context uploads every picture again: paint the signs first
+  return wake;
+}
 const SIGN_FONT = '"Fraunces",Georgia,serif';
 const signs = []; // redrawn once the sign font has loaded
 function textTex(lines, w = 512, hh = 140, bg = '#fdf8ee', fg = '#3a2e2a', border, font) {
   const c = document.createElement('canvas'); c.width = w; c.height = hh; const g = c.getContext('2d');
   const t = new T.CanvasTexture(c); t.anisotropy = 4; t.kcFree = 1;   // a sign board belongs to the room that made it: kcFree gives it back
+  let wake = () => {};
   const draw = () => {
-    g.clearRect(0, 0, w, hh);
+    wake(); g.clearRect(0, 0, w, hh);
     g.fillStyle = bg; const r = Math.min(36, hh / 3); g.beginPath(); g.moveTo(r, 0); g.arcTo(w, 0, w, hh, r); g.arcTo(w, hh, 0, hh, r); g.arcTo(0, hh, 0, 0, r); g.arcTo(0, 0, w, 0, r); g.fill();
     if (border) { g.lineWidth = 12; g.strokeStyle = border; g.stroke(); }
     g.fillStyle = fg; g.textAlign = 'center'; g.textBaseline = 'middle';
@@ -1735,7 +1752,7 @@ function textTex(lines, w = 512, hh = 140, bg = '#fdf8ee', fg = '#3a2e2a', borde
     richText(g, lines, w / 2, hh / 2 + 4, fs, draw);
     t.needsUpdate = true;
   };
-  draw(); signs.push(draw);
+  draw(); signs.push(draw); wake = kcLean(t, c, w, hh, draw, true);   // lazy: a sign that is given back and then drawn again (a cached one) paints itself when its picture is read
   t.addEventListener('dispose', () => { const i = signs.indexOf(draw); if (i >= 0) signs.splice(i, 1); });   // Kyle #89: a freed sign is not redrawn any more, so its canvas can go
   return t;
 }
@@ -1771,6 +1788,7 @@ function ctex(key, size, draw) {
   if (texCache[key]) return texCache[key];
   const c = document.createElement('canvas'); c.width = c.height = size; const g = c.getContext('2d'); draw(g, size);
   const t = new T.CanvasTexture(c); t.wrapS = t.wrapT = T.RepeatWrapping; t.anisotropy = 4;
+  kcLean(t, c, size, size, () => draw(g, size), true);
   return texCache[key] = t;
 }
 const TEX = {
@@ -16333,8 +16351,9 @@ function goodsTex(list, trim = '#c8643c', wall = '#f3e2c0', seed = 0, back = fal
   const W = 512, H = 384, c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d');
   const t = new T.CanvasTexture(c); t.anisotropy = 4;
   const warm = '#' + new T.Color(wall).lerp(new T.Color('#ffe2a8'), .45).getHexString(), deep = shade(warm, .78), tr = trim, trD = shade(trim, .7);
+  let wake = () => {};
   const draw = () => {
-    g.fillStyle = warm; g.fillRect(0, 0, W, H);
+    wake(); g.fillStyle = warm; g.fillRect(0, 0, W, H);
     g.fillStyle = deep; for (let x = 0; x < W; x += 36) g.fillRect(x, 0, 12, H); // wallpaper stripes
     g.globalAlpha = .25; for (let x = 18; x < W; x += 36) for (let y = 20; y < H; y += 40) { g.fillStyle = '#ffffff'; g.beginPath(); g.arc(x, y, 3, 0, 7); g.fill(); } g.globalAlpha = 1;
     const lamp = g.createRadialGradient(W / 2, 40, 10, W / 2, 120, 330); lamp.addColorStop(0, 'rgba(255,240,200,.55)'); lamp.addColorStop(1, 'rgba(255,240,200,0)'); g.fillStyle = lamp; g.fillRect(0, 0, W, H);
@@ -16366,7 +16385,7 @@ function goodsTex(list, trim = '#c8643c', wall = '#f3e2c0', seed = 0, back = fal
     if (!back) g.fillStyle = 'rgba(255,255,255,.16)'; else g.fillStyle = 'rgba(0,0,0,0)'; g.beginPath(); g.moveTo(120, 0); g.lineTo(190, 0); g.lineTo(60, H); g.lineTo(-10, H); g.fill(); g.beginPath(); g.moveTo(230, 0); g.lineTo(250, 0); g.lineTo(120, H); g.lineTo(100, H); g.fill();
     t.needsUpdate = true;
   };
-  draw(); return t;
+  draw(); wake = kcLean(t, c, W, H, draw); return t;
 }
 // a shop window you can look into: a little bay with the room painted at the back, a draped platform and a shelf
 // holding the shop's goods as standing cut-outs at different depths, a cake-stand for the star item, tags and glass
@@ -45814,7 +45833,7 @@ function spiral(cx, cy, r0, turns, a0, dir, n = 14) { const p = []; for (let i =
 const sfrFont = fontOf, sfrRR = rr, sfrGold = goldK, SFR_GOLD = GOLD;
 function sfrCanvasTex(W, H, paint) { // a canvas texture that repaints itself when the sign fonts or the icon art arrive
   const c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d'), t = new T.CanvasTexture(c); t.anisotropy = 4;
-  const draw = () => { g.clearRect(0, 0, W, H); paint(g, W, H, draw); t.needsUpdate = true; }; draw(); signs.push(draw); return t;
+  let wake = () => {}; const draw = () => { wake(); g.clearRect(0, 0, W, H); paint(g, W, H, draw); t.needsUpdate = true; }; draw(); signs.push(draw); wake = kcLean(t, c, W, H, draw); return t;
 }
 // neon lettering hung in a display window (lit all day and night); the school's letters are tubes in the colours of a kid's alphabet set
 function sfrWordTex(name, word, sp, kid) {
@@ -45854,12 +45873,13 @@ function sfrPlanter(g, cx, ww, pal) { // a flower box under a display window
 function dress(sp) {
   const S = Object.assign(dflt(sp), SG[sp.name] || {}), g = sp.group, w = sp.w, dx = sp.doorX || 0, L = layout(sp), { R, AW, AH } = L, hi = L.hi;
   // take down the plain board and the small cloth banner
-  g.children.filter(o => o.isMesh && o.geometry.type === 'PlaneGeometry' && o.material.map && Math.abs(o.position.z - (hi ? .94 : .16)) < .004 && Math.abs(o.position.y - (hi ? 3.61 : 2.87)) < .004).forEach(o => g.remove(o));
+  g.children.filter(o => o.isMesh && o.geometry.type === 'PlaneGeometry' && o.material.map && Math.abs(o.position.z - (hi ? .94 : .16)) < .004 && Math.abs(o.position.y - (hi ? 3.61 : 2.87)) < .004).forEach(o => { g.remove(o); if (o.material && o.material.map) o.material.map.dispose(); });   // v36.14.5 (Kyle, #113): the plain board's picture goes with it, so it is never sent up to the graphics card or painted again
   if (sp.banner) { g.remove(sp.banner); sp.banner = null; }
   // the sheet
   const c = document.createElement('canvas'); c.width = AW; c.height = AH; const x = c.getContext('2d'), tex = new T.CanvasTexture(c); tex.anisotropy = 4;
-  const paint = () => { x.clearRect(0, 0, AW, AH); paintBoard(x, R.board, sp, S, L, paint); paintMed(x, R.med1, S, S.hero, paint); if (!L.single) paintMed(x, R.med2, S, S.hero2, paint); paintBlade(x, R.blade, S, paint); paintBanner(x, R.banner, S, paint); tex.needsUpdate = true; };
-  paint(); signs.push(paint);
+  let wake = () => {};
+  const paint = () => { wake(); x.clearRect(0, 0, AW, AH); paintBoard(x, R.board, sp, S, L, paint); paintMed(x, R.med1, S, S.hero, paint); if (!L.single) paintMed(x, R.med2, S, S.hero2, paint); paintBlade(x, R.blade, S, paint); paintBanner(x, R.banner, S, paint); tex.needsUpdate = true; };
+  paint(); signs.push(paint); wake = kcLean(tex, c, AW, AH, paint);
   const M0 = new T.MeshBasicMaterial({ map: tex, alphaTest: .35, side: T.DoubleSide }); SHEETS.push(M0);
   const quad = (W, H, r) => { const geo = new T.PlaneGeometry(W, H), uv = geo.attributes.uv, u0 = (r.x + 1) / AW, u1 = (r.x + r.w - 1) / AW, v1 = 1 - (r.y + 1) / AH, v0 = 1 - (r.y + r.h - 1) / AH; for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) ? u1 : u0, uv.getY(i) ? v1 : v0); return new T.Mesh(geo, M0); };
   const nm = neonOf(S.neon), nm2 = neonOf(S.neon2), iron = ironM();
@@ -45868,7 +45888,7 @@ function dress(sp) {
   const board = quad(bw, bh, R.board); board.position.set(0, by, bz); g.add(board);
   // the name again as glowing tube letters, added over the sheet at night
   { const k = .75, LW = Math.round(R.board.w * k), LH = Math.round(R.board.h * k), lc = document.createElement('canvas'); lc.width = LW; lc.height = LH; const lg = lc.getContext('2d'), lt = new T.CanvasTexture(lc);
-    const lpaint = () => { lg.clearRect(0, 0, LW, LH); lg.save(); lg.scale(k, k); nameOn(lg, sp, S, L, R.board.w, R.board.h, true); lg.restore(); lt.needsUpdate = true; }; lpaint(); signs.push(lpaint);
+    let lwake = () => {}; const lpaint = () => { lwake(); lg.clearRect(0, 0, LW, LH); lg.save(); lg.scale(k, k); nameOn(lg, sp, S, L, R.board.w, R.board.h, true); lg.restore(); lt.needsUpdate = true; }; lpaint(); signs.push(lpaint); lwake = kcLean(lt, lc, LW, LH, lpaint);
     const lm = new T.MeshBasicMaterial({ map: lt, transparent: true, blending: T.AdditiveBlending, depthWrite: false, opacity: 0 }); LITM.push(lm);
     const lit = new T.Mesh(new T.PlaneGeometry(bw, bh), lm); lit.position.set(0, by, bz + .004); lit.userData.dyn = 1; lit.visible = false; g.add(lit); LITS.push(lit); }
   const back = shade(S.bg, .5);
@@ -51903,7 +51923,7 @@ const JBC = { x: 3.95, z: -4.38, ry: 0, sc: 1.3, ring: { x: 3.95, z: -3.0 } };
     g.strokeStyle = '#7fd6ff'; g.lineWidth = 10; g.beginPath(); g.arc(128, 150, 104, Math.PI * 1.08, Math.PI * 1.92); g.stroke();
     [-1, 1].forEach(s => { g.fillStyle = '#ff5fa2'; g.strokeStyle = K; g.lineWidth = 8; g.beginPath(); g.roundRect ? g.roundRect(128 + s * 106 - 17, 128, 34, 56, 12) : g.rect(128 + s * 106 - 17, 128, 34, 56); g.fill(); g.stroke(); });
   }));
-  const plateTex = once('pl', () => textTex('Jukebox', 512, 128, '#ffe36a', '#6a2a4a', '#c9922a'));
+  const plateTex = once('pl', () => { const t = textTex('Jukebox', 512, 128, '#ffe36a', '#6a2a4a', '#c9922a'); t.kcFree = 0; return t; });   // v36.14.5 (Kyle, #113): the plate is shared by both Jukeboxes, so a room clear must not give it back
   // H says where this one stands: { x, y, z, ry, sc } in the coordinates of the group g it is added to
   function build(g, H) {
     const S = new T.Group(), D = new T.Group(), R = { btn: [], bands: [], tubes: [], notes: [], k: 0, spinA: 0, armA: 0 };
