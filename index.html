@@ -1729,7 +1729,7 @@ const SIGN_FONT = '"Fraunces",Georgia,serif';
 const signs = []; // redrawn once the sign font has loaded
 function textTex(lines, w = 512, hh = 140, bg = '#fdf8ee', fg = '#3a2e2a', border, font) {
   const c = document.createElement('canvas'); c.width = w; c.height = hh; const g = c.getContext('2d');
-  const t = new T.CanvasTexture(c); t.anisotropy = 4;
+  const t = new T.CanvasTexture(c); t.anisotropy = 4; t.kcFree = 1;   // a sign board belongs to the room that made it: kcFree gives it back
   const draw = () => {
     g.clearRect(0, 0, w, hh);
     g.fillStyle = bg; const r = Math.min(36, hh / 3); g.beginPath(); g.moveTo(r, 0); g.arcTo(w, 0, w, hh, r); g.arcTo(w, hh, 0, hh, r); g.arcTo(0, hh, 0, 0, r); g.arcTo(0, 0, w, 0, r); g.fill();
@@ -1817,7 +1817,9 @@ const GLASS = new T.MeshLambertMaterial({ color: '#6f8fa3', emissive: '#1d2c38' 
 
 /* ================= giving memory back ================= */
 // three.js keeps every geometry, material and texture it has drawn until dispose() is called, so a room or a group that is cleared must give them back or the iPad fills up. Shared ones are simply uploaded again if they are drawn later.
-function kcFree(root) { root.traverse(o => { if (o.geometry) o.geometry.dispose(); const m = o.material; if (m) (Array.isArray(m) ? m : [m]).forEach(x => { for (const k in x) if (x[k] && x[k].isTexture) x[k].dispose(); x.dispose(); }); }); }
+// v36.14.2b (Demi, 13 Nov: floors in buildings and the backyard grass were black on her iPad): only textures a room made for itself (sign boards, `kcFree`) are given back. The shared canvas textures (floor, grass, wood, wallpaper: ctex and the plug-ins' own) are kept,
+// because iOS empties the picture of a canvas it has not drawn for a while, and a texture that was disposed is uploaded again from that empty canvas: black. The shared ones are small and were already on the graphics card.
+function kcFree(root) { root.traverse(o => { if (o.geometry) o.geometry.dispose(); const m = o.material; if (m) (Array.isArray(m) ? m : [m]).forEach(x => { for (const k in x) if (x[k] && x[k].isTexture && x[k].kcFree) x[k].dispose(); x.dispose(); }); }); }
 
 /* ================= baking ================= */
 // Merge every static mesh under root into one mesh per material (few draw calls on iPad). Textured materials get box-projected world UVs.
@@ -18248,13 +18250,15 @@ const frontWallMat = kcFrontMat(backWallMat);   // the wallpaper follows the hou
 const houseFLW = [];
 // the plain yard's fence, lavender hedge and far trees: yard-expansion.js hides them in a bigger yard
 const yardFenceG = new T.Group(); houseScene.add(yardFenceG);
+// the living room's own floor and side walls are a group of their own: every other room is smaller and draws its own, so rooms.js hides this one there (Demi, 13 Nov: "remove the walls that are outside of the bedroom")
+const kcLivingShell = new T.Group(); houseScene.add(kcLivingShell);
 {
   const g = new T.Group(); houseScene.add(g);
   const LX = KC_DIM.living[0], LF = KC_DIM.living[1], LC = (LF - HS) / 2, LL = LF + HS;   // the living room: half width, front wall, middle of the floor, depth
-  g.add(box(M.wood('#b98a5a'), 0, -.1, LC, LX * 2, .1, LL));
+  kcLivingShell.add(box(M.wood('#b98a5a'), 0, -.1, LC, LX * 2, .1, LL));
   const wallM = M.toile('#f4ecdc', '#7a8fb8');
-  g.add(box(wallM, -LX, 0, LC, .2, 3.4, LL), box(wallM, LX, 0, LC, .2, 3.4, LL));
-  g.add(box('#e8dcc4', -LX + .12, 0, LC, .06, 1, LL), box('#e8dcc4', LX - .12, 0, LC, .06, 1, LL));
+  kcLivingShell.add(box(wallM, -LX, 0, LC, .2, 3.4, LL), box(wallM, LX, 0, LC, .2, 3.4, LL));
+  kcLivingShell.add(box('#e8dcc4', -LX + .12, 0, LC, .06, 1, LL), box('#e8dcc4', LX - .12, 0, LC, .06, 1, LL));
   // the fireplace and the windows are free wall pieces (fireplaces.js), so they can be moved
   // front: a full-height wall with the street door (drawn in frontWall below, so it can fade away)
   // the yard
@@ -18270,7 +18274,7 @@ const yardFenceG = new T.Group(); houseScene.add(yardFenceG);
   // lavender hedge, distant cypress
   for (let x = -6.8; x <= 6.8; x += .8) { yardFenceG.add(lsph(.4, x % 1.6 ? '#9b86c4' : '#8a74b8', x, .35, -16.3, 1, .8, 1)); houseFLW.push([x, .8, -16.3]); }
   [-12, -6, 0, 6, 12].forEach(x => yardFenceG.add(lcyl('#6b4a32', x, 0, -26, .15, .6), lsph(1, '#3f5a34', x, 3, -26, .75, 3, .75)));
-  bake(g); bake(yardFenceG);
+  bake(g); bake(kcLivingShell); bake(yardFenceG);
   // back wall with a doorway out to the yard (see-through when you're outside)
   const bs = (LX - 1) / 2 + 1, bwid = LX - 1;   // the two pieces of the back wall either side of the doorway (it is 2 wide)
   const bw = [box(backWallMat, -bs, 0, -HS, bwid, 3.4, .2), box(backWallMat, bs, 0, -HS, bwid, 3.4, .2), box(backWallMat, 0, 2.6, -HS, 2, .8, .2)];
@@ -40346,7 +40350,7 @@ function kcRoomName(id) { return (KC_ROOMS.find(r => r.id === id) || KC_ROOMS[0]
   function showRoom(hs) {
     lastHS = hs;
     const inRoom = kcRoom !== 'living' && kcRoom !== 'backyard';
-    partyG.visible = kcRoom === 'partyroom'; kcStatic.visible = !inRoom; hStyleG.visible = !inRoom; backWall.visible = !inRoom; yardSwing.visible = !inRoom; roomG.visible = inRoom;
+    partyG.visible = kcRoom === 'partyroom'; kcLivingShell.visible = !inRoom || kcRoom === 'hallway'; kcStatic.visible = !inRoom; hStyleG.visible = !inRoom; backWall.visible = !inRoom; yardSwing.visible = !inRoom; roomG.visible = inRoom;
     yardG.visible = !inRoom; patioG.visible = !inRoom; doorG.clear(); dressTrim(hs, kcRoom);
     if (inRoom) buildRoom(kcRoom, hs); else roomG.clear();
     (KC_ROOM_DOORS[kcRoom] || []).forEach(d => addDoor(d, HOUSE_STYLES[hs[0]]));
