@@ -3999,15 +3999,17 @@ const XT_SNOW_F = `varying vec3 vSnW; varying vec3 vSnN; uniform float uSnow; un
 float snH(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
 float snN(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3. - 2. * f); return mix(mix(snH(i), snH(i + vec2(1., 0.)), f.x), mix(snH(i + vec2(0., 1.)), snH(i + vec2(1., 1.)), f.x), f.y); }
 `;
-const XT_SNOW_BODY = `{
+const XT_SNOW_BODY = `float snS = 0.;
+{
   float up = smoothstep(.7, .86, vSnN.y);
   if (uSnow > .5 && up > .01) {
     vec2 q = vSnW.xz;
     float n = snN(q * .7) * .55 + snN(q * 2.3 + 7.) * .3 + snN(q * 7.1) * .15;
     float hg = smoothstep(.1, 1., vSnW.y);
-    float c = mix(.7, .93, hg) + uBias;
-    float s = smoothstep(.97, 1.1, n + c) * up;
-    vec3 sn = vec3(.95, .975, 1.) * (.94 + .06 * snN(q * 31.));
+    float c = mix(.86, .97, hg) + uBias;
+    float s = smoothstep(.95, 1.08, n + c) * up;
+    vec3 sn = vec3(1., 1., 1.) * (.97 + .03 * snN(q * 31.));
+    snS = s;
     diffuseColor.rgb = mix(diffuseColor.rgb, sn, s);
   }
 }
@@ -4026,7 +4028,7 @@ XT.snowify = function (root, skip) {
         if (prev) prev.apply(this, arguments);
         sh.uniforms.uSnow = XT.U; sh.uniforms.uBias = { value: g ? .8 : 0 };
         sh.vertexShader = XT_SNOW_V + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n vSnW = (modelMatrix * vec4(transformed, 1.0)).xyz; vSnN = normalize(mat3(modelMatrix) * objectNormal);');
-        sh.fragmentShader = XT_SNOW_F + sh.fragmentShader.replace('#include <color_fragment>', '#include <color_fragment>\n' + XT_SNOW_BODY);
+        sh.fragmentShader = XT_SNOW_F + sh.fragmentShader.replace('#include <color_fragment>', '#include <color_fragment>\n' + XT_SNOW_BODY).replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n totalEmissiveRadiance += vec3(.3, .31, .33) * snS;');
       };
       m.customProgramCacheKey = function () { return 'xmas-snow' + (g ? 'g' : ''); };
       m.needsUpdate = true; XT.patched++;
@@ -22116,8 +22118,8 @@ const DJKIT = { x: 0, z: -3.8, stand: { x: 0, z: -4.5 } };
       sfx.tap(); const st = hit.seat; if (me.sit === st) { if (window.KCG && KCG.arc) KCG.arc.play(st.arc); return true; } if (seatTaken(st)) return true;
       standUp(); me.tx = st.seat.x; me.tz = st.seat.z; me.go = { kind: 'bench', bench: st }; return true; };
     // v36.14.3 (Demi, 13 Nov: "put a floating gaming icon over each arcade game so kids know they are usable"): a round picture bobs over each of the four machines, like the ones over the yellow circles
-    { const ICONS = { shooter: '⭐', breaker: '🧱', maze: '🍬', blocks: '🧸' }, bub = SPEC.map((s, i) => { const b = emojiSprite(ICONS[s.arc], .85); b.position.set(5.0 - (i % 2) * .75, 2.95 + (i % 2) * .6, s.z); return dyn(b); });   // v36.15 (world critic): fanned out, every other one lower and toward the room, so from the fixed camera the four pictures no longer stack on each other
-      A.tick.push(t => bub.forEach((b, i) => { b.position.y = 2.95 + (i % 2) * .6 + Math.sin(t * 2.2 + i * 1.3) * .07; })); }
+    { const ICONS = { shooter: '⭐', breaker: '🧱', maze: '🍬', blocks: '🧸' }, bub = SPEC.map((s, i) => { const b = emojiSprite(ICONS[s.arc], .72); b.position.set(5.0 - (i % 2) * 1.0, 2.7 + (i % 2) * 1.0, s.z); return dyn(b); });   // v36.15 (world critic): fanned out, every other one lower and toward the room, so from the fixed camera the four pictures no longer stack on each other
+      A.tick.push(t => bub.forEach((b, i) => { b.position.y = 2.7 + (i % 2) * 1.0 + Math.sin(t * 2.2 + i * 1.3) * .07; })); }
     d.blocks.push({ x0: 4.72, x1: 5.9, z0: -3.4, z1: 1.25 });
     claw(g, d, dyn);
     // v36.14.3 (Demi, 13 Nov): the dance floor and the snack counter swapped places, see `relocate` in arcade-room.js
