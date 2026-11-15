@@ -14363,8 +14363,8 @@ const RK = (() => {
   /* ====================== tv ====================== */
   // a flat screen hung on the wall (Demi: "the TV needs to be wall-mounted"): a brushed silver rim round black glass, the picture where the channels draw (centre y 1.3, z -.004, 1.2 by .68), a back cover with vents, screws and ports, a steel head plate and a swinging two-part arm
   // to a wall plate .355 behind the screen (the starter room's TV stands .35 from the wall, so the plate lands on it), a power light. No stand, no floor foot, and it no longer rides up on a console (onTop is off, the arm is for the wall). furniture-interact.js reads `sy` to put the channel picture over the screen
-  up('tv', { sy: 1.3, onTop: 0, wall: 1, keep: 1, fp: [.7, .3], b: g => {   // v36.14.4 (model critic: a TV placed in the room hung in mid-air): it is a wall piece now, so it sticks to the nearest wall where it is dropped (keep: kcTidyWall never moves one that is already placed)
-    const q = new T.Group(); q.position.y = 1.3 - .48; g.add(q);
+  up('tv', { sy: 1.72, onTop: 0, wall: 1, keep: 1, fp: [.7, .3], b: g => {   // v36.14.4 (model critic: a TV placed in the room hung in mid-air): it is a wall piece now, so it sticks to the nearest wall where it is dropped (keep: kcTidyWall never moves one that is already placed)
+    const q = new T.Group(); q.position.y = 1.72 - .48; g.add(q);      // v36.14.6 (Demi: "the tv is stuck behind the panel, raise the tv up higher"): the screen's middle is 1.72 m up (it was 1.3), so its bottom edge clears the castle's wall panel rail at 1.3 m
     const blk = R.metal('#0d0e12', 110, '#707070'), pla = R.metal('#25272d', 35, '#555555'), sil = R.metal('#aeb4bf', 85, '#e8e8e8'), dark = R.matte('#101114');
     const stl = R.metal('#3b3e46', 60, '#8a8e96'), stlD = R.metal('#2a2c32', 45, '#6a6e76'), bolt = R.metal('#9aa0a8', 70, '#cccccc');
     const outl = R.rect(1.32, .76, .04, 5);
@@ -22535,7 +22535,7 @@ function closeGame() {
 let inJob = false;
 $('#game').addEventListener('click', e => { if (mode === 'shop' && e.target.closest('.kcg-job, .sch-tile')) inJob = true; }, true);
 $('#back').onclick = () => { if (inJob && mode === 'shop') { inJob = false; sfx.tap(); playGame(); return; } closeGame(); };
-$('#yay-town').onclick = () => { if (mode === 'shop') closeGame(); else { $('#yay').hidden = true; sfx.tap(); } };
+$('#yay-town').onclick = () => { if (mode === 'shop') closeGame(); else { $('#yay').hidden = true; sfx.tap(); if (typeof FIRE !== 'undefined' && FIRE.cam && FIRE.s && FIRE.s.done) FIRE.leave(true); } };
 $('#again').onclick = () => { $('#yay').hidden = true; sfx.tap(); playGame(); };
 function pay(stars, msg, base = 0) {
   const coins = stars * 5 + base;
@@ -30628,7 +30628,7 @@ ${T.css || ''}`; st.append(css);
       if (!env) return go(false);
       cw.style.visibility = 'hidden'; env(p.name, clean(card), ok => { if (ok) go(true); else { cw.style.visibility = ''; ended = false; } });
     };
-    const finish = (name, msg) => { L.stop(); const st = name ? 3 : 2; done(st, msg || (name ? 'Your postcard is on its way!' : 'Come back soon!'), name ? 10 : 0); };   // v36.14.4 (Demi, 14 Nov): sending a postcard pays 10 coins, no more; leaving without sending pays nothing
+    const finish = (name, msg) => { L.stop(); const st = name ? 3 : 2; done(st, msg || (name ? 'Your postcard is on its way!' : 'Come back soon!'), (name ? 10 : 0) - st * 5); };   // pay() adds 5 coins a star, so take them off: a send pays exactly 10, leaving pays 0 (v36.14.6)   // v36.14.4 (Demi, 14 Nov): sending a postcard pays 10 coins, no more; leaving without sending pays nothing
 
     /* ----- the postcard maker ----- */
     const maker = () => {
@@ -41685,6 +41685,11 @@ function kcRoomName(id) { return (KC_ROOMS.find(r => r.id === id) || KC_ROOMS[0]
   function addDoor(d, st) {
     if (d.stairs) return d.grand ? window.kcGrand && window.kcGrand.pad(d, doorG) : d.down ? stairsDown(d) : stairsUp(d);
     if (d.arch || d.glass) return window.kcGrand && window.kcGrand.pad(d, doorG);   // castle-grand.js: an arch in the back wall (drawn there) or the tea room's glass doors to the yard: only the tap block lives here
+    if (d.mat) {      // v36.14.6 (Demi: "the way back to the living room needs to be at the bottom of the screen"): a round welcome mat on the floor by the front wall, with the picture of the room it leads to; walking onto it or tapping it goes through
+      const g = new T.Group(), x = d.x || 0, col = DOOR_COL[d.to] || '#f2a33a', pic = mesh(new T.PlaneGeometry(1, 1), plateMat(d.to), x, .05, d.z, .9, .9, 1); pic.rotation.x = -Math.PI / 2;
+      [cyl(glow(shade(col, 1.25)), x, 0, d.z, .98, .02), cyl('#fffaf0', x, .02, d.z, .84, .015), pic, box(new T.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }), x, 0, d.z, 1.9, 1.2, 1.9)].forEach(m => { m.userData.to = d.to; g.add(m); });
+      g.userData.to = d.to; doorG.add(g); return;
+    }
     const side = d.wall === 'L' ? -1 : 1, g = new T.Group(), ex = new T.Group(), col = DOOR_COL[d.to] || '#f2a33a', th = DOORS[doorKey(st)] || DOORS.starter;
     // v36.8 (Demi: "flush"): the door, its casing and its glowing edge are thin sheets in the wall's own plane, nothing stands out of the wall. The wall plane is hx-.175 (just in front of the baseboard, wainscot and band). The details (`A`, `th.extra`) were drawn for a leaf face 9 cm out, so they go into `ex`, squashed to 30% in depth and moved so that the old leaf face lands on the new one.
     const x = side * (kcHX() - .175), gl = glow(shade(col, 1.25)), o = -.04 * side;
@@ -42056,7 +42061,8 @@ function kcRoomName(id) { return (KC_ROOMS.find(r => r.id === id) || KC_ROOMS[0]
   // where the kitty stands when she comes into a room: just inside the door she came through (a plug-in may name another spot, castle-grand.js: from the tea room's glass doors to the yard and back)
   function arriveAt(id, from) {
     const side = (KC_ROOM_DOORS[id] || []).find(d => d.to === from), bk = side && side.wall === 'B';
-    let sx = bk ? side.x || 0 : side ? (side.wall === 'L' ? -1 : 1) * (kcHX() - 1.3) : 0, sz = bk ? side.z + 1.7 : side ? side.z + 1.2 : kcHF() - 1.6, ry = side && !bk ? (side.wall === 'L' ? Math.PI / 2 : -Math.PI / 2) : Math.PI;
+    const fr = side && side.wall === 'F';      // a mat by the front wall: she comes in one step behind it, facing into the room
+    let sx = bk || fr ? side.x || 0 : side ? (side.wall === 'L' ? -1 : 1) * (kcHX() - 1.3) : 0, sz = bk ? side.z + 1.7 : fr ? side.z - 1.6 : side ? side.z + 1.2 : kcHF() - 1.6, ry = side && !bk && !fr ? (side.wall === 'L' ? Math.PI / 2 : -Math.PI / 2) : Math.PI;
     const ar = window.kcArrive && window.kcArrive(id, from); if (ar) { sx = ar[0]; sz = ar[1]; ry = ar[2]; }
     me.x = me.tx = sx; me.z = me.tz = sz; me.ry = ry; me.go = null;
     camera.position.set(sx * .5, 3.05, me.z + 7);
@@ -42100,12 +42106,15 @@ function kcRoomName(id) { return (KC_ROOMS.find(r => r.id === id) || KC_ROOMS[0]
   function kcDoorWalk(to) {
     if (deco) return;
     const d = (KC_ROOM_DOORS[kcRoom] || []).find(q => q.to === to); if (!d) return kcGoRoom(to);
-    const side = d.wall === 'L' ? -1 : 1, bk = d.wall === 'B', x = bk ? d.x || 0 : d.stairs ? kcHX() - .8 : side * (kcHX() - 1.25), z = bk ? d.z + (d.grand ? 1.7 : d.arch || d.glass ? .5 : 1.2) : d.stairs ? (d.down ? d.z - 1.2 : -.7) : d.z, q = houseConstrain(x, z);
+    const side = d.wall === 'L' ? -1 : 1, bk = d.wall === 'B', x = bk || d.mat ? d.x || 0 : d.stairs ? kcHX() - .8 : side * (kcHX() - 1.25), z = d.mat ? d.z : bk ? d.z + (d.grand ? 1.7 : d.arch || d.glass ? .5 : 1.2) : d.stairs ? (d.down ? d.z - 1.2 : -.7) : d.z, q = houseConstrain(x, z);
     standUp(); me.tx = q[0]; me.tz = q[1]; me.go = { kind: 'door', to, x: q[0], z: q[1] };
   }
+  let matGo = 0;
+  window.kcDoorWalk = kcDoorWalk;      // test handle
   const walkTick = kcPartyTick;
   kcPartyTick = function (t) {
     walkTick(t); const g = me.go;
+    if (!deco && !joyVec && performance.now() - matGo > 1600) { const mt = (KC_ROOM_DOORS[kcRoom] || []).find(d => d.mat); if (mt && Math.hypot(me.x - (mt.x || 0), me.z - mt.z) < .7) { matGo = performance.now(); me.go = null; kcGoRoom(mt.to); return; } }      // v36.14.6: the round mat by the front wall goes back to the living room as soon as she stands on it
     if (!g || g.kind !== 'door') return;
     if (joyVec) { me.go = null; return; }   // the stick takes over
     if (Math.hypot(me.x - g.x, me.z - g.z) < .4) { me.go = null; kcGoRoom(g.to); }
@@ -42849,7 +42858,9 @@ function kcBackTick(dt) {
   function doors(hs, D, sg) {
     const st = HOUSE_STYLES[hs[0]]; if (!st || !LOOK[st.name]) return;
     D.living = [{ to: 'kitchen', wall: 'B', x: -AX, z: -4.7, arch: 1, fixed: 1, hw: 1.5, lock: 2 }, { to: 'tearoom', wall: 'B', x: AX, z: -4.7, arch: 1, fixed: 1, hw: 1.5 }].concat(sg >= 3 ? [{ to: 'hallway', wall: 'B', x: 0, z: -3.1, stairs: 1, fixed: 1, grand: 1, hw: 1.6 }] : []);
-    D.tearoom = [{ to: 'living', wall: 'L', z: -2.6 }, { to: 'backyard', wall: 'B', x: -GX, z: -4.7, glass: 1, fixed: 1, hw: 1.4 }, { to: 'backyard2', wall: 'B', x: GX, z: -4.7, glass: 1, fixed: 1, hw: 1.4 }];
+    const mat = room => ({ to: 'living', wall: 'F', x: 0, get z() { return kcDimOf(room)[1] - 1.2; }, mat: 1, fixed: 1, hw: .9 });      // v36.14.6 (Demi: "the way back to the living room needs to be at the bottom of the screen"): the kitchen and the tea room lead back by a round mat near the front wall, not a door in the side wall
+    D.kitchen = [mat('kitchen')];
+    D.tearoom = [mat('tearoom'), { to: 'backyard', wall: 'B', x: -GX, z: -4.7, glass: 1, fixed: 1, hw: 1.4 }, { to: 'backyard2', wall: 'B', x: GX, z: -4.7, glass: 1, fixed: 1, hw: 1.4 }];
     D.hallway = [{ to: 'bathroom', wall: 'L', z: -2.9 }, { to: 'playroom', wall: 'L', z: -.7, lock: 5 }, { to: 'bedroom', wall: 'R', z: -2.9, lock: 4 }, { to: 'partyroom', wall: 'R', z: -.7, lock: 6 }, { to: 'living', wall: 'B', x: 0, z: -3.9, stairs: 1, down: 1, grand: 1, fixed: 1, hw: 1.9 }];
   }
 
@@ -42866,18 +42877,24 @@ function kcBackTick(dt) {
     if (id === 'tearoom' && yardIntent === 'in') { yardIntent = null; yardMode = false; return [0, -3.2, Math.PI]; }
     return null;
   };
+  let lastRoom = '', hallArm = true;
   const tk = kcPartyTick;
   kcPartyTick = function (t) {
     tk(t);
     if (big) { kcCeil.visible = false; if (ceilM) ceilM.visible = !deco && !hyard && !yardMode; }      // the castle's coffered ceiling takes the place of the plain one
     if (!big || deco) return;
-    const room = kcRoomOf(), now = performance.now();
+    const room = kcRoomOf(), now = performance.now(), prevRoom = lastRoom; lastRoom = room;
     if (going && now - going < 1600) return; going = 0;
     const go = id => { going = now; me.go = null; kcGoRoom(id); };
     if (room === 'living') {
       if (yardMode) { if (me.z > -6.05 && Math.abs(me.x - AX) < .95) go('tearoom'); return; }
       if (me.z < -4.75) archRects.forEach(r => { if (!going && me.x > r.x0 && me.x < r.x1) go(r.to); });
-    } else if (room === 'hallway') { if (me.z < -2.25 && Math.abs(me.x) < .85) go('living'); }
+      if (stairsOn && !yardMode && me.z < -1.9 && Math.abs(me.x) < 1.45) go('hallway');      // v36.14.6 (Demi: "i cant get upstairs in my castle"): walking up to the foot of the wide stairs takes her up, like the hall's gap takes her down (a tap on the stairs still works)
+    } else if (room === 'hallway') {
+      if (prevRoom !== 'hallway') hallArm = false;      // Kyle #129: a Joystick held up carries her from the arrival spot (z -2.2) past the descent line in one gesture, so the way down only works after she has walked out of the arrival area
+      if (!hallArm) { if (me.z > -1.9 || Math.abs(me.x) >= .85) hallArm = true; }
+      else if (me.z < -2.25 && Math.abs(me.x) < .85) go('living');
+    }
     else if (room === 'tearoom') { if (me.z < -4.5 && Math.abs(Math.abs(me.x) - GX) < 1.0) go('backyard'); }
   };
 
@@ -43807,7 +43824,7 @@ renderer.domElement.addEventListener('pointerdown', e => {
     let ch = false, moved = false; const placed = [], want = new Set(list.filter(d => !d.fixed).map(d => 'door_' + d.to));
     for (let k = 0; k < items.length; k++) { const f = FURN_BY_ID[items[k].i]; if (f && f.door && !want.has(items[k].i)) { items.splice(k--, 1); ch = true; } }
     list.forEach(d => {
-      if (d.fixed) { if (d.wall !== 'B') placed.push({ left: d.wall === 'L', z: d.z, hw: d.hw || DOORHW }); return; }
+      if (d.fixed) { if (d.wall !== 'B' && d.wall !== 'F') placed.push({ left: d.wall === 'L', z: d.z, hw: d.hw || DOORHW }); return; }
       const id = 'door_' + d.to; let it = items.find(q => q.i === id);
       if (!it) { it = { i: id, x: wallX(room, d.wall === 'L' ? -1 : 1), z: d.z, r: d.wall === 'L' ? 1 : 3 }; items.push(it); ch = true; }
       const left = it.x < 0 || (it.x === 0 && d.wall === 'L'), nx = wallX(room, left ? -1 : 1), nr = left ? 1 : 3, zhi = DZ1(room);
@@ -43827,7 +43844,7 @@ renderer.domElement.addEventListener('pointerdown', e => {
   // [centre along the wall, half width, kind] per wall: B back (x), L left (z), R right (z), F front (x)
   const spansOf = (room, items) => {
     const S = { B: [], L: [], R: [], F: [] }, W = { B: [], L: [], R: [], F: [] };
-    (KC_ROOM_DOORS[room] || []).forEach(d => S[d.wall].push([d.wall === 'B' ? d.x || 0 : d.z, d.hw || DOORHW, 'door', d.hw ? d.hw + .1 : .9]));
+    (KC_ROOM_DOORS[room] || []).forEach(d => S[d.wall].push([d.wall === 'B' || d.wall === 'F' ? d.x || 0 : d.z, d.hw || DOORHW, 'door', d.hw ? d.hw + .1 : .9]));
     if (room === 'living') { if (window.kcGrandHs && curHS && window.kcGrandHs(curHS)) S.B.push([0, 1.9, 'fix']); else S.B.push([0, 1.3, 'door']); }   // castle-grand.js: the two arches are in the door list, the staircase between them keeps its own span
     // the disco-ball button (housedisco.js) is fixed on the party room's back wall (v36.4, Demi), so windows and wall pieces keep clear of it too
     if (room === 'partyroom' && typeof kcDisco !== 'undefined') S.B.push([kcDisco.HDB.x, .62, 'fix']);
@@ -54813,7 +54830,7 @@ Game hooks used: houseTap, kcPartyTick (runs every frame in a house), renderHous
       if (/^(gumdropsofa|moonsofa|cloudsofa)$/.test(id)) return xs.map(px => ({ x: px, z, y: seatMed(id, px, z, y) - .02, ry: 0, pose: 'sit' }));   // v36.14.4 (model critic: she sank into these three): their seats are not level, so each one gets its own height
       return xs.map(px => ({ x: px, z, y: y0 - .03, ry: 0, pose: 'sit' }));
     }
-    if (RE_CHAIR.test(id) && !NOT.test(id)) { const y0 = /stool|pouf|beanbag|octo|donut|star/.test(id) ? Math.min(.42, b.y1 * .55) : /throne|eggchair|planet/.test(id) ? .5 : /patiochair|diningchair|^chair$/.test(id) ? .58 : .44; return [{ x: cx, z: cz + .03, y: seatTop(id, cx, cz + .03, y0) - .03, ry: 0, pose: 'sit', rock: ROCK[id] ? 1 : 0, node: ROCK[id] ? 'self' : undefined }]; }
+    if (RE_CHAIR.test(id) && !NOT.test(id)) { const y0 = /stool|pouf|beanbag|octo|donut|star/.test(id) ? Math.min(.42, b.y1 * .55) : /throne|eggchair|planet/.test(id) ? .5 : /patiochair|diningchair|^chair$/.test(id) ? .58 : .44; return [{ x: cx, z: cz + .03, y: seatTop(id, cx, cz + .03, y0) - (id === 'teachair' ? -.05 : .03), ry: 0, pose: 'sit', rock: ROCK[id] ? 1 : 0, node: ROCK[id] ? 'self' : undefined }]; }
     return null;
   }
   // the middle height of the surface under a whole seat-sized patch (the kitty's seat is about that big), for seats that are not level
@@ -65400,9 +65417,7 @@ kcNewPets.homeDraw[kind]). Loads right after pets-new.js. No text, no emoji. */
 
   HOUSE_STYLES.forEach(st => {
     const K = P[st.name]; if (!K) return;
-    st.playWall = () => stoneMat(K);
-    st.playFloor = () => plankMat(K);
-    st.playDress = g => playDress(g, K, st.name);
+    // v36.14.6 (Demi, 14 Nov: "the playroom in the castle needs to revert back to the original playroom, the kids dont like the castle playroom design"): the castles keep the ordinary colorful playroom, so st.playWall, st.playFloor and st.playDress are not set here any more (playDress stays in kcMedieval for later)
     st.partyWall = () => st.wall();
     st.partyFloor = () => (window.kcRich && kcRich.floor(st.name, 'partyroom')) || null;
     st.partyCols = K.cols;
@@ -65496,22 +65511,22 @@ const KC_HOUSE_LAYOUTS = [
     partyroom: [['door_hallway',3.85,-2.6,3],['dancefloor',0,-2,0],['recordplayer',-3,-3.5,0.5],['stumptable',2.9,-4,0],['cake',2.9,-4,0],['candles',3.3,-3.85,0],['stumplamp',-3.25,0.8,0],['stumplamp',3.4,0.8,0],['stumpstool',-1,0.5,2],['stumpstool',-2.5,-0.5,2],['stumpstool',1,0.5,2],['stumpstool',2.5,-1,2],['xmastree',-3,-2.4,0],['frameoval',-3.85,1.1,1],['frameoval',3.85,0.7,3]],
   } },
   { n: 'Fairy castle', rooms: {
-    living: [['roomwindow',-6.35,4.4,1],['roomwindow',6.35,5.8,3],['hearth',-6.35,-1.6,1],['rubyrug',-3.7,-1.6,0],['rubyarmchair',-3.9,-2.9,3.5],['rubyarmchair',-3.9,-0.3,2.5],['rubysidetable',-3.0,-1.6,0],['rubypouf',-4.5,-1.6,0],['rubyrug',4.2,2.4,1],['rubysofa',3.0,2.4,1],['rubycoffeetable',4.6,2.4,1],['rubyarmchair',3.6,4.6,1.5],['rubyarmchair',3.6,0.2,0.5],['rubyconsole',6.05,2.4,3],['tv',6.35,2.4,3],['rubybookcase',6.0,-3.9,3],['rubybookcase',6.0,-2.3,3],['rubyart',6.35,0.1,3],['rubyglobe',5.2,-0.7,0],['rubyart',-6.35,1.8,1],['rubymirror',-6.35,6.6,1],['rubypiano',-5.3,5.2,1],['rubypianobench',-3.6,5.2,3],['rubyurn',-2.3,-4.45,0],['rubyurn',2.3,-4.45,0],['rubyfloorlamp',-6.0,-4.3,0],['rubyfloorlamp',5.9,7.0,0],['rubybench',-3.9,7.5,2],['rubysideboard',4.9,7.45,2],['shoerack',-2.4,7.6,2],['coatrack',2.6,7.55,2],['umbrellastand',3.2,7.7,2],['keyhooks',6.35,7.2,3],['teapalm',-5.8,7.0,0],['teapalm',5.7,4.3,0]],
+    living: [['roomwindow',-6.35,4.4,1],['roomwindow',6.35,5.8,3],['hearth',-6.35,0,1],['rubyrug',-3.7,0,0],['rubyarmchair',-3.9,-1.3,3.5],['rubyarmchair',-3.9,1.3,2.5],['rubysidetable',-3.0,0,0],['rubypouf',-4.5,0,0],['rubyrug',4.2,2.4,1],['rubysofa',3.0,2.4,1],['rubycoffeetable',4.6,2.4,1],['rubyarmchair',3.6,4.6,1.5],['rubyarmchair',3.6,0.2,0.5],['rubyconsole',6.05,2.4,3],['tv',6.35,2.4,3],['rubybookcase',6.0,-3.9,3],['rubybookcase',6.0,-2.3,3],['rubyart',6.35,0.1,3],['rubyglobe',5.2,-0.7,0],['rubyart',-6.35,1.8,1],['rubymirror',-6.35,6.6,1],['rubypiano',-5.3,5.2,1],['rubypianobench',-3.6,5.2,3],['rubyurn',-2.3,-4.45,0],['rubyurn',2.3,-4.45,0],['rubyfloorlamp',-6.0,-4.3,0],['rubyfloorlamp',5.9,7.0,0],['rubybench',-3.9,7.5,2],['rubysideboard',4.9,7.45,2],['shoerack',-2.4,7.6,2],['coatrack',2.6,7.55,2],['umbrellastand',3.2,7.7,2],['keyhooks',6.35,7.2,3],['teapalm',-5.8,7.0,0],['teapalm',5.7,4.3,0]],
     kitchen: [['door_living',3.35,-2.6,3],['roomwindow',-3.35,0.8,1],['roomwindow',-3.35,-2.4,1],['rkfridge',-3.0,-4.58,0],['rkcounter',-1.75,-4.61,0],['rksink',-0.25,-4.61,0],['rkstove',1.62,-4.58,0],['rkupper',-1.75,-4.85,0],['rkupper',-0.25,-4.85,0],['teapot',-1.95,-4.6,0],['plates',-1.45,-4.6,0],['rkcrate',3.0,-4.6,0],['rkisland',0,-1.55,0],['rkpotrack',0,-1.55,0],['kfruit',-0.55,-1.7,0],['plates',0.2,-1.7,0],['rkstool',-0.7,-0.62,0],['rkstool',0,-0.62,0],['rkstool',0.7,-0.62,0],['rktable',-0.9,0.95,0],['rkchair',-1.45,0.2,0],['rkchair',-0.35,0.2,0],['rkbench',-0.9,1.62,2],['rkchandelier',-0.9,0.95,0],['rkrunner',-0.3,-3.2,1],['rkshelf',-3.35,-0.75,1],['rkdresser',3.2,-0.6,3],['rkherbs',3.35,1.0,3],['catbowls',-3.0,-1.6,1]],
     hallway: [['door_bathroom',-3.85,-2.9,1],['door_playroom',-3.85,-0.7,1],['door_bedroom',3.85,-2.9,3],['door_partyroom',3.85,-0.7,3],['rubyart',-3.0,-4.85,0],['rubyart',3.0,-4.85,0],['rubyrunner',0,2.0,0],['rubybench',-3.55,3.9,1],['rubysideboard',3.5,3.8,3],['rubymirror',3.85,3.8,3],['rubyfloorlamp',3.4,5.4,0],['rubyart',-3.85,1.7,1],['teaclock',-3.55,5.5,1],['teapalm',3.2,-4.3,0],['teapalm',-3.2,-4.3,0],['rubyurn',-3.3,2.2,0]],
     bathroom: [['door_hallway',2.35,-2.6,3],['rttub',-0.9,-4.15,0],['rtvanity',1.5,-4.5,0],['rtmat',-0.9,-3.1,0],['rttoilet',-1.95,-1.7,1],['rttowelrack',-2.0,-2.9,1],['rthamper',-2.0,-0.6,1],['rtstool',0.75,-3.4,0],['rtshelf',-2.35,-1.7,1],['rtsconce',-2.35,-4.0,1]],
     bedroom: [['door_hallway',-3.35,-2.6,1],['roomwindow',-3.35,0.6,1],['roomwindow',3.35,0.6,3],['rbbed',0.2,-3.7,0],['rbnightstand',-1.2,-4.55,0],['rbnightstand',1.6,-4.55,0],['rbwardrobe',-2.55,-4.5,0],['rbdresser',3.05,-2.4,3],['rubyart',3.35,-2.4,3],['rbdressingtable',-3.05,-1.0,1],['rbpouf',-2.3,-1.0,0],['rubyrug',0.2,-2.3,0],['rbbench',0.2,-2.1,0],['rbscreen',2.7,-4.15,3.5],['rbcheval',-2.9,1.2,1],['rubyarmchair',2.5,0.5,2.5],['rubysidetable',3.0,1.6,0]],
-    playroom: [['door_hallway',3.35,-2.6,3],['roomwindow',-3.35,0.2,1],['roomwindow',3.35,0.2,3],['rybear',-2.85,-4.1,0.5],['rytoychest',-3.0,1.2,1],['ryeasel',1.8,-2.3,0],['rydollhouse',-0.75,0.55,0],['rystoryshelf',3.12,-0.95,3],['ryplaytable',0.95,0.75,0],['ryplaychair',0.3,0.75,1],['ryplaychair',1.6,0.75,3],['ryblocks',-2.0,1.45,0]],
+    playroom: [['door_hallway',3.35,-2.6,3],['roomwindow',-3.35,0.2,1],['roomwindow',3.35,0.2,3],['teddy',-2.85,-4,0.5],['toybox',-3,1.2,1],['rockinghorse',-0.2,-1.6,0],['easel',1.8,-2.3,0]],
     partyroom: [['door_hallway',3.85,-2.6,3],['dancefloor',0,-2,0],['recordplayer',-3,-3.5,0.5],['rjbanquet',2.7,-4.0,0],['rjcakestand',2.7,-4.0,0],['rjpartychair',2.2,-3.1,2],['rjpartychair',3.2,-3.1,2],['rjthrone',-3.35,-0.9,1],['rjpunch',3.1,-0.5,0],['rubypouf',-1,0.5,2],['rubypouf',-2.5,-0.5,2],['rubypouf',1,0.5,2],['rubypouf',2.5,-1,2],['rjcocktail',-2.2,1.3,0],['rjcocktail',2.2,1.3,0],['rjballoons',-3.5,1.45,0],['rjballoons',3.5,1.45,0],['rjgifts',-3.2,-2.3,0.5],['rjcandelabra',-3.5,0.1,0],['rjcandelabra',3.55,1.0,0],['rjbanner',-3.85,0.9,1],['rjbanner',3.85,0.45,3]],
     tearoom: [['door_living',-4.35,-2.6,1],['roomwindow',-4.35,1.1,1],['roomwindow',4.35,1.1,3],['tearug',0,-0.9,0],['teatable',0,-0.9,0],['teachair',0,-2.1,0],['teachair',0,0.3,2],['teachair',-1.25,-0.9,1],['teachair',1.25,-0.9,3],['teaart',0,-4.85,0],['teasofa',0,-4.45,0],['teasidetable',-1.4,-4.55,0],['teasidetable',1.4,-4.55,0],['teaclock',-4,-3.85,1],['teavase',-3.95,-4.6,0],['teacabinet',4.05,-2.3,3],['teaharp',3.95,-4,3],['teavase',3.95,-4.65,0],['teacouch',-3.3,0.9,1],['teacart',3.3,0.2,3],['teasconce',-4.35,-0.9,1],['teasconce',4.35,-0.9,3],['teapalm',-3.9,2.3,0],['teapalm',3.9,2.3,0]],
   } },
   { n: 'Ice castle', rooms: {
-    living: [['roomwindow',-6.35,4.4,1],['roomwindow',6.35,5.8,3],['hearth',-6.35,-1.6,1],['frostrug',-3.7,-1.6,0],['frostarmchair',-3.9,-2.9,3.5],['frostarmchair',-3.9,-0.3,2.5],['frostsidetable',-3.0,-1.6,0],['frostpouf',-4.5,-1.6,0],['frostrug',4.2,2.4,1],['frostsofa',3.0,2.4,1],['frostcoffeetable',4.6,2.4,1],['frostarmchair',3.6,4.6,1.5],['frostarmchair',3.6,0.2,0.5],['frostconsole',6.05,2.4,3],['tv',6.35,2.4,3],['frostbookcase',6.0,-3.9,3],['frostbookcase',6.0,-2.3,3],['frostart',6.35,0.1,3],['frostglobe',5.2,-0.7,0],['frostart',-6.35,1.8,1],['frostmirror',-6.35,6.6,1],['frostpiano',-5.3,5.2,1],['frostpianobench',-3.6,5.2,3],['frosturn',-2.3,-4.45,0],['frosturn',2.3,-4.45,0],['frostfloorlamp',-6.0,-4.3,0],['frostfloorlamp',5.9,7.0,0],['frostbench',-3.9,7.5,2],['frostsideboard',4.9,7.45,2],['shoerack',-2.4,7.6,2],['coatrack',2.6,7.55,2],['umbrellastand',3.2,7.7,2],['keyhooks',6.35,7.2,3],['teapalm',-5.8,7.0,0],['teapalm',5.7,4.3,0]],
+    living: [['roomwindow',-6.35,4.4,1],['roomwindow',6.35,5.8,3],['hearth',-6.35,0,1],['frostrug',-3.7,0,0],['frostarmchair',-3.9,-1.3,3.5],['frostarmchair',-3.9,1.3,2.5],['frostsidetable',-3.0,0,0],['frostpouf',-4.5,0,0],['frostrug',4.2,2.4,1],['frostsofa',3.0,2.4,1],['frostcoffeetable',4.6,2.4,1],['frostarmchair',3.6,4.6,1.5],['frostarmchair',3.6,0.2,0.5],['frostconsole',6.05,2.4,3],['tv',6.35,2.4,3],['frostbookcase',6.0,-3.9,3],['frostbookcase',6.0,-2.3,3],['frostart',6.35,0.1,3],['frostglobe',5.2,-0.7,0],['frostart',-6.35,1.8,1],['frostmirror',-6.35,6.6,1],['frostpiano',-5.3,5.2,1],['frostpianobench',-3.6,5.2,3],['frosturn',-2.3,-4.45,0],['frosturn',2.3,-4.45,0],['frostfloorlamp',-6.0,-4.3,0],['frostfloorlamp',5.9,7.0,0],['frostbench',-3.9,7.5,2],['frostsideboard',4.9,7.45,2],['shoerack',-2.4,7.6,2],['coatrack',2.6,7.55,2],['umbrellastand',3.2,7.7,2],['keyhooks',6.35,7.2,3],['teapalm',-5.8,7.0,0],['teapalm',5.7,4.3,0]],
     kitchen: [['door_living',3.35,-2.6,3],['roomwindow',-3.35,0.8,1],['roomwindow',-3.35,-2.4,1],['fkfridge',-3.0,-4.58,0],['fkcounter',-1.75,-4.61,0],['fksink',-0.25,-4.61,0],['fkstove',1.62,-4.58,0],['fkupper',-1.75,-4.85,0],['fkupper',-0.25,-4.85,0],['teapot',-1.95,-4.6,0],['plates',-1.45,-4.6,0],['fkcrate',3.0,-4.6,0],['fkisland',0,-1.55,0],['fkpotrack',0,-1.55,0],['kfruit',-0.55,-1.7,0],['plates',0.2,-1.7,0],['fkstool',-0.7,-0.62,0],['fkstool',0,-0.62,0],['fkstool',0.7,-0.62,0],['fktable',-0.9,0.95,0],['fkchair',-1.45,0.2,0],['fkchair',-0.35,0.2,0],['fkbench',-0.9,1.62,2],['fkchandelier',-0.9,0.95,0],['fkrunner',-0.3,-3.2,1],['fkshelf',-3.35,-0.75,1],['fkdresser',3.2,-0.6,3],['fkherbs',3.35,1.0,3],['catbowls',-3.0,-1.6,1]],
     hallway: [['door_bathroom',-3.85,-2.9,1],['door_playroom',-3.85,-0.7,1],['door_bedroom',3.85,-2.9,3],['door_partyroom',3.85,-0.7,3],['frostart',-3.0,-4.85,0],['frostart',3.0,-4.85,0],['frostrunner',0,2.0,0],['frostbench',-3.55,3.9,1],['frostsideboard',3.5,3.8,3],['frostmirror',3.85,3.8,3],['frostfloorlamp',3.4,5.4,0],['frostart',-3.85,1.7,1],['teaclock',-3.55,5.5,1],['teapalm',3.2,-4.3,0],['teapalm',-3.2,-4.3,0],['frosturn',-3.3,2.2,0]],
     bathroom: [['door_hallway',2.35,-2.6,3],['fttub',-0.9,-4.15,0],['ftvanity',1.5,-4.5,0],['ftmat',-0.9,-3.1,0],['fttoilet',-1.95,-1.7,1],['fttowelrack',-2.0,-2.9,1],['fthamper',-2.0,-0.6,1],['ftstool',0.75,-3.4,0],['ftshelf',-2.35,-1.7,1],['ftsconce',-2.35,-4.0,1]],
     bedroom: [['door_hallway',-3.35,-2.6,1],['roomwindow',-3.35,0.6,1],['roomwindow',3.35,0.6,3],['fbbed',0.2,-3.7,0],['fbnightstand',-1.2,-4.55,0],['fbnightstand',1.6,-4.55,0],['fbwardrobe',-2.55,-4.5,0],['fbdresser',3.05,-2.4,3],['frostart',3.35,-2.4,3],['fbdressingtable',-3.05,-1.0,1],['fbpouf',-2.3,-1.0,0],['frostrug',0.2,-2.3,0],['fbbench',0.2,-2.1,0],['fbscreen',2.7,-4.15,3.5],['fbcheval',-2.9,1.2,1],['frostarmchair',2.5,0.5,2.5],['frostsidetable',3.0,1.6,0]],
-    playroom: [['door_hallway',3.35,-2.6,3],['roomwindow',-3.35,0.2,1],['roomwindow',3.35,0.2,3],['fybear',-2.85,-4.1,0.5],['fytoychest',-3.0,1.2,1],['fyeasel',1.8,-2.3,0],['fydollhouse',-0.75,0.55,0],['fystoryshelf',3.12,-0.95,3],['fyplaytable',0.95,0.75,0],['fyplaychair',0.3,0.75,1],['fyplaychair',1.6,0.75,3],['fyblocks',-2.0,1.45,0]],
+    playroom: [['door_hallway',3.35,-2.6,3],['roomwindow',-3.35,0.2,1],['roomwindow',3.35,0.2,3],['teddy',-2.85,-4,0.5],['toybox',-3,1.2,1],['rockinghorse',-0.2,-1.6,0],['easel',1.8,-2.3,0]],
     partyroom: [['door_hallway',3.85,-2.6,3],['dancefloor',0,-2,0],['recordplayer',-3,-3.5,0.5],['fjbanquet',2.7,-4.0,0],['fjcakestand',2.7,-4.0,0],['fjpartychair',2.2,-3.1,2],['fjpartychair',3.2,-3.1,2],['fjthrone',-3.35,-0.9,1],['fjpunch',3.1,-0.5,0],['frostpouf',-1,0.5,2],['frostpouf',-2.5,-0.5,2],['frostpouf',1,0.5,2],['frostpouf',2.5,-1,2],['fjcocktail',-2.2,1.3,0],['fjcocktail',2.2,1.3,0],['fjballoons',-3.5,1.45,0],['fjballoons',3.5,1.45,0],['fjgifts',-3.2,-2.3,0.5],['fjcandelabra',-3.5,0.1,0],['fjcandelabra',3.55,1.0,0],['fjbanner',-3.85,0.9,1],['fjbanner',3.85,0.45,3]],
     tearoom: [['door_living',-4.35,-2.6,1],['roomwindow',-4.35,1.1,1],['roomwindow',4.35,1.1,3],['tearug',0,-0.9,0],['teatable',0,-0.9,0],['teachair',0,-2.1,0],['teachair',0,0.3,2],['teachair',-1.25,-0.9,1],['teachair',1.25,-0.9,3],['teaart',0,-4.85,0],['teasofa',0,-4.45,0],['teasidetable',-1.4,-4.55,0],['teasidetable',1.4,-4.55,0],['teaclock',-4,-3.85,1],['teavase',-3.95,-4.6,0],['teacabinet',4.05,-2.3,3],['teaharp',3.95,-4,3],['teavase',3.95,-4.65,0],['teacouch',-3.3,0.9,1],['teacart',3.3,0.2,3],['teasconce',-4.35,-0.9,1],['teasconce',4.35,-0.9,3],['teapalm',-3.9,2.3,0],['teapalm',3.9,2.3,0]],
   } },
@@ -65660,6 +65675,8 @@ KC_HOUSE_LAYOUTS.push({ n: 'Modern house', rooms: JSON.parse(JSON.stringify(KC_H
     return screen;
   }
 
+  // v36.14.6 (Demi: "the playroom in the castle needs to revert back to the original playroom"): once, a castle whose playroom still has the castle layout (nobody changed it) gets the ordinary playroom pieces back, and a living room nobody changed gets the fireplace set a little further down the wall (Demi: too close to the kitchen arch); a room she changed keeps her furniture
+  try { if (!save.plV && window.kcGrandHs && window.kcGrandHs(save.hs)) { ['playroom', 'living'].forEach(r => { if (listOf(r) && untouched(r)) applyLayout(r, save.hs[0], true); }); } save.plV = 1; } catch (e) { window.__hlErr = String(e.stack || e); }
   const hc = houseChanged;
   houseChanged = function (msg) {
     let screen = false;
@@ -66899,7 +66916,7 @@ function loopStep(ms) {
     animOthers(dt, t); bugsYard(dt, t); kcPartyTick(t); kcBackTick(dt);
     // the same distance and height behind the kitty as outside in the town (Demi, v33); the old close view is still one tap on the camera button; pulled back up high while decorating so the whole room fits
     if (deco) { decoFit(); if (me.z < -HS - .3) { camera.position.lerp(_v.set(me.x * .4, 8.5, me.z + 8.5), Math.min(1, dt * 4)); camera.lookAt(me.x * .4, .6, me.z - 1); } else { camera.position.lerp(_v.copy(decoTgt).addScaledVector(decoDir, decoDist), Math.min(1, dt * 4)); camera.lookAt(decoTgt); } }   // in the yard the view follows the kitty, in a room it is fitted above the tray (decoFit)
-    else if (!save.opts.hclose) { // behind the kitty, turning as she turns, kept inside the room's side walls
+    else if (!save.opts.hclose || (kcRoomOf() === 'living' && me.z < -5.4)) { // v36.14.6 (Demi: "when i try to go in my backyard, i get sent here and get stuck"): out in the yard the camera always goes to the yard side, also with the close camera on (it stood inside the house and the kitty was hidden behind the back wall). Behind the kitty, turning as she turns, kept inside the room's side walls
       // out in the yard the camera goes round to the yard side, higher and further back, so the back of the house fills the view behind her (Demi, v33)
       if (kcRoomOf() === 'living') { if (me.z < -5.7) hyard = true; else if (me.z > -4.9) hyard = false; } else hyard = false;
       if (hyard) hcamYaw = angLerp(hcamYaw, 0, Math.min(1, dt * 2.2)); else if (walking) hcamYaw = angLerp(hcamYaw, me.ry, Math.min(1, dt * 1.6));
