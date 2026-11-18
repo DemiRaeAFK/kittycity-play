@@ -206,9 +206,12 @@ h1 small{display:block;font-size:.32em;color:var(--lav);text-shadow:none;letter-
 #deed.hbar .hrow button:not(.harrow){display:flex;align-items:center;justify-content:center;gap:8px;font-size:26px;min-width:0;min-height:50px;padding:4px 16px;flex:0 1 auto}
 #deed.hbar .hrow button:not(.harrow) .lbl{font:800 16px var(--display);margin:0;letter-spacing:.02em;text-transform:none;opacity:1;white-space:nowrap}
 #deed.hbar .hrow .pill{font-size:16px;padding:6px 14px}
+#deed.hbar .hrow:empty{display:none}
 #deed.hbar .hx{top:-36px;right:-2px}
 #deed.hbar .tools button{width:38px!important;height:38px!important}#deed.hbar .tools{gap:2px}
-@media (max-width:520px){#deed.hbar .hrow button:not(.harrow) .lbl{font-size:14px}#deed.hbar .hrow button:not(.harrow){padding:4px 12px;gap:6px}}
+@media (max-width:520px){#deed.hbar .hrow button:not(.harrow) .lbl{font-size:14px}#deed.hbar .hrow button:not(.harrow){padding:4px 9px;gap:5px;font-size:23px}#deed.hbar .hrow:not(:first-of-type){gap:6px}}
+@media (max-width:400px){#deed.hbar .hrow button:not(.harrow){padding:4px 7px;gap:4px;font-size:20px}}
+@media (max-width:380px){#deed.hbar .hrow button:not(.harrow){padding:4px 6px;gap:3px}#deed.hbar .hrow button:not(.harrow) .lbl{font-size:13px;letter-spacing:0}#deed.hbar .hrow:not(:first-of-type){gap:5px}}
 .backup,.restore{font-size:18px;padding:10px 14px;border-radius:16px;box-shadow:0 4px 0 #0002}
 .hint{position:absolute;left:50%;bottom:calc(94px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:#3a2e2acc;color:#fff;border-radius:999px;padding:6px 18px;font-weight:700;pointer-events:none;transition:opacity .6s;white-space:nowrap;max-width:90vw;overflow:hidden;text-overflow:ellipsis;font-size:20px}
 #joy{position:absolute;left:max(20px,env(safe-area-inset-left,0px));bottom:calc(100px + env(safe-area-inset-bottom,0px));width:150px;height:150px;border-radius:50%;background:#ffffff55;border:4px solid #fff9;touch-action:none}
@@ -238,7 +241,7 @@ h1 small{display:block;font-size:.32em;color:var(--lav);text-shadow:none;letter-
 #tray>.pill,.tgrid>.pill{align-self:center;margin:auto}
 .pbody{flex:1 1 auto;min-height:0;display:flex;flex-direction:row;gap:10px}
 .pcats{flex:none;box-sizing:content-box;width:80px;display:flex;flex-direction:column;gap:8px;overflow-y:auto;scrollbar-width:none;padding:2px 12px 6px 2px;border-right:3px solid #0002}.pcats::-webkit-scrollbar{display:none}
-.pthemes{flex:none;display:flex;flex-wrap:wrap;gap:6px;padding:2px 2px 8px;border-bottom:3px solid #0002}
+.pthemes{flex:none;display:flex;flex-wrap:nowrap;gap:6px;padding:2px 2px 10px;border-bottom:3px solid #0002;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-webkit-overflow-scrolling:touch}.pthemes::-webkit-scrollbar{display:none}
 .tgrid{flex:1 1 auto;min-height:0;display:flex;flex-wrap:wrap;gap:10px;overflow-x:hidden;overflow-y:auto;align-items:flex-start;align-content:flex-start;-webkit-overflow-scrolling:touch;position:relative;padding-bottom:4px}
 .tgrid .morehint svg{width:46px;height:46px}
 .tdrop{position:absolute;inset:6px;z-index:6;display:none;align-items:center;justify-content:center;border:5px dashed #5a3a28;border-radius:30px;background:#ffe9b0ee;font-size:80px;pointer-events:none}
@@ -568,7 +571,7 @@ h1 small{display:block;font-size:.32em;color:var(--lav);text-shadow:none;letter-
 </div>
 
 <script>setTimeout(function () { var b = document.getElementById('boot'); if (b) b.className += ' slow'; }, 60000);</script>
-<script>window.__KC_PT={url:"https://ntfy.sh/kitty-city-bugs-26c66a1c82e6c81978a1",b:"1531e749a7"};</script>
+<script>window.__KC_PT={url:"https://ntfy.sh/kitty-city-bugs-26c66a1c82e6c81978a1",b:"494e9c7862"};</script>
 <script>(()=>{function e(e,t,n,r){Object.defineProperty(e,t,{get:n,set:r,enumerable:!0,configurable:!0})}function t(e){return e&&e.__esModule?e.default:e}class n{constructor(){this.chunkedMTU=16300,this._dataCount=1,this.chunk=e=>{let t=[],n=e.byteLength,r=Math.ceil(n/this.chunkedMTU),i=0,o=0;for(;o<n;){let s=Math.min(n,o+this.chunkedMTU),a=e.slice(o,s),c={__peerData:this._dataCount,n:i,data:a,total:r};t.push(c),o=s,i++}return this._dataCount++,t}}}class r{append_buffer(e){this.flush(),this._parts.push(e)}append(e){this._pieces.push(e)}flush(){if(this._pieces.length>0){let e=new Uint8Array(this._pieces);this._parts.push(e),this._pieces=[]}}toArrayBuffer(){let e=[];for(let t of this._parts)e.push(t);return function(e){let t=0;for(let n of e)t+=n.byteLength;let n=new Uint8Array(t),r=0;for(let t of e){let e=new Uint8Array(t.buffer,t.byteOffset,t.byteLength);n.set(e,r),r+=t.byteLength}return n}(e).buffer}constructor(){this.encoder=new TextEncoder,this._pieces=[],this._parts=[]}}function i(e){return new s(e).unpack()}function o(e){let t=new a,n=t.pack(e);return n instanceof Promise?n.then(()=>t.getBuffer()):t.getBuffer()}class s{unpack(){let e;let t=this.unpack_uint8();if(t<128)return t;if((224^t)<32)return(224^t)-32;if((e=160^t)<=15)return this.unpack_raw(e);if((e=176^t)<=15)return this.unpack_string(e);if((e=144^t)<=15)return this.unpack_array(e);if((e=128^t)<=15)return this.unpack_map(e);switch(t){case 192:return null;case 193:case 212:case 213:case 214:case 215:return;case 194:return!1;case 195:return!0;case 202:return this.unpack_float();case 203:return this.unpack_double();case 204:return this.unpack_uint8();case 205:return this.unpack_uint16();case 206:return this.unpack_uint32();case 207:return this.unpack_uint64();case 208:return this.unpack_int8();case 209:return this.unpack_int16();case 210:return this.unpack_int32();case 211:return this.unpack_int64();case 216:return e=this.unpack_uint16(),this.unpack_string(e);case 217:return e=this.unpack_uint32(),this.unpack_string(e);case 218:return e=this.unpack_uint16(),this.unpack_raw(e);case 219:return e=this.unpack_uint32(),this.unpack_raw(e);case 220:return e=this.unpack_uint16(),this.unpack_array(e);case 221:return e=this.unpack_uint32(),this.unpack_array(e);case 222:return e=this.unpack_uint16(),this.unpack_map(e);case 223:return e=this.unpack_uint32(),this.unpack_map(e)}}unpack_uint8(){let e=255&this.dataView[this.index];return this.index++,e}unpack_uint16(){let e=this.read(2),t=(255&e[0])*256+(255&e[1]);return this.index+=2,t}unpack_uint32(){let e=this.read(4),t=((256*e[0]+e[1])*256+e[2])*256+e[3];return this.index+=4,t}unpack_uint64(){let e=this.read(8),t=((((((256*e[0]+e[1])*256+e[2])*256+e[3])*256+e[4])*256+e[5])*256+e[6])*256+e[7];return this.index+=8,t}unpack_int8(){let e=this.unpack_uint8();return e<128?e:e-256}unpack_int16(){let e=this.unpack_uint16();return e<32768?e:e-65536}unpack_int32(){let e=this.unpack_uint32();return e<2147483648?e:e-4294967296}unpack_int64(){let e=this.unpack_uint64();return e<0x7fffffffffffffff?e:e-18446744073709552e3}unpack_raw(e){if(this.length<this.index+e)throw Error(`BinaryPackFailure: index is out of range ${this.index} ${e} ${this.length}`);let t=this.dataBuffer.slice(this.index,this.index+e);return this.index+=e,t}unpack_string(e){let t,n;let r=this.read(e),i=0,o="";for(;i<e;)(t=r[i])<160?(n=t,i++):(192^t)<32?(n=(31&t)<<6|63&r[i+1],i+=2):(224^t)<16?(n=(15&t)<<12|(63&r[i+1])<<6|63&r[i+2],i+=3):(n=(7&t)<<18|(63&r[i+1])<<12|(63&r[i+2])<<6|63&r[i+3],i+=4),o+=String.fromCodePoint(n);return this.index+=e,o}unpack_array(e){let t=Array(e);for(let n=0;n<e;n++)t[n]=this.unpack();return t}unpack_map(e){let t={};for(let n=0;n<e;n++)t[this.unpack()]=this.unpack();return t}unpack_float(){let e=this.unpack_uint32();return(0==e>>31?1:-1)*(8388607&e|8388608)*2**((e>>23&255)-127-23)}unpack_double(){let e=this.unpack_uint32(),t=this.unpack_uint32(),n=(e>>20&2047)-1023;return(0==e>>31?1:-1)*((1048575&e|1048576)*2**(n-20)+t*2**(n-52))}read(e){let t=this.index;if(t+e<=this.length)return this.dataView.subarray(t,t+e);throw Error("BinaryPackFailure: read index out of range")}constructor(e){this.index=0,this.dataBuffer=e,this.dataView=new Uint8Array(this.dataBuffer),this.length=this.dataBuffer.byteLength}}class a{getBuffer(){return this._bufferBuilder.toArrayBuffer()}pack(e){if("string"==typeof e)this.pack_string(e);else if("number"==typeof e)Math.floor(e)===e?this.pack_integer(e):this.pack_double(e);else if("boolean"==typeof e)!0===e?this._bufferBuilder.append(195):!1===e&&this._bufferBuilder.append(194);else if(void 0===e)this._bufferBuilder.append(192);else if("object"==typeof e){if(null===e)this._bufferBuilder.append(192);else{let t=e.constructor;if(e instanceof Array){let t=this.pack_array(e);if(t instanceof Promise)return t.then(()=>this._bufferBuilder.flush())}else if(e instanceof ArrayBuffer)this.pack_bin(new Uint8Array(e));else if("BYTES_PER_ELEMENT"in e)this.pack_bin(new Uint8Array(e.buffer,e.byteOffset,e.byteLength));else if(e instanceof Date)this.pack_string(e.toString());else if(e instanceof Blob)return e.arrayBuffer().then(e=>{this.pack_bin(new Uint8Array(e)),this._bufferBuilder.flush()});else if(t==Object||t.toString().startsWith("class")){let t=this.pack_object(e);if(t instanceof Promise)return t.then(()=>this._bufferBuilder.flush())}else throw Error(`Type "${t.toString()}" not yet supported`)}}else throw Error(`Type "${typeof e}" not yet supported`);this._bufferBuilder.flush()}pack_bin(e){let t=e.length;if(t<=15)this.pack_uint8(160+t);else if(t<=65535)this._bufferBuilder.append(218),this.pack_uint16(t);else if(t<=4294967295)this._bufferBuilder.append(219),this.pack_uint32(t);else throw Error("Invalid length");this._bufferBuilder.append_buffer(e)}pack_string(e){let t=this._textEncoder.encode(e),n=t.length;if(n<=15)this.pack_uint8(176+n);else if(n<=65535)this._bufferBuilder.append(216),this.pack_uint16(n);else if(n<=4294967295)this._bufferBuilder.append(217),this.pack_uint32(n);else throw Error("Invalid length");this._bufferBuilder.append_buffer(t)}pack_array(e){let t=e.length;if(t<=15)this.pack_uint8(144+t);else if(t<=65535)this._bufferBuilder.append(220),this.pack_uint16(t);else if(t<=4294967295)this._bufferBuilder.append(221),this.pack_uint32(t);else throw Error("Invalid length");let n=r=>{if(r<t){let t=this.pack(e[r]);return t instanceof Promise?t.then(()=>n(r+1)):n(r+1)}};return n(0)}pack_integer(e){if(e>=-32&&e<=127)this._bufferBuilder.append(255&e);else if(e>=0&&e<=255)this._bufferBuilder.append(204),this.pack_uint8(e);else if(e>=-128&&e<=127)this._bufferBuilder.append(208),this.pack_int8(e);else if(e>=0&&e<=65535)this._bufferBuilder.append(205),this.pack_uint16(e);else if(e>=-32768&&e<=32767)this._bufferBuilder.append(209),this.pack_int16(e);else if(e>=0&&e<=4294967295)this._bufferBuilder.append(206),this.pack_uint32(e);else if(e>=-2147483648&&e<=2147483647)this._bufferBuilder.append(210),this.pack_int32(e);else if(e>=-0x8000000000000000&&e<=0x7fffffffffffffff)this._bufferBuilder.append(211),this.pack_int64(e);else if(e>=0&&e<=18446744073709552e3)this._bufferBuilder.append(207),this.pack_uint64(e);else throw Error("Invalid integer")}pack_double(e){let t=0;e<0&&(t=1,e=-e);let n=Math.floor(Math.log(e)/Math.LN2),r=Math.floor((e/2**n-1)*4503599627370496),i=t<<31|n+1023<<20|r/4294967296&1048575;this._bufferBuilder.append(203),this.pack_int32(i),this.pack_int32(r%4294967296)}pack_object(e){let t=Object.keys(e),n=t.length;if(n<=15)this.pack_uint8(128+n);else if(n<=65535)this._bufferBuilder.append(222),this.pack_uint16(n);else if(n<=4294967295)this._bufferBuilder.append(223),this.pack_uint32(n);else throw Error("Invalid length");let r=n=>{if(n<t.length){let i=t[n];if(e.hasOwnProperty(i)){this.pack(i);let t=this.pack(e[i]);if(t instanceof Promise)return t.then(()=>r(n+1))}return r(n+1)}};return r(0)}pack_uint8(e){this._bufferBuilder.append(e)}pack_uint16(e){this._bufferBuilder.append(e>>8),this._bufferBuilder.append(255&e)}pack_uint32(e){let t=4294967295&e;this._bufferBuilder.append((4278190080&t)>>>24),this._bufferBuilder.append((16711680&t)>>>16),this._bufferBuilder.append((65280&t)>>>8),this._bufferBuilder.append(255&t)}pack_uint64(e){let t=e/4294967296,n=e%4294967296;this._bufferBuilder.append((4278190080&t)>>>24),this._bufferBuilder.append((16711680&t)>>>16),this._bufferBuilder.append((65280&t)>>>8),this._bufferBuilder.append(255&t),this._bufferBuilder.append((4278190080&n)>>>24),this._bufferBuilder.append((16711680&n)>>>16),this._bufferBuilder.append((65280&n)>>>8),this._bufferBuilder.append(255&n)}pack_int8(e){this._bufferBuilder.append(255&e)}pack_int16(e){this._bufferBuilder.append((65280&e)>>8),this._bufferBuilder.append(255&e)}pack_int32(e){this._bufferBuilder.append(e>>>24&255),this._bufferBuilder.append((16711680&e)>>>16),this._bufferBuilder.append((65280&e)>>>8),this._bufferBuilder.append(255&e)}pack_int64(e){let t=Math.floor(e/4294967296),n=e%4294967296;this._bufferBuilder.append((4278190080&t)>>>24),this._bufferBuilder.append((16711680&t)>>>16),this._bufferBuilder.append((65280&t)>>>8),this._bufferBuilder.append(255&t),this._bufferBuilder.append((4278190080&n)>>>24),this._bufferBuilder.append((16711680&n)>>>16),this._bufferBuilder.append((65280&n)>>>8),this._bufferBuilder.append(255&n)}constructor(){this._bufferBuilder=new r,this._textEncoder=new TextEncoder}}let c=!0,l=!0;function p(e,t,n){let r=e.match(t);return r&&r.length>=n&&parseInt(r[n],10)}function d(e,t,n){if(!e.RTCPeerConnection)return;let r=e.RTCPeerConnection.prototype,i=r.addEventListener;r.addEventListener=function(e,r){if(e!==t)return i.apply(this,arguments);let o=e=>{let t=n(e);t&&(r.handleEvent?r.handleEvent(t):r(t))};return this._eventMap=this._eventMap||{},this._eventMap[t]||(this._eventMap[t]=new Map),this._eventMap[t].set(r,o),i.apply(this,[e,o])};let o=r.removeEventListener;r.removeEventListener=function(e,n){if(e!==t||!this._eventMap||!this._eventMap[t]||!this._eventMap[t].has(n))return o.apply(this,arguments);let r=this._eventMap[t].get(n);return this._eventMap[t].delete(n),0===this._eventMap[t].size&&delete this._eventMap[t],0===Object.keys(this._eventMap).length&&delete this._eventMap,o.apply(this,[e,r])},Object.defineProperty(r,"on"+t,{get(){return this["_on"+t]},set(e){this["_on"+t]&&(this.removeEventListener(t,this["_on"+t]),delete this["_on"+t]),e&&this.addEventListener(t,this["_on"+t]=e)},enumerable:!0,configurable:!0})}function h(e){return"boolean"!=typeof e?Error("Argument type: "+typeof e+". Please use a boolean."):(c=e,e?"adapter.js logging disabled":"adapter.js logging enabled")}function u(e){return"boolean"!=typeof e?Error("Argument type: "+typeof e+". Please use a boolean."):(l=!e,"adapter.js deprecation warnings "+(e?"disabled":"enabled"))}function f(){"object"!=typeof window||c||"undefined"==typeof console||"function"!=typeof console.log||console.log.apply(console,arguments)}function m(e,t){l&&console.warn(e+" is deprecated, please use "+t+" instead.")}function g(e){return"[object Object]"===Object.prototype.toString.call(e)}function y(e,t,n){let r=n?"outbound-rtp":"inbound-rtp",i=new Map;if(null===t)return i;let o=[];return e.forEach(e=>{"track"===e.type&&e.trackIdentifier===t.id&&o.push(e)}),o.forEach(t=>{e.forEach(n=>{n.type===r&&n.trackId===t.id&&function e(t,n,r){!n||r.has(n.id)||(r.set(n.id,n),Object.keys(n).forEach(i=>{i.endsWith("Id")?e(t,t.get(n[i]),r):i.endsWith("Ids")&&n[i].forEach(n=>{e(t,t.get(n),r)})}))}(e,n,i)})}),i}var _,C,b,v,k,T,S,R,P,w,E,D,x,I,M,O,j={};function L(e,t){let n=e&&e.navigator;if(!n.mediaDevices)return;let r=function(e){if("object"!=typeof e||e.mandatory||e.optional)return e;let t={};return Object.keys(e).forEach(n=>{if("require"===n||"advanced"===n||"mediaSource"===n)return;let r="object"==typeof e[n]?e[n]:{ideal:e[n]};void 0!==r.exact&&"number"==typeof r.exact&&(r.min=r.max=r.exact);let i=function(e,t){return e?e+t.charAt(0).toUpperCase()+t.slice(1):"deviceId"===t?"sourceId":t};if(void 0!==r.ideal){t.optional=t.optional||[];let e={};"number"==typeof r.ideal?(e[i("min",n)]=r.ideal,t.optional.push(e),(e={})[i("max",n)]=r.ideal):e[i("",n)]=r.ideal,t.optional.push(e)}void 0!==r.exact&&"number"!=typeof r.exact?(t.mandatory=t.mandatory||{},t.mandatory[i("",n)]=r.exact):["min","max"].forEach(e=>{void 0!==r[e]&&(t.mandatory=t.mandatory||{},t.mandatory[i(e,n)]=r[e])})}),e.advanced&&(t.optional=(t.optional||[]).concat(e.advanced)),t},i=function(e,i){if(t.version>=61)return i(e);if((e=JSON.parse(JSON.stringify(e)))&&"object"==typeof e.audio){let t=function(e,t,n){t in e&&!(n in e)&&(e[n]=e[t],delete e[t])};t((e=JSON.parse(JSON.stringify(e))).audio,"autoGainControl","googAutoGainControl"),t(e.audio,"noiseSuppression","googNoiseSuppression"),e.audio=r(e.audio)}if(e&&"object"==typeof e.video){let o=e.video.facingMode;o=o&&("object"==typeof o?o:{ideal:o});let s=t.version<66;if(o&&("user"===o.exact||"environment"===o.exact||"user"===o.ideal||"environment"===o.ideal)&&!(n.mediaDevices.getSupportedConstraints&&n.mediaDevices.getSupportedConstraints().facingMode&&!s)){let t;if(delete e.video.facingMode,"environment"===o.exact||"environment"===o.ideal?t=["back","rear"]:("user"===o.exact||"user"===o.ideal)&&(t=["front"]),t)return n.mediaDevices.enumerateDevices().then(n=>{let s=(n=n.filter(e=>"videoinput"===e.kind)).find(e=>t.some(t=>e.label.toLowerCase().includes(t)));return!s&&n.length&&t.includes("back")&&(s=n[n.length-1]),s&&(e.video.deviceId=o.exact?{exact:s.deviceId}:{ideal:s.deviceId}),e.video=r(e.video),f("chrome: "+JSON.stringify(e)),i(e)})}e.video=r(e.video)}return f("chrome: "+JSON.stringify(e)),i(e)},o=function(e){return t.version>=64?e:{name:({PermissionDeniedError:"NotAllowedError",PermissionDismissedError:"NotAllowedError",InvalidStateError:"NotAllowedError",DevicesNotFoundError:"NotFoundError",ConstraintNotSatisfiedError:"OverconstrainedError",TrackStartError:"NotReadableError",MediaDeviceFailedDueToShutdown:"NotAllowedError",MediaDeviceKillSwitchOn:"NotAllowedError",TabCaptureError:"AbortError",ScreenCaptureError:"AbortError",DeviceCaptureError:"AbortError"})[e.name]||e.name,message:e.message,constraint:e.constraint||e.constraintName,toString(){return this.name+(this.message&&": ")+this.message}}};if(n.getUserMedia=(function(e,t,r){i(e,e=>{n.webkitGetUserMedia(e,t,e=>{r&&r(o(e))})})}).bind(n),n.mediaDevices.getUserMedia){let e=n.mediaDevices.getUserMedia.bind(n.mediaDevices);n.mediaDevices.getUserMedia=function(t){return i(t,t=>e(t).then(e=>{if(t.audio&&!e.getAudioTracks().length||t.video&&!e.getVideoTracks().length)throw e.getTracks().forEach(e=>{e.stop()}),new DOMException("","NotFoundError");return e},e=>Promise.reject(o(e))))}}}function A(e){e.MediaStream=e.MediaStream||e.webkitMediaStream}function B(e){if("object"!=typeof e||!e.RTCPeerConnection||"ontrack"in e.RTCPeerConnection.prototype)d(e,"track",e=>(e.transceiver||Object.defineProperty(e,"transceiver",{value:{receiver:e.receiver}}),e));else{Object.defineProperty(e.RTCPeerConnection.prototype,"ontrack",{get(){return this._ontrack},set(e){this._ontrack&&this.removeEventListener("track",this._ontrack),this.addEventListener("track",this._ontrack=e)},enumerable:!0,configurable:!0});let t=e.RTCPeerConnection.prototype.setRemoteDescription;e.RTCPeerConnection.prototype.setRemoteDescription=function(){return this._ontrackpoly||(this._ontrackpoly=t=>{t.stream.addEventListener("addtrack",n=>{let r;r=e.RTCPeerConnection.prototype.getReceivers?this.getReceivers().find(e=>e.track&&e.track.id===n.track.id):{track:n.track};let i=new Event("track");i.track=n.track,i.receiver=r,i.transceiver={receiver:r},i.streams=[t.stream],this.dispatchEvent(i)}),t.stream.getTracks().forEach(n=>{let r;r=e.RTCPeerConnection.prototype.getReceivers?this.getReceivers().find(e=>e.track&&e.track.id===n.id):{track:n};let i=new Event("track");i.track=n,i.receiver=r,i.transceiver={receiver:r},i.streams=[t.stream],this.dispatchEvent(i)})},this.addEventListener("addstream",this._ontrackpoly)),t.apply(this,arguments)}}}function F(e){if("object"==typeof e&&e.RTCPeerConnection&&!("getSenders"in e.RTCPeerConnection.prototype)&&"createDTMFSender"in e.RTCPeerConnection.prototype){let t=function(e,t){return{track:t,get dtmf(){return void 0===this._dtmf&&("audio"===t.kind?this._dtmf=e.createDTMFSender(t):this._dtmf=null),this._dtmf},_pc:e}};if(!e.RTCPeerConnection.prototype.getSenders){e.RTCPeerConnection.prototype.getSenders=function(){return this._senders=this._senders||[],this._senders.slice()};let n=e.RTCPeerConnection.prototype.addTrack;e.RTCPeerConnection.prototype.addTrack=function(e,r){let i=n.apply(this,arguments);return i||(i=t(this,e),this._senders.push(i)),i};let r=e.RTCPeerConnection.prototype.removeTrack;e.RTCPeerConnection.prototype.removeTrack=function(e){r.apply(this,arguments);let t=this._senders.indexOf(e);-1!==t&&this._senders.splice(t,1)}}let n=e.RTCPeerConnection.prototype.addStream;e.RTCPeerConnection.prototype.addStream=function(e){this._senders=this._senders||[],n.apply(this,[e]),e.getTracks().forEach(e=>{this._senders.push(t(this,e))})};let r=e.RTCPeerConnection.prototype.removeStream;e.RTCPeerConnection.prototype.removeStream=function(e){this._senders=this._senders||[],r.apply(this,[e]),e.getTracks().forEach(e=>{let t=this._senders.find(t=>t.track===e);t&&this._senders.splice(this._senders.indexOf(t),1)})}}else if("object"==typeof e&&e.RTCPeerConnection&&"getSenders"in e.RTCPeerConnection.prototype&&"createDTMFSender"in e.RTCPeerConnection.prototype&&e.RTCRtpSender&&!("dtmf"in e.RTCRtpSender.prototype)){let t=e.RTCPeerConnection.prototype.getSenders;e.RTCPeerConnection.prototype.getSenders=function(){let e=t.apply(this,[]);return e.forEach(e=>e._pc=this),e},Object.defineProperty(e.RTCRtpSender.prototype,"dtmf",{get(){return void 0===this._dtmf&&("audio"===this.track.kind?this._dtmf=this._pc.createDTMFSender(this.track):this._dtmf=null),this._dtmf}})}}function U(e){if(!("object"==typeof e&&e.RTCPeerConnection&&e.RTCRtpSender&&e.RTCRtpReceiver))return;if(!("getStats"in e.RTCRtpSender.prototype)){let t=e.RTCPeerConnection.prototype.getSenders;t&&(e.RTCPeerConnection.prototype.getSenders=function(){let e=t.apply(this,[]);return e.forEach(e=>e._pc=this),e});let n=e.RTCPeerConnection.prototype.addTrack;n&&(e.RTCPeerConnection.prototype.addTrack=function(){let e=n.apply(this,arguments);return e._pc=this,e}),e.RTCRtpSender.prototype.getStats=function(){let e=this;return this._pc.getStats().then(t=>y(t,e.track,!0))}}if(!("getStats"in e.RTCRtpReceiver.prototype)){let t=e.RTCPeerConnection.prototype.getReceivers;t&&(e.RTCPeerConnection.prototype.getReceivers=function(){let e=t.apply(this,[]);return e.forEach(e=>e._pc=this),e}),d(e,"track",e=>(e.receiver._pc=e.srcElement,e)),e.RTCRtpReceiver.prototype.getStats=function(){let e=this;return this._pc.getStats().then(t=>y(t,e.track,!1))}}if(!("getStats"in e.RTCRtpSender.prototype&&"getStats"in e.RTCRtpReceiver.prototype))return;let t=e.RTCPeerConnection.prototype.getStats;e.RTCPeerConnection.prototype.getStats=function(){if(arguments.length>0&&arguments[0]instanceof e.MediaStreamTrack){let e,t,n;let r=arguments[0];return(this.getSenders().forEach(t=>{t.track===r&&(e?n=!0:e=t)}),this.getReceivers().forEach(e=>(e.track===r&&(t?n=!0:t=e),e.track===r)),n||e&&t)?Promise.reject(new DOMException("There are more than one sender or receiver for the track.","InvalidAccessError")):e?e.getStats():t?t.getStats():Promise.reject(new DOMException("There is no sender or receiver for the track.","InvalidAccessError"))}return t.apply(this,arguments)}}function z(e){e.RTCPeerConnection.prototype.getLocalStreams=function(){return this._shimmedLocalStreams=this._shimmedLocalStreams||{},Object.keys(this._shimmedLocalStreams).map(e=>this._shimmedLocalStreams[e][0])};let t=e.RTCPeerConnection.prototype.addTrack;e.RTCPeerConnection.prototype.addTrack=function(e,n){if(!n)return t.apply(this,arguments);this._shimmedLocalStreams=this._shimmedLocalStreams||{};let r=t.apply(this,arguments);return this._shimmedLocalStreams[n.id]?-1===this._shimmedLocalStreams[n.id].indexOf(r)&&this._shimmedLocalStreams[n.id].push(r):this._shimmedLocalStreams[n.id]=[n,r],r};let n=e.RTCPeerConnection.prototype.addStream;e.RTCPeerConnection.prototype.addStream=function(e){this._shimmedLocalStreams=this._shimmedLocalStreams||{},e.getTracks().forEach(e=>{if(this.getSenders().find(t=>t.track===e))throw new DOMException("Track already exists.","InvalidAccessError")});let t=this.getSenders();n.apply(this,arguments);let r=this.getSenders().filter(e=>-1===t.indexOf(e));this._shimmedLocalStreams[e.id]=[e].concat(r)};let r=e.RTCPeerConnection.prototype.removeStream;e.RTCPeerConnection.prototype.removeStream=function(e){return this._shimmedLocalStreams=this._shimmedLocalStreams||{},delete this._shimmedLocalStreams[e.id],r.apply(this,arguments)};let i=e.RTCPeerConnection.prototype.removeTrack;e.RTCPeerConnection.prototype.removeTrack=function(e){return this._shimmedLocalStreams=this._shimmedLocalStreams||{},e&&Object.keys(this._shimmedLocalStreams).forEach(t=>{let n=this._shimmedLocalStreams[t].indexOf(e);-1!==n&&this._shimmedLocalStreams[t].splice(n,1),1===this._shimmedLocalStreams[t].length&&delete this._shimmedLocalStreams[t]}),i.apply(this,arguments)}}function N(e,t){if(!e.RTCPeerConnection)return;if(e.RTCPeerConnection.prototype.addTrack&&t.version>=65)return z(e);let n=e.RTCPeerConnection.prototype.getLocalStreams;e.RTCPeerConnection.prototype.getLocalStreams=function(){let e=n.apply(this);return this._reverseStreams=this._reverseStreams||{},e.map(e=>this._reverseStreams[e.id])};let r=e.RTCPeerConnection.prototype.addStream;e.RTCPeerConnection.prototype.addStream=function(t){if(this._streams=this._streams||{},this._reverseStreams=this._reverseStreams||{},t.getTracks().forEach(e=>{if(this.getSenders().find(t=>t.track===e))throw new DOMException("Track already exists.","InvalidAccessError")}),!this._reverseStreams[t.id]){let n=new e.MediaStream(t.getTracks());this._streams[t.id]=n,this._reverseStreams[n.id]=t,t=n}r.apply(this,[t])};let i=e.RTCPeerConnection.prototype.removeStream;function o(e,t){let n=t.sdp;return Object.keys(e._reverseStreams||[]).forEach(t=>{let r=e._reverseStreams[t],i=e._streams[r.id];n=n.replace(RegExp(i.id,"g"),r.id)}),new RTCSessionDescription({type:t.type,sdp:n})}e.RTCPeerConnection.prototype.removeStream=function(e){this._streams=this._streams||{},this._reverseStreams=this._reverseStreams||{},i.apply(this,[this._streams[e.id]||e]),delete this._reverseStreams[this._streams[e.id]?this._streams[e.id].id:e.id],delete this._streams[e.id]},e.RTCPeerConnection.prototype.addTrack=function(t,n){if("closed"===this.signalingState)throw new DOMException("The RTCPeerConnection's signalingState is 'closed'.","InvalidStateError");let r=[].slice.call(arguments,1);if(1!==r.length||!r[0].getTracks().find(e=>e===t))throw new DOMException("The adapter.js addTrack polyfill only supports a single  stream which is associated with the specified track.","NotSupportedError");if(this.getSenders().find(e=>e.track===t))throw new DOMException("Track already exists.","InvalidAccessError");this._streams=this._streams||{},this._reverseStreams=this._reverseStreams||{};let i=this._streams[n.id];if(i)i.addTrack(t),Promise.resolve().then(()=>{this.dispatchEvent(new Event("negotiationneeded"))});else{let r=new e.MediaStream([t]);this._streams[n.id]=r,this._reverseStreams[r.id]=n,this.addStream(r)}return this.getSenders().find(e=>e.track===t)},["createOffer","createAnswer"].forEach(function(t){let n=e.RTCPeerConnection.prototype[t];e.RTCPeerConnection.prototype[t]=({[t](){let e=arguments,t=arguments.length&&"function"==typeof arguments[0];return t?n.apply(this,[t=>{let n=o(this,t);e[0].apply(null,[n])},t=>{e[1]&&e[1].apply(null,t)},arguments[2]]):n.apply(this,arguments).then(e=>o(this,e))}})[t]});let s=e.RTCPeerConnection.prototype.setLocalDescription;e.RTCPeerConnection.prototype.setLocalDescription=function(){var e,t;let n;return arguments.length&&arguments[0].type&&(arguments[0]=(e=this,t=arguments[0],n=t.sdp,Object.keys(e._reverseStreams||[]).forEach(t=>{let r=e._reverseStreams[t],i=e._streams[r.id];n=n.replace(RegExp(r.id,"g"),i.id)}),new RTCSessionDescription({type:t.type,sdp:n}))),s.apply(this,arguments)};let a=Object.getOwnPropertyDescriptor(e.RTCPeerConnection.prototype,"localDescription");Object.defineProperty(e.RTCPeerConnection.prototype,"localDescription",{get(){let e=a.get.apply(this);return""===e.type?e:o(this,e)}}),e.RTCPeerConnection.prototype.removeTrack=function(e){let t;if("closed"===this.signalingState)throw new DOMException("The RTCPeerConnection's signalingState is 'closed'.","InvalidStateError");if(!e._pc)throw new DOMException("Argument 1 of RTCPeerConnection.removeTrack does not implement interface RTCRtpSender.","TypeError");if(e._pc!==this)throw new DOMException("Sender was not created by this connection.","InvalidAccessError");this._streams=this._streams||{},Object.keys(this._streams).forEach(n=>{this._streams[n].getTracks().find(t=>e.track===t)&&(t=this._streams[n])}),t&&(1===t.getTracks().length?this.removeStream(this._reverseStreams[t.id]):t.removeTrack(e.track),this.dispatchEvent(new Event("negotiationneeded")))}}function $(e,t){!e.RTCPeerConnection&&e.webkitRTCPeerConnection&&(e.RTCPeerConnection=e.webkitRTCPeerConnection),e.RTCPeerConnection&&t.version<53&&["setLocalDescription","setRemoteDescription","addIceCandidate"].forEach(function(t){let n=e.RTCPeerConnection.prototype[t];e.RTCPeerConnection.prototype[t]=({[t](){return arguments[0]=new("addIceCandidate"===t?e.RTCIceCandidate:e.RTCSessionDescription)(arguments[0]),n.apply(this,arguments)}})[t]})}function J(e,t){d(e,"negotiationneeded",e=>{let n=e.target;if(!(t.version<72)&&(!n.getConfiguration||"plan-b"!==n.getConfiguration().sdpSemantics)||"stable"===n.signalingState)return e})}e(j,"shimMediaStream",()=>A),e(j,"shimOnTrack",()=>B),e(j,"shimGetSendersWithDtmf",()=>F),e(j,"shimSenderReceiverGetStats",()=>U),e(j,"shimAddTrackRemoveTrackWithNative",()=>z),e(j,"shimAddTrackRemoveTrack",()=>N),e(j,"shimPeerConnection",()=>$),e(j,"fixNegotiationNeeded",()=>J),e(j,"shimGetUserMedia",()=>L);var V={};function G(e,t){let n=e&&e.navigator,r=e&&e.MediaStreamTrack;if(n.getUserMedia=function(e,t,r){m("navigator.getUserMedia","navigator.mediaDevices.getUserMedia"),n.mediaDevices.getUserMedia(e).then(t,r)},!(t.version>55&&"autoGainControl"in n.mediaDevices.getSupportedConstraints())){let e=function(e,t,n){t in e&&!(n in e)&&(e[n]=e[t],delete e[t])},t=n.mediaDevices.getUserMedia.bind(n.mediaDevices);if(n.mediaDevices.getUserMedia=function(n){return"object"==typeof n&&"object"==typeof n.audio&&(e((n=JSON.parse(JSON.stringify(n))).audio,"autoGainControl","mozAutoGainControl"),e(n.audio,"noiseSuppression","mozNoiseSuppression")),t(n)},r&&r.prototype.getSettings){let t=r.prototype.getSettings;r.prototype.getSettings=function(){let n=t.apply(this,arguments);return e(n,"mozAutoGainControl","autoGainControl"),e(n,"mozNoiseSuppression","noiseSuppression"),n}}if(r&&r.prototype.applyConstraints){let t=r.prototype.applyConstraints;r.prototype.applyConstraints=function(n){return"audio"===this.kind&&"object"==typeof n&&(e(n=JSON.parse(JSON.stringify(n)),"autoGainControl","mozAutoGainControl"),e(n,"noiseSuppression","mozNoiseSuppression")),t.apply(this,[n])}}}}function W(e,t){e.navigator.mediaDevices&&"getDisplayMedia"in e.navigator.mediaDevices||!e.navigator.mediaDevices||(e.navigator.mediaDevices.getDisplayMedia=function(n){if(!(n&&n.video)){let e=new DOMException("getDisplayMedia without video constraints is undefined");return e.name="NotFoundError",e.code=8,Promise.reject(e)}return!0===n.video?n.video={mediaSource:t}:n.video.mediaSource=t,e.navigator.mediaDevices.getUserMedia(n)})}function H(e){"object"==typeof e&&e.RTCTrackEvent&&"receiver"in e.RTCTrackEvent.prototype&&!("transceiver"in e.RTCTrackEvent.prototype)&&Object.defineProperty(e.RTCTrackEvent.prototype,"transceiver",{get(){return{receiver:this.receiver}}})}function Y(e,t){if("object"!=typeof e||!(e.RTCPeerConnection||e.mozRTCPeerConnection))return;!e.RTCPeerConnection&&e.mozRTCPeerConnection&&(e.RTCPeerConnection=e.mozRTCPeerConnection),t.version<53&&["setLocalDescription","setRemoteDescription","addIceCandidate"].forEach(function(t){let n=e.RTCPeerConnection.prototype[t];e.RTCPeerConnection.prototype[t]=({[t](){return arguments[0]=new("addIceCandidate"===t?e.RTCIceCandidate:e.RTCSessionDescription)(arguments[0]),n.apply(this,arguments)}})[t]});let n={inboundrtp:"inbound-rtp",outboundrtp:"outbound-rtp",candidatepair:"candidate-pair",localcandidate:"local-candidate",remotecandidate:"remote-candidate"},r=e.RTCPeerConnection.prototype.getStats;e.RTCPeerConnection.prototype.getStats=function(){let[e,i,o]=arguments;return r.apply(this,[e||null]).then(e=>{if(t.version<53&&!i)try{e.forEach(e=>{e.type=n[e.type]||e.type})}catch(t){if("TypeError"!==t.name)throw t;e.forEach((t,r)=>{e.set(r,Object.assign({},t,{type:n[t.type]||t.type}))})}return e}).then(i,o)}}function K(e){if(!("object"==typeof e&&e.RTCPeerConnection&&e.RTCRtpSender)||e.RTCRtpSender&&"getStats"in e.RTCRtpSender.prototype)return;let t=e.RTCPeerConnection.prototype.getSenders;t&&(e.RTCPeerConnection.prototype.getSenders=function(){let e=t.apply(this,[]);return e.forEach(e=>e._pc=this),e});let n=e.RTCPeerConnection.prototype.addTrack;n&&(e.RTCPeerConnection.prototype.addTrack=function(){let e=n.apply(this,arguments);return e._pc=this,e}),e.RTCRtpSender.prototype.getStats=function(){return this.track?this._pc.getStats(this.track):Promise.resolve(new Map)}}function X(e){if(!("object"==typeof e&&e.RTCPeerConnection&&e.RTCRtpSender)||e.RTCRtpSender&&"getStats"in e.RTCRtpReceiver.prototype)return;let t=e.RTCPeerConnection.prototype.getReceivers;t&&(e.RTCPeerConnection.prototype.getReceivers=function(){let e=t.apply(this,[]);return e.forEach(e=>e._pc=this),e}),d(e,"track",e=>(e.receiver._pc=e.srcElement,e)),e.RTCRtpReceiver.prototype.getStats=function(){return this._pc.getStats(this.track)}}function q(e){!e.RTCPeerConnection||"removeStream"in e.RTCPeerConnection.prototype||(e.RTCPeerConnection.prototype.removeStream=function(e){m("removeStream","removeTrack"),this.getSenders().forEach(t=>{t.track&&e.getTracks().includes(t.track)&&this.removeTrack(t)})})}function Q(e){e.DataChannel&&!e.RTCDataChannel&&(e.RTCDataChannel=e.DataChannel)}function Z(e){if(!("object"==typeof e&&e.RTCPeerConnection))return;let t=e.RTCPeerConnection.prototype.addTransceiver;t&&(e.RTCPeerConnection.prototype.addTransceiver=function(){this.setParametersPromises=[];let e=arguments[1]&&arguments[1].sendEncodings;void 0===e&&(e=[]);let n=(e=[...e]).length>0;n&&e.forEach(e=>{if("rid"in e&&!/^[a-z0-9]{0,16}$/i.test(e.rid))throw TypeError("Invalid RID value provided.");if("scaleResolutionDownBy"in e&&!(parseFloat(e.scaleResolutionDownBy)>=1))throw RangeError("scale_resolution_down_by must be >= 1.0");if("maxFramerate"in e&&!(parseFloat(e.maxFramerate)>=0))throw RangeError("max_framerate must be >= 0.0")});let r=t.apply(this,arguments);if(n){let{sender:t}=r,n=t.getParameters();"encodings"in n&&(1!==n.encodings.length||0!==Object.keys(n.encodings[0]).length)||(n.encodings=e,t.sendEncodings=e,this.setParametersPromises.push(t.setParameters(n).then(()=>{delete t.sendEncodings}).catch(()=>{delete t.sendEncodings})))}return r})}function ee(e){if(!("object"==typeof e&&e.RTCRtpSender))return;let t=e.RTCRtpSender.prototype.getParameters;t&&(e.RTCRtpSender.prototype.getParameters=function(){let e=t.apply(this,arguments);return"encodings"in e||(e.encodings=[].concat(this.sendEncodings||[{}])),e})}function et(e){if(!("object"==typeof e&&e.RTCPeerConnection))return;let t=e.RTCPeerConnection.prototype.createOffer;e.RTCPeerConnection.prototype.createOffer=function(){return this.setParametersPromises&&this.setParametersPromises.length?Promise.all(this.setParametersPromises).then(()=>t.apply(this,arguments)).finally(()=>{this.setParametersPromises=[]}):t.apply(this,arguments)}}function en(e){if(!("object"==typeof e&&e.RTCPeerConnection))return;let t=e.RTCPeerConnection.prototype.createAnswer;e.RTCPeerConnection.prototype.createAnswer=function(){return this.setParametersPromises&&this.setParametersPromises.length?Promise.all(this.setParametersPromises).then(()=>t.apply(this,arguments)).finally(()=>{this.setParametersPromises=[]}):t.apply(this,arguments)}}e(V,"shimOnTrack",()=>H),e(V,"shimPeerConnection",()=>Y),e(V,"shimSenderGetStats",()=>K),e(V,"shimReceiverGetStats",()=>X),e(V,"shimRemoveStream",()=>q),e(V,"shimRTCDataChannel",()=>Q),e(V,"shimAddTransceiver",()=>Z),e(V,"shimGetParameters",()=>ee),e(V,"shimCreateOffer",()=>et),e(V,"shimCreateAnswer",()=>en),e(V,"shimGetUserMedia",()=>G),e(V,"shimGetDisplayMedia",()=>W);var er={};function ei(e){if("object"==typeof e&&e.RTCPeerConnection){if("getLocalStreams"in e.RTCPeerConnection.prototype||(e.RTCPeerConnection.prototype.getLocalStreams=function(){return this._localStreams||(this._localStreams=[]),this._localStreams}),!("addStream"in e.RTCPeerConnection.prototype)){let t=e.RTCPeerConnection.prototype.addTrack;e.RTCPeerConnection.prototype.addStream=function(e){this._localStreams||(this._localStreams=[]),this._localStreams.includes(e)||this._localStreams.push(e),e.getAudioTracks().forEach(n=>t.call(this,n,e)),e.getVideoTracks().forEach(n=>t.call(this,n,e))},e.RTCPeerConnection.prototype.addTrack=function(e,...n){return n&&n.forEach(e=>{this._localStreams?this._localStreams.includes(e)||this._localStreams.push(e):this._localStreams=[e]}),t.apply(this,arguments)}}"removeStream"in e.RTCPeerConnection.prototype||(e.RTCPeerConnection.prototype.removeStream=function(e){this._localStreams||(this._localStreams=[]);let t=this._localStreams.indexOf(e);if(-1===t)return;this._localStreams.splice(t,1);let n=e.getTracks();this.getSenders().forEach(e=>{n.includes(e.track)&&this.removeTrack(e)})})}}function eo(e){if("object"==typeof e&&e.RTCPeerConnection&&("getRemoteStreams"in e.RTCPeerConnection.prototype||(e.RTCPeerConnection.prototype.getRemoteStreams=function(){return this._remoteStreams?this._remoteStreams:[]}),!("onaddstream"in e.RTCPeerConnection.prototype))){Object.defineProperty(e.RTCPeerConnection.prototype,"onaddstream",{get(){return this._onaddstream},set(e){this._onaddstream&&(this.removeEventListener("addstream",this._onaddstream),this.removeEventListener("track",this._onaddstreampoly)),this.addEventListener("addstream",this._onaddstream=e),this.addEventListener("track",this._onaddstreampoly=e=>{e.streams.forEach(e=>{if(this._remoteStreams||(this._remoteStreams=[]),this._remoteStreams.includes(e))return;this._remoteStreams.push(e);let t=new Event("addstream");t.stream=e,this.dispatchEvent(t)})})}});let t=e.RTCPeerConnection.prototype.setRemoteDescription;e.RTCPeerConnection.prototype.setRemoteDescription=function(){let e=this;return this._onaddstreampoly||this.addEventListener("track",this._onaddstreampoly=function(t){t.streams.forEach(t=>{if(e._remoteStreams||(e._remoteStreams=[]),e._remoteStreams.indexOf(t)>=0)return;e._remoteStreams.push(t);let n=new Event("addstream");n.stream=t,e.dispatchEvent(n)})}),t.apply(e,arguments)}}}function es(e){if("object"!=typeof e||!e.RTCPeerConnection)return;let t=e.RTCPeerConnection.prototype,n=t.createOffer,r=t.createAnswer,i=t.setLocalDescription,o=t.setRemoteDescription,s=t.addIceCandidate;t.createOffer=function(e,t){let r=arguments.length>=2?arguments[2]:arguments[0],i=n.apply(this,[r]);return t?(i.then(e,t),Promise.resolve()):i},t.createAnswer=function(e,t){let n=arguments.length>=2?arguments[2]:arguments[0],i=r.apply(this,[n]);return t?(i.then(e,t),Promise.resolve()):i};let a=function(e,t,n){let r=i.apply(this,[e]);return n?(r.then(t,n),Promise.resolve()):r};t.setLocalDescription=a,a=function(e,t,n){let r=o.apply(this,[e]);return n?(r.then(t,n),Promise.resolve()):r},t.setRemoteDescription=a,a=function(e,t,n){let r=s.apply(this,[e]);return n?(r.then(t,n),Promise.resolve()):r},t.addIceCandidate=a}function ea(e){let t=e&&e.navigator;if(t.mediaDevices&&t.mediaDevices.getUserMedia){let e=t.mediaDevices,n=e.getUserMedia.bind(e);t.mediaDevices.getUserMedia=e=>n(ec(e))}!t.getUserMedia&&t.mediaDevices&&t.mediaDevices.getUserMedia&&(t.getUserMedia=(function(e,n,r){t.mediaDevices.getUserMedia(e).then(n,r)}).bind(t))}function ec(e){return e&&void 0!==e.video?Object.assign({},e,{video:function e(t){return g(t)?Object.keys(t).reduce(function(n,r){let i=g(t[r]),o=i?e(t[r]):t[r],s=i&&!Object.keys(o).length;return void 0===o||s?n:Object.assign(n,{[r]:o})},{}):t}(e.video)}):e}function el(e){if(!e.RTCPeerConnection)return;let t=e.RTCPeerConnection;e.RTCPeerConnection=function(e,n){if(e&&e.iceServers){let t=[];for(let n=0;n<e.iceServers.length;n++){let r=e.iceServers[n];void 0===r.urls&&r.url?(m("RTCIceServer.url","RTCIceServer.urls"),(r=JSON.parse(JSON.stringify(r))).urls=r.url,delete r.url,t.push(r)):t.push(e.iceServers[n])}e.iceServers=t}return new t(e,n)},e.RTCPeerConnection.prototype=t.prototype,"generateCertificate"in t&&Object.defineProperty(e.RTCPeerConnection,"generateCertificate",{get:()=>t.generateCertificate})}function ep(e){"object"==typeof e&&e.RTCTrackEvent&&"receiver"in e.RTCTrackEvent.prototype&&!("transceiver"in e.RTCTrackEvent.prototype)&&Object.defineProperty(e.RTCTrackEvent.prototype,"transceiver",{get(){return{receiver:this.receiver}}})}function ed(e){let t=e.RTCPeerConnection.prototype.createOffer;e.RTCPeerConnection.prototype.createOffer=function(e){if(e){void 0!==e.offerToReceiveAudio&&(e.offerToReceiveAudio=!!e.offerToReceiveAudio);let t=this.getTransceivers().find(e=>"audio"===e.receiver.track.kind);!1===e.offerToReceiveAudio&&t?"sendrecv"===t.direction?t.setDirection?t.setDirection("sendonly"):t.direction="sendonly":"recvonly"===t.direction&&(t.setDirection?t.setDirection("inactive"):t.direction="inactive"):!0!==e.offerToReceiveAudio||t||this.addTransceiver("audio",{direction:"recvonly"}),void 0!==e.offerToReceiveVideo&&(e.offerToReceiveVideo=!!e.offerToReceiveVideo);let n=this.getTransceivers().find(e=>"video"===e.receiver.track.kind);!1===e.offerToReceiveVideo&&n?"sendrecv"===n.direction?n.setDirection?n.setDirection("sendonly"):n.direction="sendonly":"recvonly"===n.direction&&(n.setDirection?n.setDirection("inactive"):n.direction="inactive"):!0!==e.offerToReceiveVideo||n||this.addTransceiver("video",{direction:"recvonly"})}return t.apply(this,arguments)}}function eh(e){"object"!=typeof e||e.AudioContext||(e.AudioContext=e.webkitAudioContext)}e(er,"shimLocalStreamsAPI",()=>ei),e(er,"shimRemoteStreamsAPI",()=>eo),e(er,"shimCallbacksAPI",()=>es),e(er,"shimGetUserMedia",()=>ea),e(er,"shimConstraints",()=>ec),e(er,"shimRTCIceServerUrls",()=>el),e(er,"shimTrackEventTransceiver",()=>ep),e(er,"shimCreateOfferLegacy",()=>ed),e(er,"shimAudioContext",()=>eh);var eu={};e(eu,"shimRTCIceCandidate",()=>eg),e(eu,"shimRTCIceCandidateRelayProtocol",()=>ey),e(eu,"shimMaxMessageSize",()=>e_),e(eu,"shimSendThrowTypeError",()=>eC),e(eu,"shimConnectionState",()=>eb),e(eu,"removeExtmapAllowMixed",()=>ev),e(eu,"shimAddIceCandidateNullOrEmpty",()=>ek),e(eu,"shimParameterlessSetLocalDescription",()=>eT);var ef={};let em={};function eg(e){if(!e.RTCIceCandidate||e.RTCIceCandidate&&"foundation"in e.RTCIceCandidate.prototype)return;let n=e.RTCIceCandidate;e.RTCIceCandidate=function(e){if("object"==typeof e&&e.candidate&&0===e.candidate.indexOf("a=")&&((e=JSON.parse(JSON.stringify(e))).candidate=e.candidate.substring(2)),e.candidate&&e.candidate.length){let r=new n(e),i=t(ef).parseCandidate(e.candidate);for(let e in i)e in r||Object.defineProperty(r,e,{value:i[e]});return r.toJSON=function(){return{candidate:r.candidate,sdpMid:r.sdpMid,sdpMLineIndex:r.sdpMLineIndex,usernameFragment:r.usernameFragment}},r}return new n(e)},e.RTCIceCandidate.prototype=n.prototype,d(e,"icecandidate",t=>(t.candidate&&Object.defineProperty(t,"candidate",{value:new e.RTCIceCandidate(t.candidate),writable:"false"}),t))}function ey(e){!e.RTCIceCandidate||e.RTCIceCandidate&&"relayProtocol"in e.RTCIceCandidate.prototype||d(e,"icecandidate",e=>{if(e.candidate){let n=t(ef).parseCandidate(e.candidate.candidate);"relay"===n.type&&(e.candidate.relayProtocol=({0:"tls",1:"tcp",2:"udp"})[n.priority>>24])}return e})}function e_(e,n){if(!e.RTCPeerConnection)return;"sctp"in e.RTCPeerConnection.prototype||Object.defineProperty(e.RTCPeerConnection.prototype,"sctp",{get(){return void 0===this._sctp?null:this._sctp}});let r=function(e){if(!e||!e.sdp)return!1;let n=t(ef).splitSections(e.sdp);return n.shift(),n.some(e=>{let n=t(ef).parseMLine(e);return n&&"application"===n.kind&&-1!==n.protocol.indexOf("SCTP")})},i=function(e){let t=e.sdp.match(/mozilla...THIS_IS_SDPARTA-(\d+)/);if(null===t||t.length<2)return -1;let n=parseInt(t[1],10);return n!=n?-1:n},o=function(e){let t=65536;return"firefox"===n.browser&&(t=n.version<57?-1===e?16384:2147483637:n.version<60?57===n.version?65535:65536:2147483637),t},s=function(e,r){let i=65536;"firefox"===n.browser&&57===n.version&&(i=65535);let o=t(ef).matchPrefix(e.sdp,"a=max-message-size:");return o.length>0?i=parseInt(o[0].substring(19),10):"firefox"===n.browser&&-1!==r&&(i=2147483637),i},a=e.RTCPeerConnection.prototype.setRemoteDescription;e.RTCPeerConnection.prototype.setRemoteDescription=function(){if(this._sctp=null,"chrome"===n.browser&&n.version>=76){let{sdpSemantics:e}=this.getConfiguration();"plan-b"===e&&Object.defineProperty(this,"sctp",{get(){return void 0===this._sctp?null:this._sctp},enumerable:!0,configurable:!0})}if(r(arguments[0])){let e;let t=i(arguments[0]),n=o(t),r=s(arguments[0],t);e=0===n&&0===r?Number.POSITIVE_INFINITY:0===n||0===r?Math.max(n,r):Math.min(n,r);let a={};Object.defineProperty(a,"maxMessageSize",{get:()=>e}),this._sctp=a}return a.apply(this,arguments)}}function eC(e){if(!(e.RTCPeerConnection&&"createDataChannel"in e.RTCPeerConnection.prototype))return;function t(e,t){let n=e.send;e.send=function(){let r=arguments[0],i=r.length||r.size||r.byteLength;if("open"===e.readyState&&t.sctp&&i>t.sctp.maxMessageSize)throw TypeError("Message too large (can send a maximum of "+t.sctp.maxMessageSize+" bytes)");return n.apply(e,arguments)}}let n=e.RTCPeerConnection.prototype.createDataChannel;e.RTCPeerConnection.prototype.createDataChannel=function(){let e=n.apply(this,arguments);return t(e,this),e},d(e,"datachannel",e=>(t(e.channel,e.target),e))}function eb(e){if(!e.RTCPeerConnection||"connectionState"in e.RTCPeerConnection.prototype)return;let t=e.RTCPeerConnection.prototype;Object.defineProperty(t,"connectionState",{get(){return({completed:"connected",checking:"connecting"})[this.iceConnectionState]||this.iceConnectionState},enumerable:!0,configurable:!0}),Object.defineProperty(t,"onconnectionstatechange",{get(){return this._onconnectionstatechange||null},set(e){this._onconnectionstatechange&&(this.removeEventListener("connectionstatechange",this._onconnectionstatechange),delete this._onconnectionstatechange),e&&this.addEventListener("connectionstatechange",this._onconnectionstatechange=e)},enumerable:!0,configurable:!0}),["setLocalDescription","setRemoteDescription"].forEach(e=>{let n=t[e];t[e]=function(){return this._connectionstatechangepoly||(this._connectionstatechangepoly=e=>{let t=e.target;if(t._lastConnectionState!==t.connectionState){t._lastConnectionState=t.connectionState;let n=new Event("connectionstatechange",e);t.dispatchEvent(n)}return e},this.addEventListener("iceconnectionstatechange",this._connectionstatechangepoly)),n.apply(this,arguments)}})}function ev(e,t){if(!e.RTCPeerConnection||"chrome"===t.browser&&t.version>=71||"safari"===t.browser&&t.version>=605)return;let n=e.RTCPeerConnection.prototype.setRemoteDescription;e.RTCPeerConnection.prototype.setRemoteDescription=function(t){if(t&&t.sdp&&-1!==t.sdp.indexOf("\na=extmap-allow-mixed")){let n=t.sdp.split("\n").filter(e=>"a=extmap-allow-mixed"!==e.trim()).join("\n");e.RTCSessionDescription&&t instanceof e.RTCSessionDescription?arguments[0]=new e.RTCSessionDescription({type:t.type,sdp:n}):t.sdp=n}return n.apply(this,arguments)}}function ek(e,t){if(!(e.RTCPeerConnection&&e.RTCPeerConnection.prototype))return;let n=e.RTCPeerConnection.prototype.addIceCandidate;n&&0!==n.length&&(e.RTCPeerConnection.prototype.addIceCandidate=function(){return arguments[0]?("chrome"===t.browser&&t.version<78||"firefox"===t.browser&&t.version<68||"safari"===t.browser)&&arguments[0]&&""===arguments[0].candidate?Promise.resolve():n.apply(this,arguments):(arguments[1]&&arguments[1].apply(null),Promise.resolve())})}function eT(e,t){if(!(e.RTCPeerConnection&&e.RTCPeerConnection.prototype))return;let n=e.RTCPeerConnection.prototype.setLocalDescription;n&&0!==n.length&&(e.RTCPeerConnection.prototype.setLocalDescription=function(){let e=arguments[0]||{};if("object"!=typeof e||e.type&&e.sdp)return n.apply(this,arguments);if(!(e={type:e.type,sdp:e.sdp}).type)switch(this.signalingState){case"stable":case"have-local-offer":case"have-remote-pranswer":e.type="offer";break;default:e.type="answer"}return e.sdp||"offer"!==e.type&&"answer"!==e.type?n.apply(this,[e]):("offer"===e.type?this.createOffer:this.createAnswer).apply(this).then(e=>n.apply(this,[e]))})}em.generateIdentifier=function(){return Math.random().toString(36).substring(2,12)},em.localCName=em.generateIdentifier(),em.splitLines=function(e){return e.trim().split("\n").map(e=>e.trim())},em.splitSections=function(e){return e.split("\nm=").map((e,t)=>(t>0?"m="+e:e).trim()+"\r\n")},em.getDescription=function(e){let t=em.splitSections(e);return t&&t[0]},em.getMediaSections=function(e){let t=em.splitSections(e);return t.shift(),t},em.matchPrefix=function(e,t){return em.splitLines(e).filter(e=>0===e.indexOf(t))},em.parseCandidate=function(e){let t;let n={foundation:(t=0===e.indexOf("a=candidate:")?e.substring(12).split(" "):e.substring(10).split(" "))[0],component:{1:"rtp",2:"rtcp"}[t[1]]||t[1],protocol:t[2].toLowerCase(),priority:parseInt(t[3],10),ip:t[4],address:t[4],port:parseInt(t[5],10),type:t[7]};for(let e=8;e<t.length;e+=2)switch(t[e]){case"raddr":n.relatedAddress=t[e+1];break;case"rport":n.relatedPort=parseInt(t[e+1],10);break;case"tcptype":n.tcpType=t[e+1];break;case"ufrag":n.ufrag=t[e+1],n.usernameFragment=t[e+1];break;default:void 0===n[t[e]]&&(n[t[e]]=t[e+1])}return n},em.writeCandidate=function(e){let t=[];t.push(e.foundation);let n=e.component;"rtp"===n?t.push(1):"rtcp"===n?t.push(2):t.push(n),t.push(e.protocol.toUpperCase()),t.push(e.priority),t.push(e.address||e.ip),t.push(e.port);let r=e.type;return t.push("typ"),t.push(r),"host"!==r&&e.relatedAddress&&e.relatedPort&&(t.push("raddr"),t.push(e.relatedAddress),t.push("rport"),t.push(e.relatedPort)),e.tcpType&&"tcp"===e.protocol.toLowerCase()&&(t.push("tcptype"),t.push(e.tcpType)),(e.usernameFragment||e.ufrag)&&(t.push("ufrag"),t.push(e.usernameFragment||e.ufrag)),"candidate:"+t.join(" ")},em.parseIceOptions=function(e){return e.substring(14).split(" ")},em.parseRtpMap=function(e){let t=e.substring(9).split(" "),n={payloadType:parseInt(t.shift(),10)};return t=t[0].split("/"),n.name=t[0],n.clockRate=parseInt(t[1],10),n.channels=3===t.length?parseInt(t[2],10):1,n.numChannels=n.channels,n},em.writeRtpMap=function(e){let t=e.payloadType;void 0!==e.preferredPayloadType&&(t=e.preferredPayloadType);let n=e.channels||e.numChannels||1;return"a=rtpmap:"+t+" "+e.name+"/"+e.clockRate+(1!==n?"/"+n:"")+"\r\n"},em.parseExtmap=function(e){let t=e.substring(9).split(" ");return{id:parseInt(t[0],10),direction:t[0].indexOf("/")>0?t[0].split("/")[1]:"sendrecv",uri:t[1],attributes:t.slice(2).join(" ")}},em.writeExtmap=function(e){return"a=extmap:"+(e.id||e.preferredId)+(e.direction&&"sendrecv"!==e.direction?"/"+e.direction:"")+" "+e.uri+(e.attributes?" "+e.attributes:"")+"\r\n"},em.parseFmtp=function(e){let t;let n={},r=e.substring(e.indexOf(" ")+1).split(";");for(let e=0;e<r.length;e++)n[(t=r[e].trim().split("="))[0].trim()]=t[1];return n},em.writeFmtp=function(e){let t="",n=e.payloadType;if(void 0!==e.preferredPayloadType&&(n=e.preferredPayloadType),e.parameters&&Object.keys(e.parameters).length){let r=[];Object.keys(e.parameters).forEach(t=>{void 0!==e.parameters[t]?r.push(t+"="+e.parameters[t]):r.push(t)}),t+="a=fmtp:"+n+" "+r.join(";")+"\r\n"}return t},em.parseRtcpFb=function(e){let t=e.substring(e.indexOf(" ")+1).split(" ");return{type:t.shift(),parameter:t.join(" ")}},em.writeRtcpFb=function(e){let t="",n=e.payloadType;return void 0!==e.preferredPayloadType&&(n=e.preferredPayloadType),e.rtcpFeedback&&e.rtcpFeedback.length&&e.rtcpFeedback.forEach(e=>{t+="a=rtcp-fb:"+n+" "+e.type+(e.parameter&&e.parameter.length?" "+e.parameter:"")+"\r\n"}),t},em.parseSsrcMedia=function(e){let t=e.indexOf(" "),n={ssrc:parseInt(e.substring(7,t),10)},r=e.indexOf(":",t);return r>-1?(n.attribute=e.substring(t+1,r),n.value=e.substring(r+1)):n.attribute=e.substring(t+1),n},em.parseSsrcGroup=function(e){let t=e.substring(13).split(" ");return{semantics:t.shift(),ssrcs:t.map(e=>parseInt(e,10))}},em.getMid=function(e){let t=em.matchPrefix(e,"a=mid:")[0];if(t)return t.substring(6)},em.parseFingerprint=function(e){let t=e.substring(14).split(" ");return{algorithm:t[0].toLowerCase(),value:t[1].toUpperCase()}},em.getDtlsParameters=function(e,t){return{role:"auto",fingerprints:em.matchPrefix(e+t,"a=fingerprint:").map(em.parseFingerprint)}},em.writeDtlsParameters=function(e,t){let n="a=setup:"+t+"\r\n";return e.fingerprints.forEach(e=>{n+="a=fingerprint:"+e.algorithm+" "+e.value+"\r\n"}),n},em.parseCryptoLine=function(e){let t=e.substring(9).split(" ");return{tag:parseInt(t[0],10),cryptoSuite:t[1],keyParams:t[2],sessionParams:t.slice(3)}},em.writeCryptoLine=function(e){return"a=crypto:"+e.tag+" "+e.cryptoSuite+" "+("object"==typeof e.keyParams?em.writeCryptoKeyParams(e.keyParams):e.keyParams)+(e.sessionParams?" "+e.sessionParams.join(" "):"")+"\r\n"},em.parseCryptoKeyParams=function(e){if(0!==e.indexOf("inline:"))return null;let t=e.substring(7).split("|");return{keyMethod:"inline",keySalt:t[0],lifeTime:t[1],mkiValue:t[2]?t[2].split(":")[0]:void 0,mkiLength:t[2]?t[2].split(":")[1]:void 0}},em.writeCryptoKeyParams=function(e){return e.keyMethod+":"+e.keySalt+(e.lifeTime?"|"+e.lifeTime:"")+(e.mkiValue&&e.mkiLength?"|"+e.mkiValue+":"+e.mkiLength:"")},em.getCryptoParameters=function(e,t){return em.matchPrefix(e+t,"a=crypto:").map(em.parseCryptoLine)},em.getIceParameters=function(e,t){let n=em.matchPrefix(e+t,"a=ice-ufrag:")[0],r=em.matchPrefix(e+t,"a=ice-pwd:")[0];return n&&r?{usernameFragment:n.substring(12),password:r.substring(10)}:null},em.writeIceParameters=function(e){let t="a=ice-ufrag:"+e.usernameFragment+"\r\na=ice-pwd:"+e.password+"\r\n";return e.iceLite&&(t+="a=ice-lite\r\n"),t},em.parseRtpParameters=function(e){let t={codecs:[],headerExtensions:[],fecMechanisms:[],rtcp:[]},n=em.splitLines(e)[0].split(" ");t.profile=n[2];for(let r=3;r<n.length;r++){let i=n[r],o=em.matchPrefix(e,"a=rtpmap:"+i+" ")[0];if(o){let n=em.parseRtpMap(o),r=em.matchPrefix(e,"a=fmtp:"+i+" ");switch(n.parameters=r.length?em.parseFmtp(r[0]):{},n.rtcpFeedback=em.matchPrefix(e,"a=rtcp-fb:"+i+" ").map(em.parseRtcpFb),t.codecs.push(n),n.name.toUpperCase()){case"RED":case"ULPFEC":t.fecMechanisms.push(n.name.toUpperCase())}}}em.matchPrefix(e,"a=extmap:").forEach(e=>{t.headerExtensions.push(em.parseExtmap(e))});let r=em.matchPrefix(e,"a=rtcp-fb:* ").map(em.parseRtcpFb);return t.codecs.forEach(e=>{r.forEach(t=>{e.rtcpFeedback.find(e=>e.type===t.type&&e.parameter===t.parameter)||e.rtcpFeedback.push(t)})}),t},em.writeRtpDescription=function(e,t){let n="";n+="m="+e+" "+(t.codecs.length>0?"9":"0")+" "+(t.profile||"UDP/TLS/RTP/SAVPF")+" "+t.codecs.map(e=>void 0!==e.preferredPayloadType?e.preferredPayloadType:e.payloadType).join(" ")+"\r\nc=IN IP4 0.0.0.0\r\na=rtcp:9 IN IP4 0.0.0.0\r\n",t.codecs.forEach(e=>{n+=em.writeRtpMap(e)+em.writeFmtp(e)+em.writeRtcpFb(e)});let r=0;return t.codecs.forEach(e=>{e.maxptime>r&&(r=e.maxptime)}),r>0&&(n+="a=maxptime:"+r+"\r\n"),t.headerExtensions&&t.headerExtensions.forEach(e=>{n+=em.writeExtmap(e)}),n},em.parseRtpEncodingParameters=function(e){let t;let n=[],r=em.parseRtpParameters(e),i=-1!==r.fecMechanisms.indexOf("RED"),o=-1!==r.fecMechanisms.indexOf("ULPFEC"),s=em.matchPrefix(e,"a=ssrc:").map(e=>em.parseSsrcMedia(e)).filter(e=>"cname"===e.attribute),a=s.length>0&&s[0].ssrc,c=em.matchPrefix(e,"a=ssrc-group:FID").map(e=>e.substring(17).split(" ").map(e=>parseInt(e,10)));c.length>0&&c[0].length>1&&c[0][0]===a&&(t=c[0][1]),r.codecs.forEach(e=>{if("RTX"===e.name.toUpperCase()&&e.parameters.apt){let r={ssrc:a,codecPayloadType:parseInt(e.parameters.apt,10)};a&&t&&(r.rtx={ssrc:t}),n.push(r),i&&((r=JSON.parse(JSON.stringify(r))).fec={ssrc:a,mechanism:o?"red+ulpfec":"red"},n.push(r))}}),0===n.length&&a&&n.push({ssrc:a});let l=em.matchPrefix(e,"b=");return l.length&&(l=0===l[0].indexOf("b=TIAS:")?parseInt(l[0].substring(7),10):0===l[0].indexOf("b=AS:")?950*parseInt(l[0].substring(5),10)-16e3:void 0,n.forEach(e=>{e.maxBitrate=l})),n},em.parseRtcpParameters=function(e){let t={},n=em.matchPrefix(e,"a=ssrc:").map(e=>em.parseSsrcMedia(e)).filter(e=>"cname"===e.attribute)[0];n&&(t.cname=n.value,t.ssrc=n.ssrc);let r=em.matchPrefix(e,"a=rtcp-rsize");t.reducedSize=r.length>0,t.compound=0===r.length;let i=em.matchPrefix(e,"a=rtcp-mux");return t.mux=i.length>0,t},em.writeRtcpParameters=function(e){let t="";return e.reducedSize&&(t+="a=rtcp-rsize\r\n"),e.mux&&(t+="a=rtcp-mux\r\n"),void 0!==e.ssrc&&e.cname&&(t+="a=ssrc:"+e.ssrc+" cname:"+e.cname+"\r\n"),t},em.parseMsid=function(e){let t;let n=em.matchPrefix(e,"a=msid:");if(1===n.length)return{stream:(t=n[0].substring(7).split(" "))[0],track:t[1]};let r=em.matchPrefix(e,"a=ssrc:").map(e=>em.parseSsrcMedia(e)).filter(e=>"msid"===e.attribute);if(r.length>0)return{stream:(t=r[0].value.split(" "))[0],track:t[1]}},em.parseSctpDescription=function(e){let t;let n=em.parseMLine(e),r=em.matchPrefix(e,"a=max-message-size:");r.length>0&&(t=parseInt(r[0].substring(19),10)),isNaN(t)&&(t=65536);let i=em.matchPrefix(e,"a=sctp-port:");if(i.length>0)return{port:parseInt(i[0].substring(12),10),protocol:n.fmt,maxMessageSize:t};let o=em.matchPrefix(e,"a=sctpmap:");if(o.length>0){let e=o[0].substring(10).split(" ");return{port:parseInt(e[0],10),protocol:e[1],maxMessageSize:t}}},em.writeSctpDescription=function(e,t){let n=[];return n="DTLS/SCTP"!==e.protocol?["m="+e.kind+" 9 "+e.protocol+" "+t.protocol+"\r\n","c=IN IP4 0.0.0.0\r\n","a=sctp-port:"+t.port+"\r\n"]:["m="+e.kind+" 9 "+e.protocol+" "+t.port+"\r\n","c=IN IP4 0.0.0.0\r\n","a=sctpmap:"+t.port+" "+t.protocol+" 65535\r\n"],void 0!==t.maxMessageSize&&n.push("a=max-message-size:"+t.maxMessageSize+"\r\n"),n.join("")},em.generateSessionId=function(){return Math.random().toString().substr(2,22)},em.writeSessionBoilerplate=function(e,t,n){return"v=0\r\no="+(n||"thisisadapterortc")+" "+(e||em.generateSessionId())+" "+(void 0!==t?t:2)+" IN IP4 127.0.0.1\r\ns=-\r\nt=0 0\r\n"},em.getDirection=function(e,t){let n=em.splitLines(e);for(let e=0;e<n.length;e++)switch(n[e]){case"a=sendrecv":case"a=sendonly":case"a=recvonly":case"a=inactive":return n[e].substring(2)}return t?em.getDirection(t):"sendrecv"},em.getKind=function(e){return em.splitLines(e)[0].split(" ")[0].substring(2)},em.isRejected=function(e){return"0"===e.split(" ",2)[1]},em.parseMLine=function(e){let t=em.splitLines(e)[0].substring(2).split(" ");return{kind:t[0],port:parseInt(t[1],10),protocol:t[2],fmt:t.slice(3).join(" ")}},em.parseOLine=function(e){let t=em.matchPrefix(e,"o=")[0].substring(2).split(" ");return{username:t[0],sessionId:t[1],sessionVersion:parseInt(t[2],10),netType:t[3],addressType:t[4],address:t[5]}},em.isValidSDP=function(e){if("string"!=typeof e||0===e.length)return!1;let t=em.splitLines(e);for(let e=0;e<t.length;e++)if(t[e].length<2||"="!==t[e].charAt(1))return!1;return!0},ef=em;let eS=function({window:e}={},t={shimChrome:!0,shimFirefox:!0,shimSafari:!0}){let n=function(e){let t={browser:null,version:null};if(void 0===e||!e.navigator||!e.navigator.userAgent)return t.browser="Not a browser.",t;let{navigator:n}=e;if(n.userAgentData&&n.userAgentData.brands){let e=n.userAgentData.brands.find(e=>"Chromium"===e.brand);if(e)return{browser:"chrome",version:parseInt(e.version,10)}}return n.mozGetUserMedia?(t.browser="firefox",t.version=p(n.userAgent,/Firefox\/(\d+)\./,1)):n.webkitGetUserMedia||!1===e.isSecureContext&&e.webkitRTCPeerConnection?(t.browser="chrome",t.version=p(n.userAgent,/Chrom(e|ium)\/(\d+)\./,2)):e.RTCPeerConnection&&n.userAgent.match(/AppleWebKit\/(\d+)\./)?(t.browser="safari",t.version=p(n.userAgent,/AppleWebKit\/(\d+)\./,1),t.supportsUnifiedPlan=e.RTCRtpTransceiver&&"currentDirection"in e.RTCRtpTransceiver.prototype):t.browser="Not a supported browser.",t}(e),r={browserDetails:n,commonShim:eu,extractVersion:p,disableLog:h,disableWarnings:u,sdp:ef};switch(n.browser){case"chrome":if(!j||!j.shimPeerConnection||!t.shimChrome){f("Chrome shim is not included in this adapter release.");break}if(null===n.version){f("Chrome shim can not determine version, not shimming.");break}f("adapter.js shimming chrome."),r.browserShim=j,ek(e,n),eT(e,n),j.shimGetUserMedia(e,n),j.shimMediaStream(e,n),j.shimPeerConnection(e,n),j.shimOnTrack(e,n),j.shimAddTrackRemoveTrack(e,n),j.shimGetSendersWithDtmf(e,n),j.shimSenderReceiverGetStats(e,n),j.fixNegotiationNeeded(e,n),eg(e,n),ey(e,n),eb(e,n),e_(e,n),eC(e,n),ev(e,n);break;case"firefox":if(!V||!V.shimPeerConnection||!t.shimFirefox){f("Firefox shim is not included in this adapter release.");break}f("adapter.js shimming firefox."),r.browserShim=V,ek(e,n),eT(e,n),V.shimGetUserMedia(e,n),V.shimPeerConnection(e,n),V.shimOnTrack(e,n),V.shimRemoveStream(e,n),V.shimSenderGetStats(e,n),V.shimReceiverGetStats(e,n),V.shimRTCDataChannel(e,n),V.shimAddTransceiver(e,n),V.shimGetParameters(e,n),V.shimCreateOffer(e,n),V.shimCreateAnswer(e,n),eg(e,n),eb(e,n),e_(e,n),eC(e,n);break;case"safari":if(!er||!t.shimSafari){f("Safari shim is not included in this adapter release.");break}f("adapter.js shimming safari."),r.browserShim=er,ek(e,n),eT(e,n),er.shimRTCIceServerUrls(e,n),er.shimCreateOfferLegacy(e,n),er.shimCallbacksAPI(e,n),er.shimLocalStreamsAPI(e,n),er.shimRemoteStreamsAPI(e,n),er.shimTrackEventTransceiver(e,n),er.shimGetUserMedia(e,n),er.shimAudioContext(e,n),eg(e,n),ey(e,n),e_(e,n),eC(e,n),ev(e,n);break;default:f("Unsupported browser!")}return r}({window:"undefined"==typeof window?void 0:window}),eR=eS.default||eS,eP=new class{isWebRTCSupported(){return"undefined"!=typeof RTCPeerConnection}isBrowserSupported(){let e=this.getBrowser(),t=this.getVersion();return!!this.supportedBrowsers.includes(e)&&("chrome"===e?t>=this.minChromeVersion:"firefox"===e?t>=this.minFirefoxVersion:"safari"===e&&!this.isIOS&&t>=this.minSafariVersion)}getBrowser(){return eR.browserDetails.browser}getVersion(){return eR.browserDetails.version||0}isUnifiedPlanSupported(){let e;let t=this.getBrowser(),n=eR.browserDetails.version||0;if("chrome"===t&&n<this.minChromeVersion)return!1;if("firefox"===t&&n>=this.minFirefoxVersion)return!0;if(!window.RTCRtpTransceiver||!("currentDirection"in RTCRtpTransceiver.prototype))return!1;let r=!1;try{(e=new RTCPeerConnection).addTransceiver("audio"),r=!0}catch(e){}finally{e&&e.close()}return r}toString(){return`Supports:
     browser:${this.getBrowser()}
     version:${this.getVersion()}
@@ -4484,7 +4487,7 @@ SEASON.use({
   const SLD = {};
   bikeMesh = function (col) {
     if (!SLD[col]) { const mb = sledGeo(col); SLD[col] = { geo: mb.geometry(), mat: mat() }; XT.sled = { tris: mb.n }; XT.tris += mb.n; }
-    const g = new T.Group(), m = new T.Mesh(SLD[col].geo, SLD[col].mat); m.userData.dyn = 1; g.add(m); g.userData.wheels = []; return g;
+    const g = new T.Group(), m = new T.Mesh(SLD[col].geo, SLD[col].mat); m.userData.dyn = 1; g.add(m); g.userData.wheels = []; g.userData.seat = [.255, -.1]; return g;   // seat: a pet riding a mini sled (petcar.js) sits on the slats, not at a bike saddle's height
   };
   XT.sledK = { lean: .5, arm: -1.0, leg: -1.45, dy: -.12 };   // the rider's pose (tuned with tools/xmas/rides.js)
   bikePose = function (c, t, rolling) {
@@ -20455,25 +20458,40 @@ function schoolProps(g, d) {
   }), 0, 2.27, -4.805));
   { const c = document.createElement('canvas'); c.width = 1024; c.height = 300; const x = c.getContext('2d'), tx = kcOwn(new T.CanvasTexture(c));
     const pl = new T.Mesh(new T.PlaneGeometry(5.2, 1.51), new T.MeshBasicMaterial({ map: tx, transparent: true })); pl.position.set(-.75, 1.85, -4.79); pl.userData.dyn = 1; d.dyn.push(pl);
-    // pictures for the easy questions (v37): text = { pics: [[emoji, how many], ...], sign: '+' or '', ans: the answer once it is shown, eq: put '=' before it }
+    // pictures for the easy questions (v37): text = { pics: [[emoji, how many, a name to write under them (story problems, 18 Nov)], ...], sign: '+' or '', ans: the answer once it is shown, eq: put '=' before it }
     const boardPics = text => {
-      const G = text.pics, sg = text.sign ? 100 : 0, an = text.ans != null ? 230 : 0, per = n => n > 5 ? Math.ceil(n / 2) : n, rows = n => n > 5 ? 2 : 1;
+      const G = text.pics, sg = text.sign ? 100 : 0, at = text.ans != null ? (text.eq ? '= ' : '') + text.ans : '', af = at.length > 3 ? 150 : 190, an = at ? (at.length > 3 ? 290 : 230) : 0, per = n => n > 5 ? Math.ceil(n / 2) : n, rows = n => n > 5 ? 2 : 1;   // "= 12" gets more room and a smaller hand
+      const cap = G.some(g => g[2]) ? 72 : 0, CF = '400 66px "Patrick Hand",cursive'; x.font = CF; const cw = G.map(g => g[2] ? Math.min(300, x.measureText(g[2]).width) : 0);
       const cols = G.reduce((a, g) => a + per(g[1]), 0), mr = Math.max(...G.map(g => rows(g[1])));
-      const s = Math.max(40, Math.min(118, Math.floor(250 / mr) - 12, Math.floor((960 - an - (G.length - 1) * (sg + 12)) / cols) - 12)), st = s + 12;
-      const tw = G.reduce((a, g) => a + per(g[1]) * st - 12, 0) + (G.length - 1) * (sg + 12) + an, x0 = (1024 - tw) / 2; let gx = x0;
+      const s = Math.max(40, Math.min(118, Math.floor((250 - cap) / mr) - 12, Math.floor((960 - an - (G.length - 1) * (sg + 12)) / cols) - 12)), st = s + 12;
+      const gw = G.map((g, i) => Math.max(per(g[1]) * st - 12, cw[i])), tw = gw.reduce((a, w) => a + w, 0) + (G.length - 1) * (sg + 12) + an, x0 = (1024 - tw) / 2, k = Math.min(1, 1000 / tw); let gx = x0;
+      x.save(); x.translate(512, 150); x.scale(k, k); x.translate(-512, -150);   // long names can make the row wider than the board: the whole row shrinks to fit
       G.forEach((g, gi) => {
-        const n = g[1], pr = per(n), r = rows(n), top = (300 - (r * st - 12)) / 2;
+        const n = g[1], pr = per(n), r = rows(n), top = (300 - cap - (r * st - 12)) / 2 + (cap ? 4 : 0), px = gx + (gw[gi] - (pr * st - 12)) / 2;
         for (let i = 0; i < n; i++) { const row = i < pr ? 0 : 1, c = row ? i - pr : i, cnt = row ? n - pr : pr, ox = (pr - cnt) * st / 2;
-          if (!drawArt(x, g[0], gx + ox + c * st, top + row * st, s, () => d.board(text))) { x.font = s * .8 + 'px serif'; x.fillText(g[0], gx + ox + c * st, top + row * st + s * .8); } }
-        gx += pr * st - 12;
-        if (gi < G.length - 1) { x.fillStyle = '#f4efe4'; x.globalAlpha = .92; x.font = '400 130px "Patrick Hand",cursive'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(text.sign, gx + sg / 2 + 6, 156); gx += sg + 12; }
+          if (!drawArt(x, g[0], px + ox + c * st, top + row * st, s, () => d.board(text))) { x.font = s * .8 + 'px serif'; x.fillText(g[0], px + ox + c * st, top + row * st + s * .8); } }
+        if (g[2]) { x.fillStyle = '#f4efe4'; x.globalAlpha = .92; x.font = CF; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(g[2], gx + gw[gi] / 2, 256, 300); }
+        gx += gw[gi];
+        if (gi < G.length - 1) { x.fillStyle = '#f4efe4'; x.globalAlpha = .92; x.font = '400 130px "Patrick Hand",cursive'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(text.sign, gx + sg / 2 + 6, 156 - cap / 2); gx += sg + 12; }
       });
-      if (an) { x.fillStyle = '#ffe36a'; x.globalAlpha = .95; x.font = '400 190px "Patrick Hand",cursive'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText((text.eq ? '= ' : '') + text.ans, x0 + tw - an / 2, 160); }
+      if (an) { x.fillStyle = '#ffe36a'; x.globalAlpha = .95; x.font = '400 ' + af + 'px "Patrick Hand",cursive'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(at, x0 + tw - an / 2, 160 - cap / 2); }
+      x.restore();
       x.globalAlpha = .18; x.fillStyle = '#f4efe4'; x.fillRect(80, 290, 864, 4); x.globalAlpha = 1; tx.needsUpdate = true;
     };
+    // chalk words that are too wide for the board get a smaller font (a long shape name)
+    const fit = (t, px, max) => { x.font = '400 ' + px + 'px "Patrick Hand",cursive'; const w = x.measureText(t).width; if (w > max) x.font = '400 ' + Math.floor(px * max / w) + 'px "Patrick Hand",cursive'; };
     d.board = text => { x.clearRect(0, 0, 1024, 300);
       if (text && text.pics) return boardPics(text);
-      if (text && text.shape) { x.save(); x.translate(437, 25); x.scale(1.5, 1.5); const p = new Path2D(text.shape); x.fillStyle = text.c; x.globalAlpha = .85; x.fill(p); x.globalAlpha = 1; x.lineWidth = 5; x.strokeStyle = '#f4efe4'; x.stroke(p); x.restore(); tx.needsUpdate = true; return; } x.fillStyle = '#f4efe4'; x.globalAlpha = .92; x.textAlign = 'center'; x.textBaseline = 'middle'; x.font = '400 190px "Patrick Hand",cursive'; x.fillText(text, 512, 160); x.globalAlpha = .18; x.fillRect(80, 270, 864, 4); x.globalAlpha = 1; tx.needsUpdate = true; }; d.board(''); }
+      // a shape: text = { shape: outline, c: fill, edges / light / shade: the inner lines and the two sides of a solid shape, name: its name written beside it, big: drawn large (18 Nov) }
+      if (text && text.shape) {
+        let nw = 0; x.textAlign = 'left'; x.textBaseline = 'middle'; if (text.name) { fit(text.name, 150, 640); nw = x.measureText(text.name).width + 56; }
+        const K = text.big || text.name || text.edges ? 2.3 : 1.5, sx = (1024 - 100 * K - nw) / 2, p = new Path2D(text.shape);
+        x.save(); x.translate(sx, 150 - 50 * K); x.scale(K, K); x.fillStyle = text.c; x.globalAlpha = .85; x.fill(p);
+        if (text.light) { x.fillStyle = '#fff'; x.globalAlpha = .36; x.fill(new Path2D(text.light)); } if (text.shade) { x.fillStyle = '#1c1410'; x.globalAlpha = .3; x.fill(new Path2D(text.shade)); }
+        x.globalAlpha = 1; x.lineJoin = 'round'; x.lineCap = 'round'; x.strokeStyle = '#f4efe4'; if (text.edges) { x.lineWidth = 2.6; x.stroke(new Path2D(text.edges)); } x.lineWidth = 5 * 1.5 / K; x.stroke(p); x.restore();
+        if (text.name) { x.fillStyle = '#ffe36a'; x.globalAlpha = .95; x.fillText(text.name, sx + 100 * K + 56, 156); x.globalAlpha = 1; }
+        tx.needsUpdate = true; return; }
+      x.fillStyle = '#f4efe4'; x.globalAlpha = .92; x.textAlign = 'center'; x.textBaseline = 'middle'; fit(String(text), 190, 960); x.fillText(text, 512, 160); x.globalAlpha = .18; x.fillRect(80, 270, 864, 4); x.globalAlpha = 1; tx.needsUpdate = true; }; d.board(''); }
   // the leaderboard beside the chalkboard (Demi, 13 Nov): the real students and how many answers each got right; c5.js repaints it through roomInfo.leader when it changes
   { const c = document.createElement('canvas'); c.width = 512; c.height = 640; const x = c.getContext('2d'), tx = kcOwn(new T.CanvasTexture(c));
     g.add(box('#f4efe4', 1.98, 1.6, -4.79, .03, 1.5, .01));   // one chalk line on the main board: the problem on the left, the top students on the right (Demi, 14 Nov: not two chalkboards)
@@ -23472,7 +23490,8 @@ function onPeers(ch) {
     o.fx = Array.isArray(pr.fx) && typeof pr.fx[0] === 'number' && 'pwhl'.includes(pr.fx[1]) ? [pr.fx[0], pr.fx[1], clamp(pr.fx[2] | 0, 0, 15), clamp(pr.fx[3] | 0, 0, 5)] : null;
     o.fa = Array.isArray(pr.fm) && Array.isArray(pr.fm[4]) ? pr.fm[4].slice(0, 8).filter(n => typeof n === 'string' && n.length <= 40) : [];
     o.sr = pr.sr === 't' || pr.sr === 's' ? pr.sr : null; o.an = Array.isArray(pr.an) && typeof pr.an[0] === 'number' ? [pr.an[0], pr.an[1] ? 1 : 0, typeof pr.an[2] === 'number' ? clamp(Math.round(pr.an[2]), 0, 999) : null, typeof pr.an[3] === 'number' ? clamp(Math.round(pr.an[3]), 0, 9999) : 0] : null;   // v36.14.3: [question, right, what she answered, the n-th answer]
-    o.eq = Array.isArray(pr.eq) && pr.eq.length === 4 && pr.eq.every(v => typeof v === 'number') ? [clamp(pr.eq[0] | 0, 0, 99), clamp(pr.eq[1] | 0, 0, 4), clamp(pr.eq[2] | 0, 0, 99), pr.eq[3]] : null;
+    o.eq = Array.isArray(pr.eq) && pr.eq.length === 4 && pr.eq.every(v => typeof v === 'number') ? (op => [clamp(pr.eq[0] | 0, op > 4 ? 1 : 0, op > 4 ? 10 : 99), op, clamp(pr.eq[2] | 0, op > 4 ? 1 : 0, op > 4 ? 10 : 99), pr.eq[3]])(clamp(pr.eq[1] | 0, 0, 14)) : null;   // 5 times, 6 divide and 7 to 14 the story problems: every number 1 to 10 (Demi, 17 and 18 Nov)
+    o.sg = typeof pr.sg === 'number' ? clamp(pr.sg | 0, 4, 8) : 0;   // her picked age, sent only while she sits or teaches in the school: the class fits its youngest kitty (c5.js, Demi 18 Nov)
     if (pr.hs) { const hs = cleanHs(pr.hs); if (!o.hs || o.hs.join() !== hs.join()) { o.hs = hs; if (mode === 'town') rebuildNeighborhood(); } }
     const k = lookKey(o.look);
     if (o.key !== k) { const par = o.cat && o.cat.parent; if (par) par.remove(o.cat); o.cat = buildCat(o.look); o.key = k; o.cat.position.set(o.x, 0, o.z); }
@@ -24134,7 +24153,7 @@ FURN.forEach(f => { if (!f.icon) { const c = FURN_CATS.find(c => c.items.include
 
 // the catalog's two ways to look (v31): rooms (themed pieces join the room they belong in) and matching themes
 const FURN_ROOMS = ['Living room', 'Bedroom', 'Kitchen', 'Bathroom', 'Play', 'Decor', 'Garden'];
-const FURN_THEMES = [['🏰', 'Castle', /^(castle|hutchcastle|portrait)/], ['🎀', 'Pretty pink', /^pink/], ['🪵', 'Log cabin & woods', /^(log|hutchcabin|stump)/], ['🐠', 'Under the sea'], ['🍭', 'Candy land'], ['🌙', 'Space'], ['🪑', 'Mid-century'], ['🪞', 'Provincial'], ['🧙', 'Witch'], ['🍵', 'Tea room', /^tea(table|chair|sofa|couch|sidetable|cart|cabinet|harp|clock|vase|palm|screen|rug|art|sconce)$/], ['👑', 'Ruby salon', /^ruby/], ['❄️', 'Frost salon', /^frost/], ['🍳', 'Copper kitchen', /^rk/], ['🍽️', 'Slate kitchen', /^fk/], ['🛏️', 'Ruby bedroom', /^rb/], ['🛌', 'Frost bedroom', /^fb/], ['🛁', 'Ruby bathroom', /^rt/], ['🧼', 'Frost bathroom', /^ft/], ['🧸', 'Ruby playroom', /^ry/], ['🎠', 'Frost playroom', /^fy/], ['🎉', 'Ruby party', /^rj/], ['🎈', 'Frost party', /^fj/], ['📚', 'Ruby library', /^rl/], ['📖', 'Frost library', /^fl/], ['🏙️', 'Modern', /^mdn/], ['🍋', 'Tuscan', /^tsc/], ['🏠', 'Cozy', /^cz/], ['🎃', 'Holidays']];
+const FURN_THEMES = [['🏰', 'Castle', /^(castle|hutchcastle|portrait)/], ['🎀', 'Pretty pink', /^pink/], ['🪵', 'Log cabin & woods', /^(log|hutchcabin|stump)/], ['🐠', 'Under the sea'], ['🍭', 'Candy land'], ['🌙', 'Space'], ['🪑', 'Mid-century'], ['🪞', 'Provincial'], ['🧙', 'Witch'], ['🍵', 'Tea room', /^tea(table|chair|sofa|couch|sidetable|cart|cabinet|harp|clock|vase|palm|screen|rug|art|sconce)$/], ['👑', 'Ruby salon', /^ruby/], ['❄️', 'Frost salon', /^frost/], ['🍳', 'Copper kitchen', /^rk/], ['🍽️', 'Slate kitchen', /^fk/], ['🛏️', 'Ruby bedroom', /^rb/], ['🛌', 'Frost bedroom', /^fb/], ['🛁', 'Ruby bathroom', /^rt/], ['🧼', 'Frost bathroom', /^ft/], ['🧸', 'Ruby playroom', /^ry/], ['🎠', 'Frost playroom', /^fy/], ['🎉', 'Ruby party', /^rj/], ['🎈', 'Frost party', /^fj/], ['📚', 'Ruby library', /^rl(desk|readchair|lectern|steps|catalog|readtable|armillary|cart)$/], ['📖', 'Frost library', /^fl(desk|readchair|lectern|steps|catalog|readtable|armillary|cart)$/], ['🏙️', 'Modern', /^mdn/], ['🍋', 'Tuscan', /^tsc/], ['🏠', 'Cozy', /^cz/], ['🎃', 'Holidays']];
 function furnRoomOf(f) { const id = f.id; if (/^(ry|fy|rj|fj)/.test(id)) return 'Play'; if (/^(rl|fl)(desk|readchair|lectern|steps|catalog|readtable|armillary|cart)$/.test(id)) return 'Decor';
   if (/bed|wardrobe|nightstand|^(rb|fb)/.test(id)) return 'Bedroom'; if (/counter|stove|fridge|dining|^(rk|fk)(sink|upper|island|potrack|table|chair|bench|stool|dresser|shelf|herbs|crate|chandelier|runner)$/.test(id)) return 'Kitchen'; if (/tub|vanity|toilet|^(rt|ft)/.test(id)) return 'Bathroom';
   if (/rug|art$|kelp|telescope|candyjar|chest|xmastree|presents|snowman|ghost|cauldron|jackolantern|clock|mirror|haunt|crystal|broom/.test(id)) return 'Decor'; return 'Living room'; }
@@ -25862,7 +25881,11 @@ KCG.level = () => KCG.age() >= 6 ? 2 : 1;
      and there are four new kinds of question after the old five: making 10 (ten-frame), counting by 2s, 5s and 10s, sums to 20 and take-aways within 20.
      How hard it is comes from the kid's age (KCG.age(), 4 to 8; Demi, 25 Oct: no level picker, no Super round, nothing to unlock): each round of seven goes from easier to harder questions of the kinds that fit the age (AGE_BANDS).
      A kid always gets at least 2 stars; 3 stars for four right answers on the first try.
+   Demi, 18 Nov: the lesson is ONE MINUTE now ("a timer on this game to see how many questions you can answer in 1 minute, and have a personal record displayed that you are trying to beat"): a clock bar, a count of the answers
+     that were right on the first tap and the record for the kid's age in the top row; the questions go round the age's seven kinds until the minute is over. See lesson().
    - Treasure box: one big box in the middle of the school menu. Tap it and it wiggles, the lid pops and stars burst out, then the surprise comes out of the box. The small caption is gone: the lock picture says "tomorrow".
+   v36.18 (Demi, 17 Nov): times and divide for ages 7 and 8. Every number in them is 1 to 10 (the answer of a times question is up to 100). New kinds 10 to 14: equal groups of pictures, times with a picture of rows and columns (age 7) or numbers only (age 8),
+     sharing pictures between plates (the pile moves onto the plates when the answer is right), divide as the reverse of times (no left-overs, so every divide question has a whole answer from 1 to 10) and a missing number (3 × ? = 12). Ages 4 to 6 are unchanged.
    Same prizes and the same one-a-day rule as before (save.boxDay). save.lv.math is not used any more.
    Plug in: after games.js, kcg-icons.js, kcg-core.js, cutebtn.js (list it after colornum.js). It needs h, btn, $, orderBox, speak, sfx, tone, pick, shuffle, rand, clamp, bump, celebrate, save, persist, updateCoins, OUT_BY_ID, FURN
    from the game, and art for the emoji in ITEMS (artSvg / ART from artrt.js). The Letters and Shapes lessons of games.js are not in the menu any more (v36.1) and are not here either. */
@@ -25872,9 +25895,10 @@ KCG.level = () => KCG.age() >= 6 ? 2 : 1;
   const TENS = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'];
   const word = n => n <= 20 ? NUMW[n] : n === 100 ? 'one hundred' : TENS[(n / 10) | 0] + (n % 10 ? ' ' + NUMW[n % 10] : '');
   const ITEMS = ['🐟', '🍎', '⭐', '🧶', '🐭', '🦋', '🍪'];
-  // kinds of question (GEN): 1-2 count to 5 and 10, 3 add pictures, 4 take away pictures, 5 numbers, 6 make ten, 7 count by 2s 5s 10s, 8 sums to 20, 9 take away within 20
+  // kinds of question (GEN): 1-2 count to 5 and 10, 3 add pictures, 4 take away pictures, 5 numbers, 6 make ten, 7 count by 2s 5s 10s, 8 sums to 20, 9 take away within 20,
+  // 10 equal groups of pictures (times), 11 times (7: with rows and columns of pictures, 8: numbers only), 12 share pictures between plates (divide), 13 divide with numbers, 14 the missing number (3 × ? = 12)
   // the five questions of a round for each age: easier first, harder last
-  const AGE_BANDS = { 4: [1, 1, 1, 2, 2, 3, 3], 5: [2, 2, 3, 3, 4, 4, 4], 6: [3, 3, 4, 5, 5, 5, 6], 7: [5, 5, 6, 7, 7, 8, 8], 8: [6, 7, 7, 8, 8, 9, 9] };   // v36.4: seven questions a round (was five), easier to harder
+  const AGE_BANDS = { 4: [1, 1, 1, 2, 2, 3, 3], 5: [2, 2, 3, 3, 4, 4, 4], 6: [3, 3, 4, 5, 5, 5, 6], 7: [8, 10, 10, 12, 12, 11, 11], 8: [9, 10, 11, 12, 13, 13, 14] };   // v36.4: seven questions a round (was five), easier to harder
   const age = () => { const a = (window.KCG && KCG.age ? KCG.age() : 5) | 0; return a >= 4 && a <= 8 ? a : 5; };
   const CHEERS = ['Yes! Great job!', 'You got it!', 'Wow, that is right!', 'Super smart!', 'Hooray, well done!'];
 
@@ -25904,11 +25928,20 @@ KCG.level = () => KCG.age() >= 6 ? 2 : 1;
 .sch-prize .plus{font:800 clamp(40px,9vh,78px) var(--display);color:#fff;-webkit-text-stroke:9px ${O};paint-order:stroke fill;line-height:1}
 .sch-les{width:min(96%,1040px);display:flex;flex-direction:column;gap:clamp(10px,2.2vh,22px);align-items:stretch;margin-top:-6px}
 .sch-top{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:50px}
-.sch-prog{display:flex;gap:clamp(4px,1vw,10px)}
-.sch-prog i{display:block;width:clamp(30px,5.4vh,44px);height:clamp(30px,5.4vh,44px)}
-.sch-prog i svg{display:block;width:100%;height:100%}
-.sch-prog i.off{opacity:.28;filter:grayscale(1)}
-.sch-star-on{animation:schPop .5s}
+.sch-timer{flex:1 1 0;min-width:0;display:flex;align-items:center;gap:clamp(4px,1vw,10px)}
+.sch-ck,.sch-cup{flex:none;display:block;width:clamp(32px,6.4vh,50px);height:clamp(32px,6.4vh,50px)}
+.sch-tbar{flex:1 1 0;min-width:24px;height:clamp(16px,3vh,26px);border-radius:99px;background:#fff;border:4px solid ${O};box-shadow:0 4px 0 #0002;overflow:hidden}
+.sch-tbar i{display:block;height:100%;width:100%;background:linear-gradient(#8fe39a,#4fc46a);border-radius:99px}
+.sch-tbar.low i{background:linear-gradient(#ffc777,#f2a03d)}
+.sch-chip{flex:none;display:flex;align-items:center;gap:2px;padding:1px clamp(8px,1.4vw,14px) 1px 4px;border-radius:99px;background:#fff;border:4px solid ${O};box-shadow:0 4px 0 #0002;font:800 clamp(22px,4.6vh,36px)/1 var(--display);color:#3b2a24}
+.sch-chip svg{flex:none;display:block;width:clamp(28px,5.4vh,42px);height:clamp(28px,5.4vh,42px)}
+.sch-chip.rec{background:#fff6c9}.sch-chip.new{background:linear-gradient(#fff6c9,#ffd76a)}
+.sch-chip.pop{animation:schPop .5s}
+/* Keep the clock, cup and up to three record digits inside a narrow board (Kyle's agent, #165). */
+.sch-ready{position:absolute;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;gap:3%;font:800 clamp(36px,min(11vw,16vh),130px)/1 var(--display);color:#ffe36a;text-shadow:0 4px 0 #0003}
+.sch-ready svg{flex:none;width:24%;height:auto;max-height:58%;animation:schPop .5s}.sch-ready .sch-cup{width:20%;height:auto;max-height:46%;margin-left:0}
+.sch-ready svg:only-child{width:auto;height:58%;max-width:72%}
+.sch-ready b{flex:none;white-space:nowrap}
 @keyframes schPop{0%{transform:scale(.3)}60%{transform:scale(1.4)}100%{transform:scale(1)}}
 .sch-snd{flex:none;width:clamp(48px,7.6vh,62px);height:clamp(48px,7.6vh,62px);border-radius:50%;padding:0;display:grid;place-items:center;background:#fff;border:4px solid ${O};box-shadow:0 4px 0 #0002;cursor:pointer}
 .sch-snd:active{transform:translateY(3px);box-shadow:0 1px 0 #0002}
@@ -25935,15 +25968,24 @@ KCG.level = () => KCG.age() >= 6 ? 2 : 1;
 .sch-a.ok{background:linear-gradient(#c9f7b8,#5fd06b);animation:schPop .5s}
 .sch-a.no{opacity:.4}
 .sch-a.glow{animation:kcgHint .8s ease-in-out infinite}
+.sch-a.sch-ghost{visibility:hidden;box-sizing:border-box}
+.sch-col{display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;gap:2%}
+.sch-ring{display:flex;flex-direction:column;align-items:center;justify-content:center;border:3px dashed #f6f1e4b8;border-radius:22px;background:#ffffff10;box-sizing:border-box}
+.sch-plate{position:relative;flex:none;border-radius:50%;box-sizing:border-box;display:flex;align-items:center;justify-content:center;border:4px solid #f6f1e4;background:radial-gradient(circle,#ffffff1a 0 58%,#ffffff30 60% 100%);box-shadow:inset 0 0 0 4px #ffffff20,0 3px 0 #0003}
+.sch-plate.q{border-style:dashed;border-color:#ffe36a;animation:schQ 1.4s ease-in-out infinite}
+.sch-it.pop{animation:schPop .5s backwards}
 .sch-cheer{position:absolute;right:1.5%;bottom:-2px;z-index:6;display:flex;align-items:flex-end;gap:4px;pointer-events:none;transform-origin:100% 100%}
 .sch-cheer .bb{background:#fff;border:4px solid ${O};border-radius:24px;padding:6px 12px;margin-bottom:46%;position:relative;box-shadow:0 4px 0 #0003}
 .sch-cheer .bb:after{content:"";position:absolute;right:-12px;bottom:12px;border:8px solid transparent;border-left:14px solid ${O}}
 .sch-cheer svg.cat{display:block;height:clamp(110px,24vh,210px);width:auto}
+.sch-cheer.l{right:auto;left:1.5%;flex-direction:row-reverse;transform-origin:0 100%}
+.sch-cheer.l .bb:after{right:auto;left:-12px;border-left:8px solid transparent;border-right:14px solid ${O}}
+@media (max-width:520px){.sch-cheer svg.cat{height:min(24vh,30vw)}.sch-top{gap:4px}.sch-timer .sch-ck{width:32px;height:32px}.sch-chip{padding-right:6px;font-size:clamp(22px,6.8vw,30px)}.sch-chip svg{width:30px;height:30px}.sch-snd{width:48px;height:48px}}
 @media (max-height:520px){
 .sch-math{--w:min(28vw,38vh)}.sch-box,.sch-clock{--w:min(24vw,36vh)}.sch-menu{margin-top:-8px}
 .sch-board{height:30vh;min-height:104px}.sch-a{height:18vh;min-height:58px;font-size:min(9vh,46px)}.sch-top{min-height:42px}.sch-les{gap:8px}
 }
-@media (prefers-reduced-motion:reduce){.sch-bob,.sch-tw,.sch-q{animation:none}}`;
+@media (prefers-reduced-motion:reduce){.sch-bob,.sch-tw,.sch-q,.sch-plate.q,.sch-it.pop{animation:none}}`;
     document.head.appendChild(st);
   }
 
@@ -25953,6 +25995,15 @@ KCG.level = () => KCG.age() >= 6 ? 2 : 1;
   const itemArt = k => have(k) ? artSvg(k) : k;
   const itemEl = (k, s, faded) => `<span class="sch-it${faded ? ' f' : ''}" style="width:${s}px;height:${s}px">${itemArt(k)}</span>`;
   const nums = (n, hi = 999) => { const c = shuffle([n - 1, n + 1, n - 2, n + 2, n + 3, n - 3].filter(v => v >= 0 && v <= hi && v !== n)); return shuffle([n, c[0], c[1]]); };
+
+  // v36.18: three tiles for a times or divide question: the right one and two that a kid could mix up (the sum, one more group, a nearby number), always whole numbers from lo to hi
+  const NAMES = { '🐟': 'fish', '🍎': 'apples', '⭐': 'stars', '🧶': 'balls of yarn', '🐭': 'mice', '🦋': 'butterflies', '🍪': 'cookies' }, ONE = { '🐟': 'fish', '🍎': 'apple', '⭐': 'star', '🧶': 'ball of yarn', '🐭': 'mouse', '🦋': 'butterfly', '🍪': 'cookie' }, FOOD = ['🐟', '🍎', '🍪'];
+  const opts3 = (ans, near, lo, hi) => {
+    const ok = v => v >= lo && v <= hi && v !== ans, c = [...new Set(shuffle(near).filter(ok))];
+    for (const v of shuffle([ans + 1, ans - 1, ans + 2, ans - 2, ans + 3, ans - 3])) if (c.length < 2 && ok(v) && !c.includes(v)) c.push(v);
+    return shuffle([ans, c[0], c[1]]);
+  };
+  const eqLine = (pre, r, fs) => { const t = h('div', 'sch-chalk'); t.style.fontSize = Math.floor(fs) + 'px'; t.innerHTML = pre + (r == null ? '?' : `<span style="color:#ffe36a">${r}</span>`); return t; };
 
   /* ---------- the big pictures of the menu ---------- */
   const chalkTile = () => `<svg viewBox="0 0 400 300" aria-hidden="true">
@@ -26024,6 +26075,27 @@ KCG.level = () => KCG.age() >= 6 ? 2 : 1;
     },
     8: () => { const a = 5 + rand(8), b = Math.max(11 - a, 3) + rand(Math.min(20 - a, 12) - Math.max(11 - a, 3) + 1); return { say: `What is ${a} plus ${b}?`, ans: a + b, opts: nums(a + b, 20), draw: (B, r) => B.chalk(`${a} + ${b} = ${r == null ? '?' : r}`) }; },
     9: () => { const a = 11 + rand(10), b = 2 + rand(8); return { say: `What is ${word(a)} take away ${word(b)}?`, ans: a - b, opts: nums(a - b, 20), draw: (B, r) => B.chalk(`${a} − ${b} = ${r == null ? '?' : r}`) }; },
+    // v36.18: times and divide, ages 7 and 8. Every number you multiply or divide is 1 to 10.
+    10: () => {   // n groups of k pictures: how many altogether (the pictures are limited to 20 columns so they stay big enough to count)
+      const it = pick(ITEMS); let n, k; do { n = 1 + rand(10); k = 1 + rand(10); } while (n * (k > 5 ? Math.ceil(k / 2) : k) > 20);
+      return { say: `${word(n)} ${n === 1 ? 'group' : 'groups'} of ${word(k)} ${(k === 1 ? ONE : NAMES)[it]}. How many altogether?`, ans: n * k, opts: opts3(n * k, [n * k + k, n * k - k, n * k + n, n * k - n, n + k], 1, 100), draw: (B, r) => B.rings(n, k, it, r) };
+    },
+    11: () => {   // a times b: age 7 sees a rows of b pictures next to it (when they fit), age 8 only the numbers
+      const a = 1 + rand(10), b = 1 + rand(10), it = pick(ITEMS), arr = age() < 8;
+      return { say: `What is ${word(a)} times ${word(b)}?`, ans: a * b, opts: opts3(a * b, [a * b + a, a * b - a, a * b + b, a * b - b, a + b], 1, 100), left: 1, draw: (B, r) => B.times(a, b, it, r, arr) };
+    },
+    12: () => {   // share a pile between p plates: how many on each plate (the pile is 30 pictures at most)
+      const it = pick(FOOD); let p, r; do { p = 2 + rand(4); r = 1 + rand(10); } while (p * r > 30);
+      return { say: `Share ${word(p * r)} ${NAMES[it]} between ${word(p)} plates. How many on each plate?`, ans: r, opts: opts3(r, [r + 1, r - 1, p], 1, 10), left: 1, draw: (B, rr) => B.share(p * r, p, it, rr) };
+    },
+    13: () => {   // total divided by a is b: the reverse of a times b
+      const a = 1 + rand(10), b = 1 + rand(10), t = a * b;
+      return { say: `What is ${word(t)} divided by ${word(a)}?`, ans: b, opts: opts3(b, [b + 1, b - 1, a], 1, 10), left: 1, draw: (B, r) => B.sent(`${t} ÷ ${a} = `, r, '') };
+    },
+    14: () => {   // the missing number: a × ? = t or ? × a = t
+      const a = 1 + rand(10), b = 1 + rand(10), t = a * b, flip = rand(2) === 1;
+      return { say: flip ? `What number times ${word(a)} makes ${word(t)}?` : `${word(a)} times what number makes ${word(t)}?`, ans: b, opts: opts3(b, [b + 1, b - 1, a], 1, 10), draw: (B, r) => flip ? B.sent('', r, ` × ${a} = ${t}`) : B.sent(`${a} × `, r, ` = ${t}`) };
+    },
   };
   function count(n) { const it = pick(ITEMS); return { say: 'How many can you count?', ans: n, opts: nums(n), draw: B => B.groups([[it, n]]) }; }
 
@@ -26063,46 +26135,138 @@ KCG.level = () => KCG.age() >= 6 ? 2 : 1;
         if (r != null) { const t = h('div', 'sch-chalk'); t.style.cssText += `;font-size:${fs}px;min-width:${fs * (digs * .55 + .3)}px;text-align:center;color:#ffe36a`; t.textContent = r; inner.append(t); return; }
         const q = h('div', 'sch-q'); q.style.cssText += `;width:${fs * (digs * .55 + .5)}px;height:${fs * 1.15}px;font:800 ${fs * .8}px var(--display)`; q.textContent = '?'; inner.append(q);
       },
+      // v36.18, a number sentence in chalk, as big as chalk() writes, with the answer in yellow once it is known
+      sent(pre, r, post) { const t = eqLine(pre, r, Math.min(hh() * .66, w() / ((pre + (r == null ? '?' : r) + post).length * .5))); t.insertAdjacentText('beforeend', post); inner.innerHTML = ''; inner.append(t); },
+      // v36.18, equal groups: n dashed rings with k pictures in each, and the number sentence under them (left out when the board is very short).
+      // The rings stand in one row, or in two to four rows when that makes the pictures bigger (many small groups, or the tall narrow board of a phone held upright).
+      rings(n, k, it, r) {
+        const rows = k > 5 ? 2 : 1, per = Math.ceil(k / rows), eqH = hh() >= 130 ? Math.min(hh() * .27, 64) : 0, W = w() * .96, H = hh() - eqH; let s = 0, R = 1;
+        for (let t = 1; t <= Math.min(n, 4); t++) { const C = Math.ceil(n / t), v = Math.floor(Math.min((H - t * 6) / (t * (rows * 1.1 + .32) + (t - 1) * .3 + .2), (W - C * 6) / (C * (per * 1.1 + .32) + (C - 1) * .4), 104)); if (v > s) { s = v; R = t; } }
+        const C = Math.ceil(n / R), g = Math.max(2, Math.round(s * .1)), col = h('div', 'sch-col'); col.style.gap = Math.round(s * .3) + 'px';
+        for (let y = 0, i = 0; y < R; y++) {
+          const row = h('div', ''); row.style.cssText = `display:flex;align-items:center;justify-content:center;gap:${Math.round(s * .4)}px`;
+          for (let x = 0; x < C && i < n; x++, i++) {
+            const ring = h('div', 'sch-ring'); ring.style.padding = Math.round(s * .16) + 'px'; ring.style.gap = g + 'px'; ring.style.borderRadius = Math.round(Math.min(22, s * .5)) + 'px';
+            for (let yy = 0, c = 0; yy < rows; yy++) { const rw = h('div', 'sch-row'); rw.style.setProperty('--g', g + 'px'); for (let xx = 0; xx < Math.min(per, k - c); xx++) rw.insertAdjacentHTML('beforeend', itemEl(it, s, false)); c += per; ring.append(rw); }
+            row.append(ring);
+          }
+          col.append(row);
+        }
+        if (eqH) col.append(eqLine(`${n} × ${k} = `, r, eqH * .9)); inner.innerHTML = ''; inner.append(col);
+      },
+      // times: a × b = ?, with a rows of b pictures beside it (above it on a tall narrow board) when arr is on and the pictures stay big enough to see
+      times(a, b, it, r, arr) {
+        const W = w() * .96, tall = W < hh() * 1.7, plain = `${a} × ${b} = ${r == null ? '?' : r}`, len = plain.length * .5;
+        const s = !arr ? 0 : Math.floor(tall ? Math.min(hh() * .66 / a / 1.1, W / b / 1.1, 84) : Math.min(hh() / a / 1.12, W * .46 / b / 1.12, 84));
+        inner.innerHTML = ''; if (s < 16) return inner.append(eqLine(`${a} × ${b} = `, r, Math.min(hh() * .66, w() / len)));
+        const g = Math.max(2, Math.round(s * .08)), box = h('div', ''), fr = h('div', 'sch-grp'); fr.style.setProperty('--g', g + 'px');
+        box.style.cssText = `display:flex;flex-direction:${tall ? 'column' : 'row'};align-items:center;justify-content:center;gap:${Math.round(tall ? hh() * .04 : W * .06)}px`;
+        for (let y = 0; y < a; y++) { const rw = h('div', 'sch-row'); rw.style.setProperty('--g', g + 'px'); for (let x = 0; x < b; x++) rw.insertAdjacentHTML('beforeend', itemEl(it, s, false)); fr.append(rw); }
+        box.append(fr, eqLine(`${a} × ${b} = `, r, tall ? Math.min(hh() * .2, W / len) : Math.min(hh() * .5, W * .44 / len))); inner.append(box);
+      },
+      // divide as sharing: the pile and p plates (side by side, or the pile above the plates on a tall narrow board); when the answer is right the pile is gone and every plate has r pictures
+      share(total, p, it, r) {
+        const eqH = hh() >= 130 ? Math.min(hh() * .27, 64) : 0, H = hh() - eqH, W = w() * .96, tall = W < H * 1.7, col = h('div', 'sch-col'), main = h('div', '');
+        main.style.cssText = `display:flex;flex-direction:${tall ? 'column' : 'row'};align-items:center;justify-content:center;gap:${Math.round(tall ? H * .06 : W * .05)}px`;
+        const PW = tall ? W : W * .39, PH = tall ? H * .4 : H, LW = tall ? W : W * .55, LH = tall ? H * .52 : H * .96; let s = 0, pr = 1, d = 0, PR = 1;
+        for (let t = 1; t <= 4; t++) { const v = Math.floor(Math.min(PH / t / 1.14, PW / Math.ceil(total / t) / 1.14, 90)); if (v > s) { s = v; pr = t; } }
+        for (let t = 1; t <= 2; t++) { const v = Math.floor(Math.min(LH / t / 1.1, LW / Math.ceil(p / t) / 1.1, 180)); if (v > d) { d = v; PR = t; } }
+        const pc = Math.ceil(total / pr), g = Math.max(2, Math.round(s * .1)), pile = h('div', 'sch-grp'); pile.style.setProperty('--g', g + 'px');
+        for (let y = 0, c = 0; y < pr; y++) { const rw = h('div', 'sch-row'); rw.style.setProperty('--g', g + 'px'); for (let x = 0; x < Math.min(pc, total - c); x++) rw.insertAdjacentHTML('beforeend', itemEl(it, s, false)); c += pc; pile.append(rw); }
+        if (r != null) pile.style.visibility = 'hidden';   // it keeps its room so the plates do not jump
+        const PC = Math.ceil(p / PR), pls = h('div', 'sch-grp'); pls.style.setProperty('--g', Math.round(d * .08) + 'px');
+        for (let y = 0, i = 0; y < PR; y++) {
+          const prow = h('div', 'sch-row'); prow.style.setProperty('--g', Math.round(d * .1) + 'px');
+          for (let x = 0; x < PC && i < p; x++, i++) {
+            const pl = h('div', 'sch-plate' + (r == null ? ' q' : '')); pl.style.width = pl.style.height = d + 'px';
+            if (r != null) {
+              const rows = r > 6 ? 3 : r > 3 ? 2 : 1, per = Math.ceil(r / rows), si = Math.floor(Math.min(d * .8 / Math.hypot(per, rows), 64)), gp = h('div', 'sch-grp'); gp.style.setProperty('--g', Math.max(1, Math.round(si * .08)) + 'px');
+              for (let yy = 0, c = 0; yy < rows; yy++) { const rw = h('div', 'sch-row'); rw.style.setProperty('--g', Math.max(1, Math.round(si * .08)) + 'px'); for (let xx = 0; xx < Math.min(per, r - c); xx++) rw.insertAdjacentHTML('beforeend', itemEl(it, si, false).replace('class="sch-it', 'class="sch-it pop').replace('style="', `style="animation-delay:${i * 90 + xx * 40}ms;`)); c += per; gp.append(rw); }
+              pl.append(gp);
+            }
+            prow.append(pl);
+          }
+          pls.append(prow);
+        }
+        main.append(pile, pls); col.append(main); if (eqH) col.append(eqLine(`${total} ÷ ${p} = `, r, eqH * .9)); inner.innerHTML = ''; inner.append(col);
+      },
     };
     return B;
   };
 
-  /* ---------- the Math lesson ---------- */
+  /* ---------- the Math lesson: one minute (Demi, 18 Nov) ---------- */
+  // "there should be a timer on this game to see how many questions you can answer in 1 minute, and have a personal record displayed that you are trying to beat"
+  // The clock runs only while a question waits for its answer (not while the kitty is told to get ready, and not while the teacher cheers). A star is an answer that was right on the first tap, so tapping every tile
+  // in turn does not make a record. The record is kept for each age (save.gp.school.r4 to r8) because the questions come from the age, and it grows the moment it is beaten.
+  // Nothing is lost when the minute ends: at least 2 stars, 3 for five stars or for reaching the record. Same pay as before (a quick game).
+  const MINUTE = 60;
+  const recGet = a => { try { return clamp((save.gp && save.gp.school && save.gp.school['r' + a]) | 0, 0, 999); } catch (e) { return 0; } };
+  const recSet = (a, n) => { try { save.gp = save.gp || {}; save.gp.school = save.gp.school || {}; save.gp.school['r' + a] = n; persist(); } catch (e) {} };
+  // our own drawings for the top row: a stopwatch and a gold cup
+  const SW = `stroke="${O}" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"`;
+  const clockSvg = `<svg class="sch-ck" viewBox="0 0 100 100" aria-hidden="true"><rect x="43" y="5" width="14" height="14" rx="4" fill="#e2587c" ${SW}/><path d="M76 24l8-8" fill="none" ${SW}/><circle cx="50" cy="57" r="36" fill="#fff" ${SW}/><circle cx="50" cy="57" r="27" fill="#cfe9ff"/><path d="M50 57V38M50 57l13 7" fill="none" ${SW}/><circle cx="50" cy="57" r="4.5" fill="${O}"/></svg>`;
+  const cupSvg = `<svg class="sch-cup" viewBox="0 0 100 100" aria-hidden="true"><path d="M30 22H15c0 17 7 25 18 26M70 22h15c0 17-7 25-18 26" fill="none" stroke="${O}" stroke-width="12" stroke-linecap="round"/><path d="M30 22H15c0 17 7 25 18 26M70 22h15c0 17-7 25-18 26" fill="none" stroke="#ffd23f" stroke-width="4.5" stroke-linecap="round"/><path d="M44 58h12v15H44z" fill="#f2b705" ${SW}/><path d="M30 73h40v14H30z" fill="#b07a4a" ${SW}/><path d="M28 12h44v27c0 15-10 24-22 24s-22-9-22-24z" fill="#ffd23f" ${SW}/><path d="M38 22v17" fill="none" stroke="#fff" stroke-opacity=".8" stroke-width="6" stroke-linecap="round"/></svg>`;
   function lesson(root, done) {
     const L = KCG.life(root, 'schoolmath'); root.textContent = '';
-    const band = AGE_BANDS[age()], Q = band.length; let q = 0, first = 0, missed = false, misses = 0, locked = false, cur = null;
+    const A = age(), band = AGE_BANDS[A], Q = band.length, best0 = recGet(A), seen = [];
+    let q = 0, first = 0, missed = false, misses = 0, locked = true, cur = null, left = MINUTE, running = false, over = false, best = best0, newRec = false, lastT = 0;
     const wrap = h('div', 'sch-les'), top = h('div', 'sch-top'), board = h('div', 'sch-board'), ans = h('div', 'sch-ans');
-    const prog = h('div', 'sch-prog'); for (let i = 0; i < Q; i++) prog.insertAdjacentHTML('beforeend', '<i class="off">' + KCG.ico('star', 44) + '</i>');
-    const again = btn('sch-snd', KCG.ico('sound', 34), 'Hear it again'); again.onclick = () => { sfx.tap(); speak(cur.say); };
-    top.append(prog, again); wrap.append(top, board, ans); root.append(wrap);
+    const timer = h('div', 'sch-timer', clockSvg + '<div class="sch-tbar"><i></i></div>'), tbar = timer.lastChild, fill = tbar.firstChild;
+    const cnt = h('div', 'sch-chip', KCG.ico('star', 40) + '<b>0</b>'), rec = h('div', 'sch-chip rec', cupSvg + '<b>' + best + '</b>');
+    timer.setAttribute('aria-label', 'One minute'); cnt.setAttribute('aria-label', 'Right answers'); rec.setAttribute('aria-label', 'My record');
+    const again = btn('sch-snd', KCG.ico('sound', 34), 'Hear it again'); again.onclick = () => { sfx.tap(); if (cur) speak(cur.say); else if (!over) speak(readyLine()); };   // before the first question it says the get-ready line again
+    top.append(timer, cnt, rec, again); wrap.append(top, board, ans); root.append(wrap);
     const B = boardDraw(board);
+    const readyLine = () => best ? 'One minute! Can you beat ' + best + '? Ready, go!' : 'One minute! How many can you answer? Ready, go!';
+    const pop = el => { el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); };
     const cheer = () => {
       const c = h('div', 'sch-cheer'); c.innerHTML = `<div class="bb">${KCG.ico('star', 46)}</div>` + KCG.catBust({ fur: '#f0a04b', muz: '#fff1dc', eye: '#4caf62', glasses: true, bow: '#e2587c', shirt: '#8a5ad0', happy: true, px: 92 }).replace('<svg ', '<svg class="cat" ');
-      board.append(c); const an = c.animate([{ transform: 'translateY(120%) scale(.7)', opacity: 0 }, { transform: 'translateY(-6%) scale(1.06)', opacity: 1, offset: .3 }, { transform: 'translateY(0) scale(1)', offset: .45 }, { transform: 'translateY(0) scale(1)', offset: .8, opacity: 1 }, { transform: 'translateY(120%) scale(.8)', opacity: 0 }], { duration: 1500, easing: 'ease-out' });
-      an.onfinish = () => c.remove(); KCG.snd.ding(); speak(pick(CHEERS));
+      if (cur && cur.left) c.classList.add('l');   // v36.18: in a times or divide question the answer is on the right (the plates, the last number), so the teacher pops up on the left
+      board.append(c); const an = c.animate([{ transform: 'translateY(120%) scale(.7)', opacity: 0 }, { transform: 'translateY(-6%) scale(1.06)', opacity: 1, offset: .35 }, { transform: 'translateY(0) scale(1)', offset: .5 }, { transform: 'translateY(0) scale(1)', offset: .78, opacity: 1 }, { transform: 'translateY(120%) scale(.8)', opacity: 0 }], { duration: 1000, easing: 'ease-out' });
+      an.onfinish = () => c.remove(); KCG.snd.ding();   // no spoken cheer: the next question is read right away
+    };
+    const paintClock = () => { fill.style.width = Math.max(0, left / MINUTE * 100) + '%'; tbar.classList.toggle('low', left <= 10); };
+    // the minute is over: the answer of the open question is shown, then the usual hooray with the count and the record
+    const timeUp = () => {
+      if (over || !L.alive) return; over = true; running = false; locked = true; left = 0; paintClock(); KCG.snd.ding();
+      if (cur) { B.clear(); cur.draw(B, cur.ans); [...ans.children].forEach(o => o.classList.add(+o.textContent === cur.ans ? 'ok' : 'no')); }
+      const stars = first > 0 && (first >= 5 || first >= best0) ? 3 : 2; let shown = false;
+      // Back during the answer reveal keeps the earned coins; normal results pay through done (Kyle's agent, #164)
+      L.cleanup(() => { if (shown) return; shown = true; save.coins += stars * 5 + KCG.fairBase(L.key, stars); persist(); updateCoins(); });
+      const msg = newRec ? 'A new record! ' + first + ' in one minute!' : first ? first + ' in one minute! Your record is ' + best + '.' : 'Time is up! Good try, student!';
+      L.later(1100, () => { shown = true; KCG.finish(L, done, stars, msg); });   // a quick game: 10 coins for 2 stars, 15 for 3 (KCG.TIER schoolmath)
     };
     const next = () => {
-      if (q === Q) {
-        const stars = first >= 5 ? 3 : 2, msg = stars === 3 ? 'Amazing work, student!' : 'Great job, student!';
-        return KCG.finish(L, done, stars, msg);   // a quick game: 10 coins for 2 stars, 15 for 3 (KCG.TIER schoolmath)
-      }
-      missed = false; misses = 0; locked = false; cur = GEN[band[q]](); B.clear(); cur.draw(B);
+      if (over) return;
+      missed = false; misses = 0; locked = false; const k = band[q % Q]; cur = GEN[k](); for (let t = 0; t < 8 && seen.includes(cur.say); t++) cur = GEN[k](); seen.push(cur.say); if (seen.length > 5) seen.shift();   // the questions go round the age's seven kinds, easier to harder, and one of the last five never comes straight back
+      B.clear(); cur.draw(B);
       ans.textContent = ''; cur.opts.forEach(v => { const b = btn('sch-a', String(v), String(v)); b.onclick = () => pick1(b, v); ans.append(b); });
-      speak(cur.say);
+      speak(cur.say); running = true;
     };
     const pick1 = (b, v) => {
-      if (locked || b.disabled) return;
+      if (locked || over || b.disabled) return;
       if (v === cur.ans) {
-        locked = true; sfx.good(); if (!missed) { first++; } B.clear(); cur.draw(B, cur.ans); b.classList.add('ok'); [...ans.children].forEach(o => { if (o !== b) o.classList.add('no'); });
-        prog.children[q].classList.remove('off'); prog.children[q].classList.add('sch-star-on'); q++; cheer(); L.later(1700, next);
+        locked = true; running = false; sfx.good(); B.clear(); cur.draw(B, cur.ans); b.classList.add('ok'); [...ans.children].forEach(o => { if (o !== b) o.classList.add('no'); });
+        if (!missed) {
+          first++; cnt.lastChild.textContent = first; pop(cnt);
+          if (first > best) { best = first; newRec = true; recSet(A, best); rec.lastChild.textContent = best; rec.classList.add('new'); pop(rec); }
+        }
+        q++; cheer(); L.later(1050, next);
       } else {
         missed = true; misses++; sfx.oops(); bump(b, 'shake'); b.disabled = true; b.classList.add('no');
         if (misses >= 2) [...ans.children].forEach(o => { if (+o.textContent === cur.ans) o.classList.add('glow'); });   // two misses: the right tile glows (nothing is ever lost)
       }
     };
-    // the board needs its size, so wait one frame after it is on the page
-    requestAnimationFrame(() => L.later(0, next));
-    root.__sch = { get q() { return q; }, get first() { return first; }, get cur() { return cur; }, band, GEN, board, ans, pick1: v => { const b = [...ans.children].find(o => +o.textContent === v); if (b) pick1(b, v); } };
+    // first the clock and the record to beat on the board while the narrator says what to do, then the first question (the board needs its size, so wait one frame after it is on the page)
+    const start = () => {
+      const rd = h('div', 'sch-ready', clockSvg + (best ? cupSvg + '<b>' + best + '</b>' : '')); board.append(rd);
+      for (let i = 0; i < 3; i++) ans.append(h('div', 'sch-a sch-ghost'));   // the answer row keeps its room, so nothing jumps when the first question comes
+      speak(readyLine());
+      L.later(save.opts && save.opts.voice ? 3400 : 1800, () => { rd.remove(); next(); });
+    };
+    paintClock(); requestAnimationFrame(() => L.later(0, start));
+    L.loop((dt, t) => { const d = lastT ? Math.min(.25, t - lastT) : 0; lastT = t; if (running && !over) { left -= d; paintClock(); if (left <= 0) timeUp(); } });   // real seconds; a hidden page (no frames) stops the clock
+    root.__sch = { get q() { return q; }, get first() { return first; }, get cur() { return cur; }, get kind() { return band[q % Q]; }, get left() { return left; }, set left(v) { left = v; paintClock(); if (left <= 0 && running) timeUp(); }, get best() { return best; }, get over() { return over; }, get running() { return running; }, band, GEN, B, board, ans, pick1: v => { const b = [...ans.children].find(o => +o.textContent === v); if (b) pick1(b, v); } };
   }
 
   /* ---------- the Treasure box ---------- */
@@ -26777,6 +26941,39 @@ KCG.level = () => KCG.age() >= 6 ? 2 : 1;
     return s;
   };
 
+  /* ---------- the helicopter (Demi, 18 Nov: "add a helicopter"): a round cabin with a big glass front, a tail boom with a fin and a little side rotor, two skids; on Go the rotors turn, it lifts straight up, flies a loop and lands where it stood ----------
+     The body is drawn in the side plane along u (UPL: x along the body, 49.2 per tile, y straight up), once on the near side and once on the far side, and the outline round both is the part of the body seen from above. */
+  const heli = c => {
+    const h = 13, w = .12, gl = '#bfe6f7', O = P(0, 0, h), L = ([x, y], dv = 0) => [O[0] + x * .894 - dv * HX, O[1] + x * .447 + y + dv * HY];      // a point of the side picture, moved to the near (dv > 0) or far side
+    const egg = (k = 1) => { const a = []; for (let i = 0; i < 28; i++) { const t = i / 28 * Math.PI * 2, cx = Math.cos(t), sy = Math.sin(t); a.push([4 + 19 * cx * (cx > 0 ? 1 : .92) * k, -4 + (sy > 0 ? 11.5 : 13) * sy * k]); } return a; };
+    const cab = egg(), glass = egg().filter(([x, y]) => x > 6 && y < 3).concat([[6, 3], [6, -16]]).sort((a, b) => Math.atan2(a[1] + 4, a[0] - 4) - Math.atan2(b[1] + 4, b[0] - 4));
+    const boom = [[-8, -9], [-50, -7.5], [-50, -3.5], [-8, 1]], up = sh(c.body, .15), dk = sh(c.body, -.17);
+    let s = `<g class="mc-gs">${shadow(30, 14, 3)}</g>`;
+    const skid = sv => { const a = P(-.36, sv, 2.4), b = P(.3, sv, 2.4), cq = P(.39, sv, 2.4), tip = P(.42, sv, 6.5), d = `M${pt(a)}L${pt(b)}Q${pt(cq)} ${pt(tip)}`; return `<path d="${d}" fill="none" stroke="${K}" stroke-width="5.400" stroke-linecap="round"/><path d="${d}" fill="none" stroke="${c.rotor}" stroke-width="2.600" stroke-linecap="round"/>` + stick(P(-.16, sv, 2.6), P(-.1, sv * .45, h - 6.5), c.rotor, 2, 1.8) + stick(P(.17, sv, 2.6), P(.12, sv * .45, h - 6.5), c.rotor, 2, 1.8); };
+    s += skid(-.19);
+    // the tail: the boom (top seen from above, then the near side), a fin in the paint's second color, the little rotor on the near side of the fin
+    s += poly(hull(boom.map(q => L(q, -.05)).concat(boom.map(q => L(q, .05)))), up, 2.4) + poly(boom.map(q => L(q, .05)), c.body, 2.4);
+    s += poly([L([-40, -7.6], .05), L([-49, -24], .05), L([-54, -24], .05), L([-52, -4], .05)], c.stripe, 2.4);
+    s += poly([L([-38, -5.5], -.13), L([-44, -5.5], -.13), L([-45, -5.5], .2), L([-39, -5.5], .2)], dk, 2);      // the little tail wing across the boom
+    { const [tx, ty] = L([-50, -15], .1), bl = `<path d="M0 -8.500Q1.800 -4 1.400 0Q0 1.200 -1.400 0Q-1.800 -4 0 -8.500Z" fill="#c9ced9" stroke="${K}" stroke-width="1.300" stroke-linejoin="round"/>`;
+      s += `<g transform="translate(${n1(tx)} ${n1(ty)})"><g transform="${UPL}"><g class="mc-prop"><g transform="rotate(20)">${bl}<g transform="rotate(180)">${bl}</g></g></g><circle r="2.200" fill="#8d97a8" stroke="${K}" stroke-width="1.300"/></g></g>`; }
+    // the cabin: the outline round the near and far sides (the roof and the nose seen from above), the glass across the front, then the near side
+    s += poly(hull(cab.map(q => L(q, -w)).concat(cab.map(q => L(q, w)))), up, 3);
+    s += poly(hull(glass.map(q => L(q, -w)).concat(glass.map(q => L(q, w)))), sh(gl, -.1), 2);
+    s += poly(cab.map(q => L(q, w)), c.body, 3);
+    s += poly([L([-12.6, -.5], w), L([6.5, -.5], w), L([6.5, 3.5], w), L([-12.2, 3.5], w)], c.stripe, 1.6);      // a band along the side, up to the glass
+    s += poly(glass.map(q => L(q, w)), gl, 2.2) + seg(L([9, -12], w), L([16, -6], w), '#fff', 1.8, 'opacity=".8"');
+    s += poly([L([-8, -12], w), L([2.5, -12], w), L([2.5, -1], w), L([-8, -1], w)], gl, 2) + seg(L([-6, -10], w), L([-3, -10], w), '#fff', 1.5, 'opacity=".8"');   // the door window
+    s += seg(L([-9, -14.5], w), L([1, -15.5], w), '#fff', 2, 'opacity=".5"');
+    s += box(-.17, .05, -.07, .07, h + 14, h + 19.5, c.body, { sw: 2.2 });   // the engine hump on the roof
+    // the mast and the main rotor: two long blades lying flat (they turn on Go)
+    const [mx, my] = P(-.06, 0, h + 19.5), bl = (a) => `<g transform="rotate(${a})"><path d="M2 -3.400L45 -2.800Q48.500 0 45 2.800L2 3.400Z" fill="${c.rotor}" stroke="${K}" stroke-width="1.600" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></g>`;
+    s += stick([mx, my], [mx, my - 6], '#8d97a8', 2.600, 2);
+    s += `<g transform="translate(${n1(mx)} ${n1(my - 6)})"><g transform="matrix(1 0 0 .5 0 0)"><g class="mc-prop">${bl(25)}${bl(205)}</g></g><ellipse rx="4" ry="2.400" fill="${c.rotor}" stroke="${K}" stroke-width="1.600"/></g>`;
+    s += skid(.19);
+    return s;
+  };
+
   /* ---------- the pirate ship (it goes on the water only; on Go it sails along the river) ---------- */
   const hullW = u => { const t = Math.min(1, Math.max(0, (u + .4) / .86)); return .19 * (1 - Math.pow(t, 2.4)) * (.78 + .22 * Math.min(1, t * 5)); };
   const hullZ = u => 13 + 5 * Math.pow(Math.max(0, (u + .1) / .56), 2);                // the deck rises toward the bow
@@ -26888,6 +27085,35 @@ KCG.level = () => KCG.age() >= 6 ? 2 : 1;
     return s;
   };
 
+  /* ---------- the circus tent (Demi, 18 Nov: "add a ... circus tent"): a round big top with stripes that dips between the peak and the edge, a scalloped edge, a striped wall with the door flaps tied back, ropes out to stakes, a flag on the top pole ---------- */
+  const circus = c => {
+    const r = .46, zw = 25, H = 38, top = zw + H, [x0, y0] = P(0, 0), rx = RX(r), ry = RY(r), N = 10, W2 = '#fffaf0', PI = Math.PI;
+    const E = (th, z, k = 1) => [x0 + Math.cos(th) * rx * k, y0 + Math.sin(th) * ry * k - z], ap = [x0, y0 - top];
+    const C = th => E(th, zw + H * .3, .4), lit = th => Math.cos(th) < .42, col = (i, cc) => i % 2 ? cc : W2;
+    const rope = th => seg(E(th, zw - 1), E(th, 0, 1.38), '#9a7a58', 1.3) + stick(E(th, -.5, 1.38), E(th, 3, 1.4), '#9a7350', 1.4, 1.4);
+    let s = shadow(48, 23, 6);
+    [3.6, 4.4, 5.2, 6].forEach(th => { s += rope(th); });                                   // the ropes behind the tent
+    // the wall: vertical stripes round the front, darker on the right
+    for (let i = 0; i < N; i++) { const a = i * PI / N, b = (i + 1) * PI / N, f = col(i, c.wall), m = (a + b) / 2;
+      s += `<path d="M${pt(E(a, zw))}L${pt(E(a, 0))}A${n1(rx)} ${n1(ry)} 0 0 1 ${pt(E(b, 0))}L${pt(E(b, zw))}A${n1(rx)} ${n1(ry)} 0 0 0 ${pt(E(a, zw))}Z" fill="${lit(m) ? f : sh(f, -.17)}" stroke="${K}" stroke-width="1.200" stroke-linejoin="round"/>`; }
+    s += `<path d="M${pt(E(0, zw))}L${pt(E(0, 0))}A${n1(rx)} ${n1(ry)} 0 0 1 ${pt(E(PI, 0))}L${pt(E(PI, zw))}" fill="none" stroke="${K}" stroke-width="3" stroke-linejoin="round"/>`;
+    // the door: a dark way in, with the two flaps pulled aside and tied
+    { const a = 1.74, b = 2.26, m = 2, dd = `M${pt(E(a, 0))}L${pt(E(a, 7))}L${pt(E(m, 18.5))}L${pt(E(b, 7))}L${pt(E(b, 0))}A${n1(rx)} ${n1(ry)} 0 0 0 ${pt(E(a, 0))}Z`;
+      s += `<path d="${dd}" fill="#4a3640" stroke="${K}" stroke-width="2.200" stroke-linejoin="round"/>` + `<path d="M${pt(E(a + .06, 0))}A${n1(rx)} ${n1(ry)} 0 0 1 ${pt(E(b - .06, 0))}L${pt(E(b - .1, 4))}L${pt(E(a + .1, 4))}Z" fill="#6b4f5a"/>`;
+      s += poly([E(m, 19.5), E(a + .02, 7.5), E(a - .2, 0), E(a - .04, 0)], c.roof, 2) + poly([E(m, 19.5), E(b - .02, 7.5), E(b + .2, 0), E(b + .04, 0)], c.roof, 2); }
+    // the big top: the back half first (it shows over the peak's sides where the roof is flat), then the front half
+    const wedge = (a, b, f) => `<path d="M${pt(ap)}Q${pt(C(a))} ${pt(E(a, zw))}A${n1(rx)} ${n1(ry)} 0 0 1 ${pt(E(b, zw))}Q${pt(C(b))} ${pt(ap)}Z" fill="${f}" stroke="${K}" stroke-width="1.300" stroke-linejoin="round"/>`;
+    for (let i = 0; i < N; i++) { const a = PI + i * PI / N, b = a + PI / N; s += wedge(a, b, col(i, c.roof)); }
+    s += `<path d="M${pt(E(PI, zw))}A${n1(rx)} ${n1(ry)} 0 0 1 ${pt(E(0, zw))}" fill="none" stroke="${K}" stroke-width="3"/>`;
+    for (let i = 0; i < N; i++) { const a = i * PI / N, b = a + PI / N, f = col(i, c.roof); s += wedge(a, b, lit((a + b) / 2) ? f : sh(f, -.17)); }
+    s += `<path d="M${pt(E(0, zw))}Q${pt(C(0))} ${pt(ap)}Q${pt(C(PI))} ${pt(E(PI, zw))}" fill="none" stroke="${K}" stroke-width="3" stroke-linejoin="round"/>`;
+    // the scalloped edge hanging from the rim, all along the front
+    for (let i = 0; i < N; i++) { const a = i * PI / N, b = a + PI / N, m = (a + b) / 2, f = col(i + 1, c.roof);
+      s += `<path d="M${pt(E(a, zw))}Q${pt(E(m, zw - 7))} ${pt(E(b, zw))}Z" fill="${lit(m) ? f : sh(f, -.17)}" stroke="${K}" stroke-width="1.600" stroke-linejoin="round"/>`; }
+    [.3, .95, 2.95].forEach(th => { s += rope(th); });                                       // the ropes in front
+    s += stick(ap, [ap[0], ap[1] - 6], '#c9a46a', 2.400, 2.200) + pennant(ap[0], ap[1] - 5, 12, c.flag, 15);
+    return s;
+  };
   const mk = (id, cat, name, fn, vb, o = {}) => {
     const it = Object.assign({ id, cat, name, vb, on: cat === 'v' ? 'road' : cat === 'k' ? 'walk' : 'lot', parts: {} }, o);
     it.first = it.parts; it.parts = blank(it.first);
@@ -26966,8 +27192,10 @@ KCG.level = () => KCG.age() >= 6 ? 2 : 1;
     mk('ferris', 'b', 'Ferris wheel', (r, c) => ferris(c), '-52 -92 104 112', { tab: 'f', run: 'css', parts: { rim: '#ff6f91', cabin: '#ffd23f', frame: '#5cb8e8', base: '#cfc9d8' } }),
     mk('merry', 'b', 'Merry-go-round', (r, c) => merry(c), '-56 -100 112 120', { tab: 'f', run: 'css', parts: { roof: '#e8584a', horse: '#fffaf0', base: '#ffd23f' } }),
     mk('eiffel', 'b', 'Eiffel Tower', (r, c) => eiffel(c), '-50 -176 100 202', { tab: 'f', top: 340, parts: { iron: '#8a7a68', deck: '#b8a98f', flag: '#e2483d' } }),
+    mk('circus', 'b', 'Circus tent', (r, c) => circus(c), '-58 -96 116 124', { tab: 'f', parts: { roof: '#e8584a', wall: '#ffd23f', flag: '#5cb8e8' } }),
     mk('balloon', 'g', 'Hot air balloon', (r, c) => balloon(c), '-36 -104 72 116', { tab: 'v', run: 'fly', top: 112, parts: { env: '#ff6f91', stripe: '#ffd23f', basket: '#c98f55' } }),
     mk('plane', 'g', 'Airplane', (r, c) => plane(c), '-52 -66 104 84', { tab: 'v', run: 'fly', parts: { body: '#fffaf0', wing: '#5cb8e8', stripe: '#e8584a' } }),
+    mk('heli', 'g', 'Helicopter', (r, c) => heli(c), '-62 -70 120 96', { tab: 'v', run: 'fly', parts: { body: '#e8584a', stripe: '#fffaf0', rotor: '#5a6070' } }),
     mk('ship', 'g', 'Pirate ship', (r, c) => ship(c), '-52 -86 104 112', { tab: 'v', run: 'sail', water: true, on: 'water', parts: { hull: '#9a6a3c', sail: '#fffaf0', flag: '#3a3a46' } }),
     mk('sailboat', 'g', 'Sailboat', (r, c) => sailboat(c), '-46 -80 92 106', { tab: 'v', run: 'sail', water: true, on: 'water', parts: { hull: '#e2573f', sail: '#fffaf0', flag: '#ffd23f' } }),
     mk('r_road', 'r', 'Road', () => roadSlab(), '-50 -36 100 62'),
@@ -27928,7 +28156,7 @@ KCG.level = () => KCG.age() >= 6 ? 2 : 1;
       amb: () => { tone(700, .25, 'triangle', .06); setTimeout(() => tone(520, .25, 'triangle', .06), 260); }, bus: () => { tone(240, .35, 'square', .05); }, mail: () => { tone(1100, .3, 'sine', .08); setTimeout(() => tone(1500, .35, 'sine', .07), 120); },
     };
     const RIDE = {                                                     // what a tap on a ride says
-      plane: () => tone(300, .6, 'sawtooth', .04, [220, 440]), balloon: () => tone(180, .5, 'triangle', .07, [150, 250]), ship: () => tone(160, .55, 'sawtooth', .05, [150, 110]),
+      plane: () => tone(300, .6, 'sawtooth', .04, [220, 440]), heli: () => tone(130, .6, 'square', .035, [110, 150]), balloon: () => tone(180, .5, 'triangle', .07, [150, 250]), ship: () => tone(160, .55, 'sawtooth', .05, [150, 110]),
       ferris: () => [523, 659, 784].forEach((f, i) => setTimeout(() => tone(f, .18, 'triangle', .06), i * 110)), merry: () => [392, 523, 659, 523].forEach((f, i) => setTimeout(() => tone(f, .14, 'triangle', .06), i * 120)),
     };
     const poke = it => {
@@ -28127,6 +28355,28 @@ KCG.level = () => KCG.age() >= 6 ? 2 : 1;
         return m;
       };
 
+      /* the helicopter (Demi, 18 Nov): the rotors spin up for a moment, it lifts straight up, flies a slow loop on the side toward the middle of the map, leaning a little the way it goes, comes back over its spot and sets down, rests, then goes again */
+      const heliRide = it => {
+        const home = homeOf(it), sd = mkShadow(36), d0 = it.rot === 1 ? [0, 1] : [1, 0], mid = (N - 1) / 2;
+        let n0 = [-d0[1], d0[0]]; if ((home[0] - mid) * n0[0] + (home[1] - mid) * n0[1] > 0) n0 = [-n0[0], -n0[1]];
+        const rel = [[0, 0, 0], [0, 0, 0], [0, 0, 34], [.6, .2, 66], [2.4, 1.1, 78], [3.6, 3, 82], [2.8, 4.9, 80], [.6, 5.4, 78], [-1.4, 4, 76], [-1.7, 1.7, 72], [-.6, .3, 60], [0, 0, 30], [0, 0, 0]];
+        const pts = rel.map(([a, b, z]) => [clamp(home[0] + .7 * (a * d0[0] + b * n0[0]), .8, N - .8), clamp(home[1] + .7 * (a * d0[1] + b * n0[1]), .8, N - .8), z]);     // .7: a smaller loop than the airplane's, so it stays near its spot
+        pts[0] = pts[1] = [home[0], home[1], 0]; pts[pts.length - 1] = [home[0], home[1], 0];
+        const TT = [0, 1.6, 3.6, 5.4, 7.6, 9.8, 12, 14.2, 16.4, 18.4, 20.2, 22.2, 24.4], DUR = 24.4; let t = 0, wait = 0, px = null, th = 0;
+        const g = (k, j) => pts[clamp(k, 0, pts.length - 1)][j], crm = (a, b, c, d, t) => .5 * (2 * b + (-a + c) * t + (2 * a - 5 * b + 4 * c - d) * t * t + (-a + 3 * b - 3 * c + d) * t * t * t);
+        return { it, sd, step: dt => {
+          if (wait > 0) { wait -= dt; if (wait <= 0) { t = 0; px = null; } else return; }
+          t += dt; let j = 0; while (j < TT.length - 2 && t > TT[j + 1]) j++;
+          const f = Math.min(pts.length - 1, j + clamp((t - TT[j]) / (TT[j + 1] - TT[j]), 0, 1)), i = Math.min(pts.length - 2, Math.floor(f)), k = f - i;
+          const at = j => crm(g(i - 1, j), g(i, j), g(i + 1, j), g(i + 2, j), k);
+          it.pos = [at(0), at(1)]; const hg = Math.max(0, at(2)); it.lift = hg; it.zi = hg > 14 ? 300 : null; it.el.classList.toggle('fly', hg > .5);
+          const sx = SX(it.pos[0], it.pos[1]); let want = 0;
+          if (px != null && dt > 0) { const vx = (sx - px) / cam.z / dt; if (Math.abs(vx) > 4) { flOf(it).classList.toggle('f', vx < 0); } want = clamp(vx / 6, -9, 9); }
+          th += (want - th) * Math.min(1, dt * 3); px = sx; tilt(it, th); placeIt(it); putShadow(sd, it.pos[0], it.pos[1], hg > .5 ? .3 * (1 - hg / 200) : 0);
+          if (t >= DUR) { it.pos = null; it.lift = 0; it.zi = null; it.el.classList.remove('fly'); tilt(it, 0); th = 0; px = null; flOf(it).classList.toggle('f', flipOf(it.d, it.rot)); placeIt(it); putShadow(sd, home[0], home[1], 0); wait = 3; }
+        }, relay: () => { placeIt(it); putShadow(sd, sd.u, sd.v, sd.op); }, end: () => { sd.e.remove(); done(it); } };
+      };
+
       /* the pirate ship: from tile to tile on open water that nothing else is on (the ducks and the fish keep out of its way) */
       const shipRide = it => {
         let c = it.c, r = it.r, to = null, from = null, t = 0, pause = .8 + R() * 1.2, dir = null; it.pos = [c + .5, r + .5]; used.add(c + ',' + r);
@@ -28143,7 +28393,7 @@ KCG.level = () => KCG.age() >= 6 ? 2 : 1;
         }, relay: () => placeIt(it), end: () => { done(it); } };
       };
 
-      items.forEach(it => { const k = it.d.run; if (k === 'fly') ms.push(it.d.id === 'plane' ? planeRide(it) : balloonRide(it)); else if (k === 'sail') ms.push(shipRide(it)); });
+      items.forEach(it => { const k = it.d.run; if (k === 'fly') ms.push(it.d.id === 'plane' ? planeRide(it) : it.d.id === 'heli' ? heliRide(it) : balloonRide(it)); else if (k === 'sail') ms.push(shipRide(it)); });
       return { ms, step: dt => ms.forEach(m => m.step(dt)), relay: () => ms.forEach(m => m.relay && m.relay()), end: () => ms.forEach(m => m.end()) };
     };
 
@@ -43735,13 +43985,14 @@ function kcRoomName(id) { return (KC_ROOMS.find(r => r.id === id) || KC_ROOMS[0]
     }
     return origTap();
   };
-  // house upgrades (the shop's single "bigger" button is swapped for the next stage)
+  // house upgrades (the shop's single "bigger" button is swapped for the next stage). Demi, 18 Nov: a house with every room says "Grand house!" (it said "Whole house!") and is a button like the others, not a flat label;
+  // the class hup marks the house's own upgrade, which yard-expansion.js moves down beside the garden's.
   const origShop = openHouseShop;
   openHouseShop = function () {
     origShop(); const p = $('#deed'), row2 = p && p.querySelectorAll('.hrow')[1]; if (!row2 || !row2.lastElementChild) return;
     row2.lastElementChild.remove(); const sg = kcStage(save.hs);
-    if (sg >= (window.kcLibStage && window.kcLibStage(save.hs) ? 7 : 6)) { row2.append(h('span', 'pill', '⭐ Whole house!')); return; }      // the castles have one more stage: the library (castle-library.js)
-    const up = KC_STAGES[sg + 1], b = btn('', '⬆️'); b.append(h('div', 'lbl', up.name + ' · ' + up.price + ' 🪙'));
+    if (sg >= (window.kcLibStage && window.kcLibStage(save.hs) ? 7 : 6)) { const b = btn('hup hdone', '⭐'); b.append(h('div', 'lbl', 'Grand house!')); b.onclick = () => { sfx.tap(); speak('Your house has every room!'); }; row2.append(b); return; }      // the castles have one more stage: the library (castle-library.js)
+    const up = KC_STAGES[sg + 1], b = btn('hup', '⬆️'); b.append(h('div', 'lbl', up.name + ' · ' + up.price + ' 🪙'));
     b.onclick = () => { if (save.coins < up.price) { speak('You need ' + up.price + ' coins to make your house bigger. Keep working!'); return; } save.coins -= up.price; save.hs[2] = sg + 1; save.hs[1] = Math.max(save.hs[1] | 0, KC_STAGE_LV[sg + 1]); houseChanged('Wow! Your house got bigger!'); speak(up.say); };
     row2.append(b);
   };
@@ -44585,9 +44836,9 @@ function kcBackTick(dt) {
     const ow = st.wall, of = st.floor;      // castle-rich.js: damask wallpaper (the colour picker still chooses its family) and a floor for each room
     st.wall = () => (window.kcRich && kcRich.wall(st.name)) || ow();
     st.floor = () => (window.kcRich && kcRich.floor(st.name, kcRoomOf())) || of();
-    st.kitchenFloor = () => window.kcRich && kcRich.floor(st.name, 'kitchen');      // the kitchen has the living room's marble too
+    st.kitchenFloor = () => window.kcRich && kcRich.floor(st.name, 'tearoom');      // v36.15 (Demi, 17 Nov: "can we change the flooring in the castle kitchens to match the tea room"): the kitchen has the tea room's wood floor (it had the living room's marble) and, below, the tea room's dark tile border
     st.backWall = (id, hx, H, wm) => id === 'tearoom' ? teaWall(hx, H, wm) : null;
-    st.roomDress = (g, id) => { if (id === 'hallway') hallDress(L, g, st); else if (id === 'tearoom') teaDress(L, g, st); };
+    st.roomDress = (g, id) => { if (id === 'hallway') hallDress(L, g, st); else if (id === 'tearoom') teaDress(L, g, st); else if (id === 'kitchen' && window.kcRich) kcRich.floorBand(g, st.name, { hx: kcHX(), zb: -HS + .1, zf: kcHF(), y: .02, inset: .3, w: .9 }); };
   });
   const orig = applyHouseInterior;
   applyHouseInterior = function (hs) {
@@ -44619,7 +44870,8 @@ function kcBackTick(dt) {
   }
   function room(st, to, cx) {
     const [hx, hf] = KC_DIM[to], H = kcHH(to) || 3.4, zc = (hf - HS) / 2, zl = hf + HS, g = new T.Group(), wm = st.wall();
-    g.add(box(R.floor(st.name, to === 'tearoom' ? 'tearoom' : 'kitchen'), 0, -.005, zc, hx * 2 - .22, .025, zl - .22));
+    g.add(box(R.floor(st.name, 'tearoom'), 0, -.005, zc, hx * 2 - .22, .025, zl - .22));      // the kitchen and the tea room have the same wood floor (castle-grand.js `kitchenFloor`) and tile border
+    R.floorBand(g, st.name, { hx, zb: -HS + .1, zf: hf, y: .02, inset: .3, w: .9 });
     g.add(box(M.wood('#b98a5a'), 0, -.12, zc, hx * 2, .12, zl));
     g.add(box(wm, -hx, 0, zc, .2, H, zl), box(wm, hx, 0, zc, .2, H, zl), box(wm, 0, 0, -HS, hx * 2 + .2, H, .2));
     R.dress(g, { name: st.name, zb: -HS + .1, hx, zf: hf, H, skip: {}, upper: null });
@@ -45092,8 +45344,8 @@ renderer.domElement.addEventListener('pointerdown', e => {
       blush(g, -.16, .25, .27, .03); blush(g, .16, .25, .27, .03);
       // a sunflower seed held up in both paws in front of the mouth (the paws grip its two ends), feet, tail nub
       g.add(lsph(.04, '#6b5a48', 0, .185, .345, 1.9, .75, .95));
-      // (Demi 30 Oct: "the balls on the sides of the nut should be hands") two real hands: an arm from the shoulder, a palm round the end of the seed and three fingers lying over it
-      [-1, 1].forEach(s => { g.add(pTube(fur, [[s * .15, .2, .22], [s * .12, .18, .29], [s * .092, .182, .335]], .026, 8), lsph(.034, fur, s * .08, .184, .345, .8, .75, 1.15)); [-.026, 0, .026].forEach(dz => g.add(pTube(fur, [[s * .082, .205, .345 + dz], [s * .068, .224, .345 + dz], [s * .04, .224, .345 + dz]], .0085, 5))); });
+      // (Demi 30 Oct: "the balls on the sides of the nut should be hands") an arm from the shoulder and a paw round the end of the seed; (Demi 18 Nov: "remove the fingers, just keep the nubby paws") one soft round mitten, no fingers
+      [-1, 1].forEach(s => { g.add(pTube(fur, [[s * .15, .2, .22], [s * .12, .18, .29], [s * .092, .182, .335]], .026, 8), lsph(.037, fur, s * .074, .192, .348, .95, .8, 1.1)); });
       [-1, 1].forEach(s => { g.add(lsph(.05, '#ffb0c0', s * .1, .03, .12, 1, .6, 1.4)); toes(g, '#ffb0c0', s * .1, .02, .2, .012, 3, .026); });
       g.add(lsph(.04, fur, 0, .14, -.22));
     } else { // mouse
@@ -45733,39 +45985,111 @@ renderer.domElement.addEventListener('pointerdown', e => {
 // A shape question is eq = [shape, 2, seed, ts]: the shape is drawn on the board and the student taps the same one of four.
 // The easy set (Demi, v37, so a 5-year-old teacher and 5-year-old students can play together): eq = [n, 3, seed, ts] is "count the pictures" (n pictures on the board, the student taps one of three number tiles)
 // and eq = [a, 4, b, ts] is a picture sum with a + b up to 10 (a pictures, a plus sign, b pictures, three number tiles).
+// Times and divide (Demi, 17 Nov; every number 1 to 10): eq = [a, 5, b, ts] is a × b and eq = [d, 6, q, ts] is (d × q) ÷ d, whose answer is q. Students type the answer like a sum.
+// The questions fit the YOUNGEST kitty in the class (Demi, 18 Nov: "if there is a 4 and 7 year old playing in the school, it needs to be 4 year old questions"): every kitty with a role in the class shares her picked age as presence sg
+// (only while she sits or teaches), classAge() is the lowest of them and mine, and the teacher's menu, the keypad and the school's own teacher all use it. Times and divide show only when everybody is 7 or older.
+// Harder shapes (Demi, 18 Nov: "the shapes can be harder for all ages too, include sphere/cone/cylander/etc for 6+"): 20 shapes in four steps, the step travels in the seed (seed = 0 to 11 plus 12 x step; a seed under 12 is an older iPad's
+// question and plays the old way). Steps 1 and 2 (ages 4 and 5) draw the shape in chalk and the tiles come in mixed colors with a look-alike among them; steps 3 and 4 (age 6, ages 7 and 8) write only the NAME on the board, with solid shapes.
+// Story problems (Demi, 18 Nov: "Mittens has ___ apples, Tom has ____ bananas, how many fruit do they have?" and the teacher picks how many of each): eq = [a, 7 + story, b, ts], the answer is a + b, both numbers 1 to 10.
 // Pretend students sit at some of the desks whenever you're in the school, and one gets up and moves if you want its seat.
 const school = { role: null, eq: null, tick: null, seen: 0, botAt: 0, pupils: [], paidFor: {}, score: {}, scored: {}, leadSig: '' };
 const SCHOOL_TIME = 30, SCHOOL_PAY = 3;
 const inSchool = () => me.building && me.building.id === 'school';
+// on a phone held sideways the shared panel is only 200 px tall and cut every question in half: the class's own panels (class schp, taken off again with the role) reach from under the top bar to the bottom of the screen
+{ const st = document.createElement('style'); st.textContent = '@media (max-height:500px){#deed.schp{bottom:calc(6px + env(safe-area-inset-bottom,0px));max-height:calc(100% - 64px - env(safe-area-inset-bottom,0px));gap:5px;padding:8px 12px}#deed.schp .ttl{font-size:18px}}'; document.head.append(st); }
+const schShort = () => innerHeight < 500;   // a phone held sideways: smaller buttons, so a whole panel fits
+const schSmall = (...bs) => { if (schShort()) bs.forEach(b => { b.style.fontSize = '26px'; b.style.padding = '4px 14px'; b.style.marginTop = '0'; }); };
+const schPanel = () => { const p = $('#deed'); p.classList.add('schp'); p.textContent = ''; p.hidden = false; return p; };
 const BOARD_SHAPES = [
   ['circle', 'M50 10 A40 40 0 1 1 49.9 10 Z', '#e2483d'], ['square', 'M14 14 H86 V86 H14 Z', '#4f8fe0'], ['triangle', 'M50 10 L92 86 H8 Z', '#3fae5a'],
   ['star', 'M50 6 L61 38 L95 38 L67 58 L78 92 L50 71 L22 92 L33 58 L5 38 L39 38 Z', '#f2b705'],
   ['heart', 'M50 88 C20 66 6 50 6 32 C6 16 18 8 30 8 C40 8 47 14 50 22 C53 14 60 8 70 8 C82 8 94 16 94 32 C94 50 80 66 50 88 Z', '#e86a8a'],
   ['rectangle', 'M6 26 H94 V74 H6 Z', '#8a5ad0'], ['diamond', 'M50 6 L90 50 L50 94 L10 50 Z', '#2fb5b0'],
+  // more flat shapes (7 to 13), then solid shapes (14 to 19): [name, outline, color, inner edges, the light side, the dark side]. New shapes only go on the END, the numbers travel in presence
+  ['oval', 'M8 50 A42 27 0 1 1 92 50 A42 27 0 1 1 8 50 Z', '#f2913d'], ['crescent', 'M78 15.4 A40 40 0 1 0 78 84.6 A40 40 0 0 1 78 15.4 Z', '#f2b705'],
+  ['pentagon', 'M50 9 L91 39 L75 87 H25 L9 39 Z', '#3fae5a'], ['hexagon', 'M28.5 13 H71.5 L93 50 L71.5 87 H28.5 L7 50 Z', '#4f8fe0'], ['octagon', 'M33 9 H67 L91 33 V67 L67 91 H33 L9 67 V33 Z', '#e2483d'],
+  ['trapezoid', 'M30 22 H70 L92 80 H8 Z', '#8a5ad0'], ['parallelogram', 'M30 24 H94 L70 78 H6 Z', '#2fb5b0'],
+  ['sphere', 'M50 10 A40 40 0 1 1 49.9 10 Z', '#e2483d', '', 'M22 44 C22 28 34 18 48 18 C36 23 27 32 22 44 Z', 'M88 62 A40 40 0 0 1 38 88 C60 88 80 78 88 62 Z'],
+  ['cube', 'M18 36 L36 16 H86 V64 L68 84 H18 Z', '#4f8fe0', 'M18 36 H68 V84 M68 36 L86 16', 'M18 36 L36 16 H86 L68 36 Z', 'M68 36 L86 16 V64 L68 84 Z'],
+  ['cone', 'M50 8 L84 76 A34 12 0 0 1 16 76 Z', '#f2913d', '', 'M47 22 L29 72 L36 75 Z', 'M50 8 L84 76 A34 12 0 0 1 50 88 Z'],
+  ['cylinder', 'M20 24 A30 11 0 0 1 80 24 V76 A30 11 0 0 1 20 76 Z', '#3fae5a', 'M20 24 A30 11 0 0 0 80 24', 'M20 24 A30 11 0 0 1 80 24 A30 11 0 0 1 20 24 Z', 'M62 34 V86 A30 11 0 0 0 80 76 V24 A30 11 0 0 1 62 34 Z'],
+  ['pyramid', 'M50 10 L90 68 L58 88 L12 74 Z', '#f2b705', 'M50 10 L58 88', '', 'M50 10 L90 68 L58 88 Z'],
+  ['rectangular prism', 'M8 44 L24 26 H92 V62 L76 80 H8 Z', '#8a5ad0', 'M8 44 H76 V80 M76 44 L92 26', 'M8 44 L24 26 H92 L76 44 Z', 'M76 44 L92 26 V62 L76 80 Z'],
 ];
-const shapeSvg = (i, s) => `<svg viewBox="0 0 100 100" width="${s}" height="${s}"><path d="${BOARD_SHAPES[i][1]}" fill="${BOARD_SHAPES[i][2]}" stroke="#3a2a22" stroke-width="5" stroke-linejoin="round"/></svg>`;
+const SHAPE_N = BOARD_SHAPES.length, SHAPE_PAL = ['#e2483d', '#4f8fe0', '#3fae5a', '#f2b705', '#e86a8a', '#8a5ad0', '#2fb5b0', '#f2913d'], CHALK_FILL = 'rgba(244,239,228,.16)';
+// which shapes a class meets: step 1 is age 4, 2 is age 5, 3 is age 6 (solid shapes come in), 4 is ages 7 and 8
+const SHAPE_POOL = [null, [0, 1, 2, 3, 4, 5, 6, 7], [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 16, 17, 18], BOARD_SHAPES.map((s, i) => i)];
+// the shapes a kid mixes up with each one: one of them is always among the tiles (two from step 3)
+const SHAPE_LIKE = [[7, 14, 11], [5, 6, 15], [18, 16, 12, 9], [9, 6, 4], [3, 0, 6], [1, 13, 19, 12], [1, 13, 2], [0, 8, 14], [7, 0, 4], [10, 11, 2], [9, 11, 0], [10, 9, 0], [2, 5, 13], [5, 6, 12], [0, 7, 17], [1, 19, 18], [2, 18, 17], [5, 16, 19, 7], [2, 16, 15], [15, 5, 17]];
+const shapeTier = e => Math.min(4, Math.floor(e[2] / 12)), ageTier = age => age <= 4 ? 1 : age === 5 ? 2 : age === 6 ? 3 : 4;
+// our own pictures for the Times and Divide buttons: a white sign on a rounded tile with the brown outline
+const opSvg = (div, s) => `<svg viewBox="0 0 100 100" width="${s}" height="${s}"><rect x="8" y="8" width="84" height="84" rx="20" fill="${div ? '#8a5ad0' : '#4f8fe0'}" stroke="#3a2a22" stroke-width="5"/>` + (div ? '<path d="M27 50H73" stroke="#fff" stroke-width="11" stroke-linecap="round"/><circle cx="50" cy="29" r="7.5" fill="#fff"/><circle cx="50" cy="71" r="7.5" fill="#fff"/>' : '<path d="M32 32L68 68M68 32L32 68" stroke="#fff" stroke-width="11" stroke-linecap="round"/>') + '</svg>';
+const shapeSvg = (i, s, col) => { const S = BOARD_SHAPES[i]; return `<svg viewBox="0 0 100 100" width="${s}" height="${s}"><path d="${S[1]}" fill="${col || S[2]}"/>` + (S[4] ? `<path d="${S[4]}" fill="#fff" opacity=".4"/>` : '') + (S[5] ? `<path d="${S[5]}" fill="#3a2a22" opacity=".24"/>` : '') + (S[3] ? `<path d="${S[3]}" fill="none" stroke="#3a2a22" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>` : '') + `<path d="${S[1]}" fill="none" stroke="#3a2a22" stroke-width="5" stroke-linejoin="round"/></svg>`; };
 const isShape = e => e && e[1] === 2;
-const isCount = e => e && e[1] === 3, isEasy = e => e && e[1] === 4, isPics = e => isCount(e) || isEasy(e);
+// story problems: two kitties, two kinds of things, one word for both. [picture, one, many, picture, one, many, both, she ..., they ...]. New stories only go on the END (the number travels in presence)
+const STORIES = [
+  ['🍎', 'apple', 'apples', '🍌', 'banana', 'bananas', 'fruit', 'has', 'have'], ['🍓', 'strawberry', 'strawberries', '🍊', 'orange', 'oranges', 'fruit', 'has', 'have'],
+  ['🍪', 'cookie', 'cookies', '🧁', 'cupcake', 'cupcakes', 'treats', 'has', 'have'], ['🌷', 'tulip', 'tulips', '🌻', 'sunflower', 'sunflowers', 'flowers', 'picks', 'pick'],
+  ['🦋', 'butterfly', 'butterflies', '🐝', 'bee', 'bees', 'bugs', 'sees', 'see'], ['🎈', 'balloon', 'balloons', '🧸', 'teddy bear', 'teddy bears', 'toys', 'has', 'have'],
+  ['🥕', 'carrot', 'carrots', '🍅', 'tomato', 'tomatoes', 'vegetables', 'picks', 'pick'], ['🐸', 'frog', 'frogs', '🐢', 'turtle', 'turtles', 'animals', 'sees', 'see'],
+];
+const STORY_CATS = ['Mittens', 'Tom', 'Luna', 'Pip', 'Olive', 'Bean', 'Ziggy', 'Mo'];
+const isCount = e => e && e[1] === 3, isEasy = e => e && e[1] === 4, isTimes = e => e && e[1] === 5, isDiv = e => e && e[1] === 6, isStory = e => e && e[1] >= 7 && e[1] < 7 + STORIES.length, isPics = e => isCount(e) || isEasy(e) || isStory(e);
+// who a story is about: the real kitties of the class (the students in the order of their ids, then the teacher), so every iPad names the same two; a class with fewer than two gets Mittens and Tom and their friends
+function storyNames(e) {
+  const real = [], s = e[1] - 7; if (school.role) real.push([school.role === 't' ? 1 : 0, save.kid || '', safeName(save.name)]);
+  for (const o of others.values()) if (o.loc === 's:school' && o.sr) real.push([o.sr === 't' ? 1 : 0, o.k || '', o.name || 'Kitty']);
+  const all = []; real.sort((a, b) => a[0] - b[0] || (a[1] < b[1] ? -1 : a[1] > b[1] ? 1 : 0)).forEach(r => { if (!all.includes(r[2])) all.push(r[2]); });
+  const names = all.length > 2 ? [all[s % all.length], all[(s + 1) % all.length]] : all;
+  for (let i = 0; names.length < 2; i++) { const n = STORY_CATS[(s * 2 + i) % STORY_CATS.length]; if (!names.includes(n)) names.push(n); }
+  return names;
+}
+// the three sentences of a story; a number that is not picked yet (0) is a blank
+const storyParts = e => { const S = STORIES[e[1] - 7], nm = storyNames(e), w = (n, one, many) => (n || '___') + ' ' + (n === 1 ? one : many); return [nm[0] + ' ' + S[7] + ' ' + w(e[0], S[1], S[2]) + '.', nm[1] + ' ' + S[7] + ' ' + w(e[2], S[4], S[5]) + '.', 'How many ' + S[6] + ' do they ' + S[8] + '?']; };
 const SCHOOL_ITEMS = ['🍎', '🐟', '⭐', '🧶', '🐭', '🦋', '🍪'];
 const picItem = e => SCHOOL_ITEMS[(isCount(e) ? e[2] : e[0] * 3 + e[2]) % SCHOOL_ITEMS.length];
-const eqSay = e => isShape(e) ? 'Find the ' + BOARD_SHAPES[e[0] % BOARD_SHAPES.length][0] + '!' : isCount(e) ? 'How many can you count?' : isEasy(e) ? e[0] + ' plus ' + e[2] + '. How many altogether?' : e[0] + (e[1] ? ' take away ' : ' plus ') + e[2] + '?';
+const eqSay = e => isShape(e) ? 'Find the ' + BOARD_SHAPES[e[0] % BOARD_SHAPES.length][0] + '!' : isStory(e) ? storyParts(e).join(' ') : isCount(e) ? 'How many can you count?' : isEasy(e) ? e[0] + ' plus ' + e[2] + '. How many altogether?' : isTimes(e) ? e[0] + ' times ' + e[2] + '?' : isDiv(e) ? e[0] * e[2] + ' divided by ' + e[0] + '?' : e[0] + (e[1] === 1 ? ' take away ' : ' plus ') + e[2] + '?';
 // the four shapes a student picks from: the right one plus three others, the same for everyone in the class
-const shapeChoices = e => { const r = [e[0] % BOARD_SHAPES.length]; let k = e[2] + 1; while (r.length < 4) { const c = (e[0] + k * 3) % BOARD_SHAPES.length; if (!r.includes(c)) r.push(c); k++; } const o = e[2] % 4; return r.slice(1, 1 + o).concat([r[0]], r.slice(1 + o)); };
+const shapeChoices = e => {
+  const t = shapeTier(e), right = e[0] % SHAPE_N, r = [right], o = e[2] % 4;
+  if (!t) { let k = e[2] + 1; while (r.length < 4) { const c = (e[0] + k * 3) % 7; if (!r.includes(c)) r.push(c); k++; } }   // an older iPad's question: the first seven shapes, as before
+  else {
+    const pool = SHAPE_POOL[t], like = SHAPE_LIKE[right].filter(i => pool.includes(i)); let seed = right * 31 + e[2];
+    for (let j = 0; j < (t >= 3 ? 2 : 1) && j < like.length; j++) r.push(like[(e[2] + j) % like.length]);
+    const rest = pool.filter(i => !r.includes(i)); while (r.length < 4 && rest.length) { seed = (seed * 73 + 19) % 997; r.push(rest.splice(seed % rest.length, 1)[0]); }
+  }
+  return r.slice(1, 1 + o).concat([r[0]], r.slice(1 + o));
+};
+// a tile's color: mixed from step 1 on, so the color never gives the shape away
+const shapeTileCol = (e, j) => shapeTier(e) ? SHAPE_PAL[(e[2] + j * 3) % SHAPE_PAL.length] : null;
 function boardEq(e, showAns) {
-  if (isShape(e)) boardShow({ shape: BOARD_SHAPES[e[0] % BOARD_SHAPES.length][1], c: BOARD_SHAPES[e[0] % BOARD_SHAPES.length][2] });
+  if (isShape(e)) {
+    const S = BOARD_SHAPES[e[0] % SHAPE_N], t = shapeTier(e);
+    if (!t) boardShow({ shape: S[1], c: S[2] });
+    else if (t >= 3) boardShow(showAns ? { shape: S[1], c: S[2], edges: S[3], light: S[4], shade: S[5], name: S[0] } : S[0]);   // the older classes read (and hear) the name; the picture comes with the answer
+    else boardShow({ shape: S[1], c: CHALK_FILL, name: showAns ? S[0] : '', big: 1 });
+  }
+  else if (isStory(e)) { const S = STORIES[e[1] - 7], nm = storyNames(e); boardShow({ pics: [[S[0], e[0], nm[0]], [S[3], e[2], nm[1]]], sign: '+', ans: showAns ? eqAns(e) : null, eq: true }); }
   else if (isPics(e)) boardShow({ pics: isCount(e) ? [[picItem(e), e[0]]] : [[picItem(e), e[0]], [picItem(e), e[2]]], sign: isEasy(e) ? '+' : '', ans: showAns ? eqAns(e) : null, eq: isEasy(e) });
   else boardShow(eqText(e, showAns));
 }
-const eqText = (e, showAns) => e[0] + (e[1] ? ' − ' : ' + ') + e[2] + ' = ' + (showAns ? (e[1] ? e[0] - e[2] : e[0] + e[2]) : '?');
-const eqAns = e => isCount(e) ? e[0] : e[1] === 1 ? e[0] - e[2] : e[0] + e[2];
+const eqText = (e, showAns) => isTimes(e) ? e[0] + ' × ' + e[2] + ' = ' + (showAns ? e[0] * e[2] : '?') : isDiv(e) ? e[0] * e[2] + ' ÷ ' + e[0] + ' = ' + (showAns ? e[2] : '?') : e[0] + (e[1] === 1 ? ' − ' : ' + ') + e[2] + ' = ' + (showAns ? (e[1] === 1 ? e[0] - e[2] : e[0] + e[2]) : '?');
+const eqAns = e => isCount(e) ? e[0] : isTimes(e) ? e[0] * e[2] : isDiv(e) ? e[2] : e[1] === 1 ? e[0] - e[2] : e[0] + e[2];
 // the kid's age, 4 to 8 (5 until picked): KCG.age() from the build thread's age picker
 const kidAge = () => { const a = typeof KCG !== 'undefined' && KCG.age ? KCG.age() | 0 : 5; return a >= 4 && a <= 8 ? a : 5; };
-// the school's own teacher: a question for the n-th time, picked by the student's age
+// the youngest kitty in the class, me included (Demi, 18 Nov). A kitty whose iPad sends no age (an older version) counts as 5, the age of a kitty who has not picked one.
+const classAge = () => { let a = kidAge(); for (const o of others.values()) if (o.loc === 's:school' && o.sr) a = Math.min(a, o.sg || 5); return a; };
+// what a class of that age may be asked: 4 counts and adds to 5, 5 to 10, 6 adds one-digit sums, 7 and 8 add sums to 99 and times and divide; shapes of its own step or an easier one; a story's numbers add up to 5, to 10, or are each up to 9 or 10
+const storyCap = age => age <= 4 ? [4, 5] : age === 5 ? [9, 10] : age === 6 ? [9, 18] : [10, 20];   // [the most of one thing, the most of both]
+const fitsClass = (e, age = classAge()) => isShape(e) ? shapeTier(e) >= 1 && shapeTier(e) <= ageTier(age) && SHAPE_POOL[shapeTier(e)].includes(e[0]) : isStory(e) ? e[0] >= 1 && e[2] >= 1 && Math.max(e[0], e[2]) <= storyCap(age)[0] && e[0] + e[2] <= storyCap(age)[1] : isCount(e) ? e[0] <= (age <= 4 ? 5 : 10) : isEasy(e) ? e[0] + e[2] <= (age <= 4 ? 5 : 10) : isTimes(e) || isDiv(e) ? age >= 7 : age >= 7 || (age === 6 && e[0] <= 14 && e[2] <= 14);
+// the school's own teacher: a question for the n-th time, picked by the age of the youngest kitty in the class
 function botQuestion(n) {
-  const age = kidAge(), cyc = age <= 5 ? 'cas' : age === 6 ? 'casn' : 'snna', k = cyc[(n - 1) % cyc.length], now = Date.now();
+  const age = classAge(), cyc = age <= 5 ? 'casw' : age === 6 ? 'caswn' : 'tndwns', k = cyc[(n - 1) % cyc.length], now = Date.now();
+  if (k === 'w') { const [each, tot] = storyCap(age), a = 1 + rand(Math.min(each, tot - 1)); return [a, 7 + rand(STORIES.length), 1 + rand(Math.min(each, tot - a)), now]; }   // a story
+  if (k === 't' || k === 'd') return [1 + rand(10), k === 't' ? 5 : 6, 1 + rand(10), now];   // times, or divide as its reverse: every number 1 to 10
   if (k === 'c') return [1 + rand(age <= 4 ? 5 : 10), 3, rand(SCHOOL_ITEMS.length), now];
   if (k === 'a') { const cap = age <= 4 ? 5 : 10, a = 1 + rand(cap - 1); return [a, 4, 1 + rand(cap - a), now]; }
-  if (k === 's') return [rand(BOARD_SHAPES.length), 2, rand(12), now];
+  if (k === 's') { const st = ageTier(age); return [pick(SHAPE_POOL[st]), 2, rand(12) + 12 * st, now]; }
   const op = rand(2);   // numbers: 6 sums up to 14, 7 and 8 up to 35
   if (age === 6) { const a = op ? 3 + rand(10) : rand(8), b = op ? rand(a + 1) : rand(8); return [a, op, b, now]; }
   const a = op ? 8 + rand(19) : 5 + rand(16), b = op ? 1 + rand(a) : 1 + rand(15); return [a, op, b, now];
@@ -45774,12 +46098,14 @@ const teacherHere = () => [...others.values()].find(o => o.loc === 's:school' &&
 function schoolReset() {
   clearInterval(school.tick); school.tick = null; school.role = null; school.eq = null; school.seen = 0; school.paidFor = {}; school.score = {}; school.scored = {}; school.leadSig = ''; school.reopened = 0;
   school.pupils.forEach(p => { if (p.cat.parent) p.cat.parent.remove(p.cat); dropLabel(p); }); school.pupils = [];
-  pushPresence(true, { sr: null, eq: null, an: null });
+  for (const l of labels.values()) if (l.__sch) { l.__sch = false; l.querySelector('.nm').style.visibility = ''; }
+  $('#deed').classList.remove('schp');
+  pushPresence(true, { sr: null, eq: null, an: null, sg: null });
 }
 function boardShow(text) { if (roomInfo && roomInfo.board) roomInfo.board(text); }
 function schoolRole(r) {
   school.role = r; school.eq = null; school.seen = Date.now(); sfx.good();
-  pushPresence(true, { sr: r, eq: null, an: null });
+  pushPresence(true, { sr: r, eq: null, an: null, sg: kidAge() });   // my age travels only while I sit or teach, so the class can fit its youngest kitty
   $('#role-pill').hidden = false; $('#role-pill').textContent = r === 't' ? '👩‍🏫 Teacher' : '🎒 Student';
   if (r === 't') { boardShow(''); teacherPanel(); speak('You are the teacher! Make a problem for the class.'); }
   else { school.botAt = nowT + 3; boardShow(''); }
@@ -45787,8 +46113,8 @@ function schoolRole(r) {
 // standing up from the desk, or stepping off the circle at the board, puts the role down again
 function schoolRoleEnd() {
   const was = school.role; clearInterval(school.tick); school.tick = null; school.role = null; school.eq = null; school.paidFor = {};
-  $('#deed').hidden = true; $('#role-pill').hidden = true; if (was === 't') boardShow('');
-  pushPresence(true, { sr: null, eq: null, an: null });
+  $('#deed').hidden = true; $('#deed').classList.remove('schp'); $('#role-pill').hidden = true; if (was === 't') boardShow('');
+  pushPresence(true, { sr: null, eq: null, an: null, sg: null });
 }
 // pretend students at the desks, so the class is never empty
 const pupilSeatFree = s => !seatTaken(s) && !school.pupils.some(p => p.seat === s);
@@ -45810,33 +46136,75 @@ function pupilMove(pu) {
 }
 function keypad(onKey) {
   const pad = h('div', ''); pad.style.cssText = 'display:grid;grid-template-columns:repeat(5,1fr);gap:6px;width:100%;margin-top:6px';
-  [1, 2, 3, 4, 5, 6, 7, 8, 9, 0].forEach(n => { const k = btn('', String(n)); k.style.cssText = 'font:800 34px var(--display);padding:8px 0;min-width:0'; k.onclick = () => { sfx.tap(); onKey(n); }; pad.append(k); });
+  [1, 2, 3, 4, 5, 6, 7, 8, 9, 0].forEach(n => { const k = btn('', String(n)); k.style.cssText = schShort() ? 'font:800 26px var(--display);padding:3px 0;min-width:0' : 'font:800 34px var(--display);padding:8px 0;min-width:0'; k.onclick = () => { sfx.tap(); onKey(n); }; pad.append(k); });
   return pad;
 }
 // the teacher's first screen (Demi, v37): big picture buttons. Count and Add put an easy question on the board with one tap, Shapes lets the teacher pick a shape, Numbers is the keypad for sums up to 99
 function teacherPanel(view) {
-  const p = $('#deed'); p.textContent = ''; p.hidden = false;
+  const p = schPanel();
   if (view === 'num') return teacherKeys(p);
   if (view === 'shapes') return teacherShapes(p);
+  if (view === 'story') return teacherStory(p);
   p.append(h('div', 'ttl', '👩‍🏫 Pick a question for the class'));
-  const row = h('div', ''); row.style.cssText = 'display:flex;gap:10px;justify-content:center;flex-wrap:wrap;width:100%;margin-top:6px';
-  const mk = (ico, lbl, fn) => { const b = btn('', ico, lbl); const l = h('div', 'lbl', lbl); l.style.fontSize = '15px'; b.append(l); b.style.cssText = 'display:flex;flex-direction:column;align-items:center;justify-content:center;width:128px;min-height:112px;padding:8px 6px'; b.onclick = () => { sfx.tap(); fn(); }; row.append(b); };
-  mk('<span style="font-size:36px;letter-spacing:-4px;white-space:nowrap">🍎🍎🍎</span>', 'Count', () => { p.hidden = true; postProblem([1 + rand(10), 3, rand(SCHOOL_ITEMS.length), Date.now()]); });
-  mk('<span style="font-size:36px;letter-spacing:-3px;white-space:nowrap">🍎➕🍎</span>', 'Add', () => { const a = 1 + rand(9); p.hidden = true; postProblem([a, 4, 1 + rand(10 - a), Date.now()]); });
-  mk('<span style="font-size:56px">' + shapeSvg(3, 56) + '</span>', 'Shapes', () => teacherPanel('shapes'));
-  mk('<span style="font-size:56px">🔢</span>', 'Numbers', () => teacherPanel('num'));
+  const row = h('div', ''); row.style.cssText = 'display:flex;gap:' + (schShort() ? 5 : 10) + 'px;justify-content:center;flex-wrap:wrap;width:100%;margin-top:' + (schShort() ? 0 : 6) + 'px';
+  const mk = (ico, lbl, fn) => { const b = btn('', ico, lbl); const l = h('div', 'lbl', lbl); l.style.fontSize = '15px'; b.append(l); b.style.cssText = 'display:flex;flex-direction:column;align-items:center;justify-content:center;width:128px;min-height:' + (schShort() ? 78 : 112) + 'px;padding:' + (schShort() ? 0 : 8) + 'px 6px'; b.onclick = () => { sfx.tap(); fn(); }; row.append(b); };
+  // what the teacher can ask fits the youngest kitty in the class (Demi, 18 Nov): 4 and 5 get pictures and shapes, 6 adds the keypad, 7 and 8 add times and divide
+  const age = classAge(), cap = age <= 4 ? 5 : 10;
+  mk('<span style="font-size:36px;letter-spacing:-4px;white-space:nowrap">🍎🍎🍎</span>', 'Count', () => { p.hidden = true; postProblem([1 + rand(cap), 3, rand(SCHOOL_ITEMS.length), Date.now()]); });
+  mk('<span style="font-size:36px;letter-spacing:-3px;white-space:nowrap">🍎➕🍎</span>', 'Add', () => { const a = 1 + rand(cap - 1); p.hidden = true; postProblem([a, 4, 1 + rand(cap - a), Date.now()]); });
+  mk('<span style="font-size:56px">' + shapeSvg(age >= 6 ? 15 : 3, 56) + '</span>', 'Shapes', () => teacherPanel('shapes'));
+  mk('<span style="font-size:56px">📚</span>', 'Story', () => teacherPanel('story'));
+  if (age >= 6) mk('<span style="font-size:56px">🔢</span>', 'Numbers', () => teacherPanel('num'));
+  if (age >= 7) {
+    mk(opSvg(0, 56), 'Times', () => { p.hidden = true; postProblem([1 + rand(10), 5, 1 + rand(10), Date.now()]); });
+    mk(opSvg(1, 56), 'Divide', () => { p.hidden = true; postProblem([1 + rand(10), 6, 1 + rand(10), Date.now()]); });
+  }
   p.append(row);
-  const x = btn('', '✖️'); x.style.cssText = 'font-size:30px;margin-top:6px'; x.onclick = () => p.hidden = true; p.append(x);
+  const x = btn('', '✖️'); x.style.cssText = 'font-size:30px;margin-top:6px'; x.onclick = () => p.hidden = true; schSmall(x); p.append(x);
 }
 function teacherShapes(p) {
   p.append(h('div', 'ttl', '👩‍🏫 Pick a shape'));
   const shp = h('div', ''); shp.style.cssText = 'display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:8px;width:100%';
-  BOARD_SHAPES.forEach(([n], i) => { const b = btn('', shapeSvg(i, 46), n); b.style.cssText = 'padding:6px 8px;min-width:0'; b.onclick = () => { p.hidden = true; postProblem([i, 2, rand(12), Date.now()]); }; shp.append(b); });
+  const st = ageTier(classAge());   // the shapes of the youngest kitty's step
+  SHAPE_POOL[st].forEach(i => { const b = btn('', shapeSvg(i, schShort() ? 38 : 46), BOARD_SHAPES[i][0]); b.dataset.i = i; b.style.cssText = schShort() ? 'padding:3px 6px;min-width:0' : 'padding:6px 8px;min-width:0'; b.onclick = () => { p.hidden = true; postProblem([i, 2, rand(12) + 12 * st, Date.now()]); }; shp.append(b); });
   p.append(shp);
-  const x = btn('', '✖️'); x.style.cssText = 'font-size:30px;margin-top:6px'; x.onclick = () => teacherPanel(); p.append(x);
+  const x = btn('', '✖️'); x.style.cssText = 'font-size:30px;margin-top:6px'; x.onclick = () => teacherPanel(); schSmall(x); p.append(x);
+}
+// the story maker (Demi, 18 Nov): the sentences with two blanks, and under each a row of the pictures. Tapping the third apple makes it three apples; the dice brings another story
+function teacherStory(p) {
+  const [each, tot] = storyCap(classAge()), st = { s: rand(STORIES.length), a: 0, b: 0 }, narrow = innerWidth < 560, sz = innerHeight < 500 ? 36 : narrow ? 48 : 52;
+  p.append(h('div', 'ttl', '👩‍🏫 Make a story for the class'));
+  const box = h('div', ''); box.style.cssText = 'width:100%;display:flex;flex-direction:column;align-items:center;gap:4px'; p.append(box);
+  const line = () => { const l = h('div', 'sline'); l.style.cssText = 'font:800 ' + (narrow ? 20 : 23) + 'px var(--display);color:var(--ink);text-align:center;width:100%;line-height:1.25'; return l; };
+  const blank = n => { const b = h('b', ''); b.textContent = n || '\u00a0'; b.style.cssText = 'display:inline-block;min-width:44px;margin:0 3px;padding:0 6px;border-radius:10px;text-align:center;' + (n ? 'background:#ffe36a;border:3px solid #3a2a22' : 'background:#fff;border:3px dashed #f2b705'); return b; };
+  const paint = () => {
+    const S = STORIES[st.s], nm = storyNames([0, 7 + st.s, 0, 0]); box.textContent = '';
+    [['a', 0, 1, 2], ['b', 3, 4, 5]].forEach(([k, pi, one, many], li) => {
+      const l = line(); l.append(nm[li] + ' ' + S[7] + ' ', blank(st[k]), ' ' + (st[k] === 1 ? S[one] : S[many]) + '.'); box.append(l);
+      const row = h('div', ''); row.dataset.k = k; row.style.cssText = 'display:grid;grid-template-columns:repeat(' + (narrow ? Math.min(5, each) : each) + ',' + sz + 'px);gap:4px;justify-content:center;margin-bottom:4px';
+      for (let i = 1; i <= each; i++) {
+        const b = btn('', S[pi], i + ' ' + (i === 1 ? S[one] : S[many])); b.dataset.n = i;
+        b.style.cssText = 'font-size:' + Math.round(sz * .62) + 'px;line-height:1;width:' + sz + 'px;height:' + sz + 'px;min-width:0;padding:0;border-radius:12px;' + (i <= st[k] ? 'background:#fff6c9;outline:3px solid #f2b705' : 'opacity:.38;box-shadow:none');
+        b.onclick = () => { st[k] = i; const o = k === 'a' ? 'b' : 'a'; if (st[o] && st.a + st.b > tot) st[o] = tot - i; sfx.tap(); speak(i + ' ' + (i === 1 ? S[one] : S[many])); paint(); };
+        row.append(b);
+      }
+      box.append(row);
+    });
+    const q = line(); q.textContent = 'How many ' + S[6] + ' do they ' + S[8] + '?'; q.style.color = 'var(--accent)'; box.append(q);
+  };
+  const ctl = h('div', ''); ctl.style.cssText = 'display:flex;gap:8px;justify-content:center;margin-top:4px;flex-wrap:wrap;width:100%';
+  const dice = btn('', '🎲', 'Another story'), go = btn('', '✅', 'Put it on the board'), x = btn('', '✖️', 'Back');
+  // a teacher who cannot read yet hears the story and what to do
+  const tell = () => { const S = STORIES[st.s], nm = storyNames([0, 7 + st.s, 0, 0]); speak(nm[0] + ' ' + S[7] + ' some ' + S[2] + '. ' + nm[1] + ' ' + S[7] + ' some ' + S[5] + '. Tap the pictures to pick how many!'); };
+  dice.onclick = () => { st.s = (st.s + 1 + rand(STORIES.length - 1)) % STORIES.length; sfx.tap(); paint(); tell(); };
+  go.append(h('div', 'lbl', 'Put it on the board'));
+  go.onclick = () => { if (!st.a || !st.b) { speak('Tap the pictures to pick how many!'); return sfx.oops(); } p.hidden = true; postProblem([st.a, 7 + st.s, st.b, Date.now()]); };
+  x.style.fontSize = '30px'; x.onclick = () => teacherPanel(); schSmall(dice, go, x);
+  ctl.append(dice, go, x); p.append(ctl); paint(); tell();
+  p.__story = st; st.paint = paint;   // for the tests
 }
 function teacherKeys(p) {
-  const st = { a: '', b: '', op: 0, f: 'a' };
+  const st = { a: '', b: '', op: 0, f: 'a' }, len = classAge() >= 7 ? 2 : 1;   // a class with a 6 year old in it gets one-digit numbers
   p.append(h('div', 'ttl', '👩‍🏫 Make a problem for the class'));
   const row = h('div', ''); row.style.cssText = 'display:flex;align-items:center;justify-content:center;gap:10px;margin:6px 0';
   const fa = btn('', ''), fb = btn('', ''), add = btn('', '➕'), sub = btn('', '➖');
@@ -45849,11 +46217,11 @@ function teacherKeys(p) {
   fa.onclick = () => { st.f = 'a'; paint(); }; fb.onclick = () => { st.f = 'b'; paint(); };
   add.onclick = () => { st.op = 0; sfx.tap(); paint(); }; sub.onclick = () => { st.op = 1; sfx.tap(); paint(); };
   row.append(fa, add, sub, fb); p.append(row);
-  p.append(keypad(n => { const k = st.f; st[k] = (st[k] + n).replace(/^0(\d)/, '$1').slice(0, 2); if (st[k].length === 2 && k === 'a') st.f = 'b'; paint(); }));
+  p.append(keypad(n => { const k = st.f; st[k] = len === 1 ? String(n) : (st[k] + n).replace(/^0(\d)/, '$1').slice(0, 2); if (st[k].length === len && k === 'a') st.f = 'b'; paint(); }));
   const ctl = h('div', ''); ctl.style.cssText = 'display:flex;gap:8px;justify-content:center;margin-top:8px;flex-wrap:wrap';
   const del = btn('', '⬅️'), dice = btn('', '🎲'), go = btn('', '✅');
   del.onclick = () => { st[st.f] = st[st.f].slice(0, -1); paint(); };
-  dice.onclick = () => { st.op = rand(2); st.a = String(st.op ? 3 + rand(15) : rand(11)); st.b = String(st.op ? rand(+st.a + 1) : rand(11)); paint(); sfx.tap(); };
+  dice.onclick = () => { st.op = rand(2); st.a = String(st.op ? 3 + rand(len === 1 ? 7 : 15) : rand(len === 1 ? 10 : 11)); st.b = String(st.op ? rand(+st.a + 1) : rand(len === 1 ? 10 : 11)); paint(); sfx.tap(); };
   go.append(h('div', 'lbl', 'Put it on the board'));
   go.onclick = () => {
     if (st.a === '' || st.b === '') { speak('Pick two numbers!'); return sfx.oops(); }
@@ -45862,16 +46230,18 @@ function teacherKeys(p) {
     p.hidden = true; postProblem([a, st.op, b, Date.now()]);
   };
   ctl.append(del, dice, go); p.append(ctl);
-  const x = btn('', '✖️'); x.style.fontSize = '30px'; x.onclick = () => teacherPanel(); ctl.append(x);
+  const x = btn('', '✖️'); x.style.fontSize = '30px'; x.onclick = () => teacherPanel(); ctl.append(x); schSmall(del, dice, go, x);
+  if (schShort()) { [fa, fb].forEach(f => { f.style.fontSize = '30px'; f.style.padding = '2px 10px'; }); schSmall(add, sub); row.style.margin = '0'; }
   paint();
 }
 function postProblem(e) {
+  if (school.role === 't' && !fitsClass(e)) { sfx.oops(); speak('A little kitty is in the class. Pick an easier one!'); return teacherPanel(); }   // a younger kitty sat down while the teacher was choosing
   school.eq = e; school.paidFor[e[3]] = 0; boardEq(e); sfx.good();
   if (school.role === 't') {
     pushPresence(true, { eq: e });
     speak(eqSay(e));
     school.pupils.forEach((pu, i) => { pu.ok = null; setTimeout(() => { if (school.eq !== e) return; pu.ok = Math.random() < .85; say(pu, pu.ok ? ansText(e, ansVal(e)) + ' ✅' : '🤔', true); if (pu.ok) payTeacher(e); }, 2500 + i * 1700 + Math.random() * 1500); });
-    setTimeout(() => { if (school.eq === e && !isShape(e)) boardEq(e, true); }, SCHOOL_TIME * 1000 + 500);
+    setTimeout(() => { if (school.eq === e && (!isShape(e) || shapeTier(e))) boardEq(e, true); }, SCHOOL_TIME * 1000 + 500);
   }
 }
 function payTeacher(e) {
@@ -45901,9 +46271,9 @@ function studentAnswer(e, from) {
   if (isShape(e)) return studentShape(e, from);
   if (isPics(e)) return studentTiles(e, from);
   school.eq = e; boardShow(eqText(e)); clearInterval(school.tick);
-  const p = $('#deed'); p.textContent = ''; p.hidden = false; let ans = '', done = false; const t0 = performance.now();
-  const q = h('div', 'ttl', eqText(e)); q.style.cssText = 'font:800 46px var(--display);text-align:center;width:100%';
-  const out = h('div', '', '?'); out.style.cssText = 'font:800 52px var(--display);text-align:center;min-height:62px;width:100%;color:#2f5b47';
+  const p = schPanel(); let ans = '', done = false; const t0 = performance.now();
+  const q = h('div', 'ttl', eqText(e)); q.style.cssText = 'font:800 ' + (schShort() ? 30 : 46) + 'px var(--display);text-align:center;width:100%';
+  const out = h('div', '', '?'); out.style.cssText = schShort() ? 'font:800 34px var(--display);text-align:center;min-height:40px;width:100%;color:#2f5b47' : 'font:800 52px var(--display);text-align:center;min-height:62px;width:100%;color:#2f5b47';
   const bar = h('div', ''), fill = h('div', ''); bar.style.cssText = 'width:100%;height:16px;border-radius:9px;background:#0002;overflow:hidden'; fill.style.cssText = 'height:100%;width:100%;background:#3fae5a;border-radius:9px';
   bar.append(fill); p.append(q, bar, out);
   const finish = (ok) => {
@@ -45914,7 +46284,7 @@ function studentAnswer(e, from) {
   };
   p.append(keypad(n => { if (done) return; ans = (ans + n).replace(/^0(\d)/, '$1').slice(0, 3); out.textContent = ans; }));
   const ctl = h('div', ''); ctl.style.cssText = 'display:flex;gap:8px;justify-content:center;margin-top:8px';
-  const del = btn('', '⬅️'), go = btn('', '✅');
+  const del = btn('', '⬅️'), go = btn('', '✅'); schSmall(del, go);
   del.onclick = () => { if (!done) { ans = ans.slice(0, -1); out.textContent = ans || '?'; } };
   go.onclick = () => { if (done || ans === '') return; if (+ans === eqAns(e)) finish(true); else { sendAns(e, false, +ans); sfx.oops(); bump(out, 'shake'); speak('Try again!'); ans = ''; setTimeout(() => { if (!done) out.textContent = '?'; }, 500); } };
   ctl.append(del, go); p.append(ctl);
@@ -45924,8 +46294,9 @@ function studentAnswer(e, from) {
 // a shape question: four big shapes, tap the one on the board. Wrong ones just wiggle; the time bar is the same as for sums
 function studentShape(e, from) {
   school.eq = e; boardEq(e); clearInterval(school.tick);
-  const p = $('#deed'); p.textContent = ''; p.hidden = false; let done = false; const t0 = performance.now();
+  const p = schPanel(); let done = false; const t0 = performance.now();
   const bar = h('div', ''), fill = h('div', ''); bar.style.cssText = 'width:100%;height:16px;border-radius:9px;background:#0002;overflow:hidden'; fill.style.cssText = 'height:100%;width:100%;background:#3fae5a;border-radius:9px';
+  if (shapeTier(e) >= 3) { const q = h('div', 'ttl', eqSay(e)); q.style.fontSize = '26px'; p.append(q); }   // the older classes find the shape by its name
   bar.append(fill); p.append(bar);
   const row = h('div', ''); row.style.cssText = 'display:flex;gap:10px;justify-content:center;flex-wrap:wrap;width:100%;margin-top:8px';
   const right = e[0] % BOARD_SHAPES.length;
@@ -45934,9 +46305,10 @@ function studentShape(e, from) {
     if (ok) { save.coins += SCHOOL_PAY; persist(); updateCoins(); sendAns(e, true, right); sfx.yay(); speak('Yes! The ' + BOARD_SHAPES[right][0] + '! Great job!'); const t = $('#toast'); t.textContent = '🪙 +' + SCHOOL_PAY + ' · great job! ⭐'; t.hidden = false; clearTimeout(t._t); t._t = setTimeout(() => t.hidden = true, 3000); }
     else speak('Here is the ' + BOARD_SHAPES[right][0] + '!');
     [...row.children].forEach(b => { if (+b.dataset.i === right) b.style.outline = '6px solid #3fae5a'; });
+    if (shapeTier(e)) boardEq(e, true);
     setTimeout(() => { if (school.eq === e) p.hidden = true; }, 2600);
   };
-  shapeChoices(e).forEach(i => { const b = btn('', shapeSvg(i, 96), BOARD_SHAPES[i][0]); b.dataset.i = i; b.style.cssText = 'padding:10px;min-width:0'; b.onclick = () => { if (done) return; if (i === right) finish(true); else { sendAns(e, false, i); sfx.oops(); bump(b, 'shake'); speak('That is the ' + BOARD_SHAPES[i][0] + '. ' + eqSay(e)); } }; row.append(b); });
+  shapeChoices(e).forEach((i, j) => { const b = btn('', shapeSvg(i, 96, shapeTileCol(e, j)), BOARD_SHAPES[i][0]); b.dataset.i = i; b.style.cssText = 'padding:10px;min-width:0'; b.onclick = () => { if (done) return; if (i === right) finish(true); else { sendAns(e, false, i); sfx.oops(); bump(b, 'shake'); speak('That is the ' + BOARD_SHAPES[i][0] + '. ' + eqSay(e)); } }; row.append(b); });
   p.append(row);
   speak((from ? from + ' asks: ' : '') + eqSay(e));
   school.tick = setInterval(() => { const left = SCHOOL_TIME - (performance.now() - t0) / 1000; fill.style.width = Math.max(0, left / SCHOOL_TIME * 100) + '%'; fill.style.background = left < 3 ? '#e2483d' : left < 6 ? '#f2b705' : '#3fae5a'; if (left <= 0 && !done) finish(false); }, 100);
@@ -45946,10 +46318,11 @@ const numChoices = e => { const r = eqAns(e), seed = isCount(e) ? e[2] : e[0] * 
 // a picture question: the pictures are on the board, the student taps the right one of three big numbers. A wrong tile fades; the time bar is the same as for sums
 function studentTiles(e, from) {
   school.eq = e; boardEq(e); clearInterval(school.tick);
-  const p = $('#deed'); p.textContent = ''; p.hidden = false; let done = false, misses = 0; const t0 = performance.now(), right = eqAns(e);
+  const p = schPanel(); let done = false, misses = 0; const t0 = performance.now(), right = eqAns(e);
   const bar = h('div', ''), fill = h('div', ''); bar.style.cssText = 'width:100%;height:16px;border-radius:9px;background:#0002;overflow:hidden'; fill.style.cssText = 'height:100%;width:100%;background:#3fae5a;border-radius:9px';
+  if (isStory(e)) { const q = h('div', 'ttl', ''); q.textContent = storyParts(e).join(' '); q.style.cssText = 'font-size:' + (innerWidth < 560 ? 18 : 21) + 'px;line-height:1.2;color:var(--ink)'; p.append(q); }
   bar.append(fill); p.append(bar);
-  const row = h('div', ''); row.style.cssText = 'display:flex;gap:12px;justify-content:center;width:100%;margin-top:8px';
+  const nar = innerWidth < 560, row = h('div', ''); row.style.cssText = 'display:flex;gap:' + (nar ? 6 : 12) + 'px;justify-content:center;width:100%;margin-top:8px';   // on a phone three big tiles were wider than the panel
   const finish = ok => {
     done = true; clearInterval(school.tick); school.tick = null;
     if (ok) { save.coins += SCHOOL_PAY; persist(); updateCoins(); sendAns(e, true, right); sfx.yay(); speak('Yes! ' + right + '! Great job!'); const t = $('#toast'); t.textContent = '🪙 +' + SCHOOL_PAY + ' · great job! ⭐'; t.hidden = false; clearTimeout(t._t); t._t = setTimeout(() => t.hidden = true, 3000); }
@@ -45957,7 +46330,7 @@ function studentTiles(e, from) {
     [...row.children].forEach(b => { if (+b.dataset.n === right) b.style.outline = '6px solid #3fae5a'; });
     boardEq(e, true); setTimeout(() => { if (school.eq === e) p.hidden = true; }, 2600);
   };
-  numChoices(e).forEach(n => { const b = btn('', String(n), String(n)); b.dataset.n = n; b.style.cssText = 'font:800 64px var(--display);min-width:120px;padding:10px 22px'; b.onclick = () => { if (done) return; if (n === right) finish(true); else { misses++; sendAns(e, false, n); sfx.oops(); bump(b, 'shake'); b.style.opacity = .35; b.disabled = true; speak('Try again!'); } }; row.append(b); });
+  numChoices(e).forEach(n => { const b = btn('', String(n), String(n)); b.dataset.n = n; b.style.cssText = nar ? 'font:800 52px var(--display);min-width:96px;padding:8px 8px' : 'font:800 64px var(--display);min-width:120px;padding:10px 22px'; b.onclick = () => { if (done) return; if (n === right) finish(true); else { misses++; sendAns(e, false, n); sfx.oops(); bump(b, 'shake'); b.style.opacity = .35; b.disabled = true; speak('Try again!'); } }; row.append(b); });
   p.append(row);
   speak((from ? from + ' asks: ' : '') + eqSay(e));
   school.tick = setInterval(() => { const left = SCHOOL_TIME - (performance.now() - t0) / 1000; fill.style.width = Math.max(0, left / SCHOOL_TIME * 100) + '%'; fill.style.background = left < 3 ? '#e2483d' : left < 6 ? '#f2b705' : '#3fae5a'; if (left <= 0 && !done) finish(false); }, 100);
@@ -45989,6 +46362,8 @@ function updateSchool(t, dt = .016) {
     if (o.an[1]) scoreFor(k, o.an[0]);
   }
   paintLeader();
+  // the teacher stands at the middle of the board, so her name tag would sit on the question: it hides while one is up
+  { const tk = teacherHere(), up = !!school.eq; for (const [o, l] of labels) { const hide = up && (o === tk || (o === meObj && school.role === 't')); if (!!l.__sch !== hide) { l.__sch = hide; l.querySelector('.nm').style.visibility = hide ? 'hidden' : ''; } } }
   if (!school.role) return;
   if (school.role === 's') {
     const tch = teacherHere();
@@ -56290,6 +56665,7 @@ const HDB = { x: 3.38, y: 1.5 };   // v36.4 (Demi): the button moved from the li
     // everyone dances for 5 seconds: two dances, each a different move for each kitty
     while (D.blk < BLOCK.length && age >= BLOCK[D.blk]) { dancers(D.blk); D.blk++; }
     if (age > DANCE + .2 && D.h) { try { D.h.stop(.8); } catch (e) {} D.h = null; }
+    if (D.h && !save.opts.sound) { try { D.h.stop(.2); } catch (e) {} D.h = null; }      // Kyle #134: Sounds switched off during the show fades the tune, the lights and the dance go on
   }
   { const _ao = animOthers; animOthers = function (dt, t) { _ao(dt, t); try { frame(dt, t); } catch (e) { if (window.noteErr) noteErr(e); } }; }
   window.kcDisco = { quiet: () => { if (D.h) { try { D.h.stop(.2); } catch (e) {} D.h = null; } }, D, B, W, press, newest, frame, begin, finish, HDB, COOL, DANCE, END, get ready() { return Date.now() - D.T >= COOL; } };
@@ -60370,7 +60746,8 @@ Prices are coins as the kid sees them (not halved again). Visitors see the yard 
   openHouseShop = function () {
     origShop(); const p = $('#deed'); if (!p || p.hidden) return;
     const lv = lvOf(save.hs), row = h('div', 'hrow'), x = p.querySelector('.hx');
-    if (lv >= 3) row.append(h('span', 'pill', '🌳 Grand garden!'));
+    { const hu = p.querySelector('.hrow .hup'); if (hu) row.append(hu); }   // Demi, 18 Nov: the house's own upgrade (or "Grand house!") sits down here beside the garden's, and Reset house is up under the name (house-layouts.js)
+    if (lv >= 3) { const b = btn('hdone', '🌳'); b.append(h('div', 'lbl', 'Grand garden!')); b.onclick = () => { sfx.tap(); speak('Your garden is as big as it can be!'); }; row.append(b); }   // a button like the others on the panel, not a flat label
     else { const up = KC_YARD[lv + 1], b = btn('', '🌳'); b.append(h('div', 'lbl', 'Bigger yard · ' + up.price + ' 🪙'));
       b.onclick = () => { if (save.coins < up.price) { speak('You need ' + up.price + ' coins for a bigger yard. Keep working!'); return; } save.coins -= up.price; save.hs[3] = lv + 1 + (emptyOf(save.hs) ? 4 : 0); if (window.kcGarden) kcGarden.upgrade(lv + 1); houseChanged('Wow! Your yard got bigger!'); speak(lv === 0 ? 'Your yard is bigger! Walk out the back door to see it.' : lv === 1 ? 'Your garden has roses now!' : 'You have a grand garden!'); };
       row.append(b); }
@@ -62208,6 +62585,7 @@ ART_DEF({
   function startAudio(pos) {
     if (M.h || !soundOk()) return; const c = ctx(); if (!c) return;
     try { M.h = SCORE.start(c, c.destination, pos, { gain: .5 }); } catch (e) { if (window.noteErr) noteErr(e); }
+    if (M.h && window.kcDisco && kcDisco.quiet) kcDisco.quiet();      // Kyle #139: whenever the movie's score starts (play, play again, Music switched back on, a realign) it takes over from the disco tune
   }
   function movieT() {                                      // the second of the film now: from the audio clock while it plays (so picture and sound agree), otherwise from the shared start time
     const d = dateT();
@@ -62222,7 +62600,6 @@ ART_DEF({
     M.on = true; M.T0 = T0; M.restart = 0; stopB.hidden = false;
     if (me.sit || me.swing) { /* a kitty on a bean bag keeps her seat: she watches from there */ }
     if (window.kcHouseMusic) kcHouseMusic.hold(true, 'movie');
-    if (soundOk() && window.kcDisco && kcDisco.quiet) kcDisco.quiet();      // Kyle #139: the movie's score wins over the disco tune
     startAudio(dateT());
   }
   function finish() {
@@ -64751,7 +65128,8 @@ Wraps: petFollow, petStep, renderHouse, houseFade. Needs: kcInteract (furniture-
     pb.g.position.set(pb.x, 0, pb.z); pb.g.rotation.y = pb.ry; if (pb.g.userData.wheels) pb.g.userData.wheels.forEach(w => w.rotation.x = pb.spin);
     const a = Math.sin(pb.ry), b = Math.cos(pb.ry);
     m.scale.setScalar(PETB * szOf(k)); m.rotation.y = pb.ry; petAnim(m, t, false);
-    m.position.set(pb.x - a * .3 * SB, .86 * SB, pb.z - b * .3 * SB);
+    const st = pb.g.userData.seat || [.86, -.3];   // [height, along] of where the pet sits on the mini ride: the bike's saddle, or what a season's ride says (the Christmas sled's slats, Demi 18 Nov: "the mouse is floating in the air")
+    m.position.set(pb.x + a * st[1] * SB, st[0] * SB, pb.z + b * st[1] * SB);
     ud.x = pb.x; ud.z = pb.z; ud.ry = pb.ry; ud.spd = 0;
   };
   // a mini car or bike nobody has moved for a moment (the pet or its kitty left the scene) goes away
@@ -68972,7 +69350,7 @@ Object.assign(KC_HOUSE_LAYOUTS[KC_HOUSE_LAYOUTS.length - 1].rooms, {
   }
   { const os = openHouseShop; openHouseShop = function () {
     os.apply(this, arguments); const p = $('#deed'); if (!p || p.hidden || visitingHouse()) return;
-    const rows = p.querySelectorAll('.hrow'), row = rows[rows.length - 1], x = p.querySelector('.hx'); if (!row) return;
+    const rows = p.querySelectorAll('.hrow'), row = rows[1] || rows[rows.length - 1]; if (!row) return;   // Demi, 18 Nov: Reset house is in the row under the house's name (the upgrades are in the bottom row, yard-expansion.js)
     const b = btn('rst', '🏠'); b.append(h('div', 'lbl', 'Reset house'));
     b.onclick = () => { sfx.tap(); kcAsk('Are you sure you want to reset your house?', () => { if (resetHouse()) { sfx.good(); speak('Your house is back the way it came! Your things are in the box.'); } }, { icon: '🏠' }); };
     row.append(b);
@@ -69073,8 +69451,8 @@ Object.assign(KC_HOUSE_LAYOUTS[KC_HOUSE_LAYOUTS.length - 1].rooms, {
    on the top row, the different themes like seasonal or the other theme names") =================
    While decorating, the tray in c2.js (`drawTray`) is this pop-up: nine kinds in a column on the left, a row of themes along the top, and the pieces the kid owns as big tiles in the middle.
    It stands beside the room on a wide screen and under it on a tall one (`kcCatalog.box`, used by `trayLayout` and `decoFit` in c2.js), and a small arrow tucks it away so the whole room shows (`kcCatalog.tuck`), so the room is always on the screen.
-   This file only holds what the pop-up is made from: the kinds and their drawings, which kind each piece belongs to, the themes (Holidays shows as Seasonal), and the size it needs.
-   Needs FURN, FURN_CATS (b3.js, c1thumbs.js), furnTypeOf and furnBrowse (c1thumbs.js). A set of Christmas pieces joins the Seasonal theme with `kcCatalog.seasonal(['id', ...])`
+   This file only holds what the pop-up is made from: the kinds and their drawings, which kind each piece belongs to, the themes (the Holidays tab and the Christmas set are one Holiday button, each castle look is one button, not one per room), and the size it needs.
+   Needs FURN, FURN_CATS (b3.js, c1thumbs.js), furnTypeOf and furnBrowse (c1thumbs.js). A set of Christmas pieces joins the Holiday theme with `kcCatalog.seasonal(['id', ...])`
    (or by being pushed into the Holidays tab of FURN_CATS); nothing else has to change. A garden piece (a snowman, an igloo) joins the Garden kind with `kcCatalog.garden(['id', ...])`. The kind comes from `furnTypeOf` (the old tray's kinds), so a plug-in that teaches `FURN_TYPES` a new id also teaches this. */
 (() => {
   const S = 'stroke="#5a3a28" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"';
@@ -69090,7 +69468,7 @@ Object.assign(KC_HOUSE_LAYOUTS[KC_HOUSE_LAYOUTS.length - 1].rooms, {
     Furniture: svg('<rect x="9" y="9" width="42" height="40" rx="5" fill="#7fc4e8"/><path d="M9 22.5h42M9 35.5h42" stroke-width="3" fill="none"/><circle cx="30" cy="16" r="2.4" fill="#fff" stroke-width="2"/><circle cx="30" cy="29" r="2.4" fill="#fff" stroke-width="2"/><circle cx="30" cy="42" r="2.4" fill="#fff" stroke-width="2"/><path d="M14 49v7M46 49v7" fill="none"/>' + hi('M14 14h8')),
     Decorative: svg('<path d="M30 40C30 26 21 19 10 19c0 13 8 21 20 21z" fill="#8fd18a"/><path d="M30 40C30 26 39 19 50 19c0 13-8 21-20 21z" fill="#6fc17a"/><path d="M30 38C24 28 25 17 30 7c5 10 6 21 0 31z" fill="#a6dc92"/><path d="M19 39h22l-3 16H22z" fill="#e0866a"/><rect x="16" y="36" width="28" height="7" rx="3" fill="#ee9b7d"/>'),
     Garden: svg('<rect x="26" y="34" width="9" height="21" rx="3" fill="#c98a43"/><path d="M15 33a10 10 0 0 1 3-18 11 11 0 0 1 21-3 11 11 0 0 1 8 14 8 8 0 0 1-4 7z" fill="#8fd18a"/><path d="M10 55V44" fill="none"/><circle cx="10" cy="40" r="5" fill="#f08aa5" stroke-width="2.5"/><circle cx="10" cy="40" r="1.6" fill="#ffd54a" stroke="none"/><path d="M4 56h52" fill="none"/>' + hi('M22 18h8')),
-    Seasonal: '<svg class="kpi" viewBox="0 0 60 60" aria-hidden="true"><g stroke="#5a3a28" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"><path d="M30 6a24 24 0 0 0 0 48z" fill="#ffc07a"/><path d="M30 6a24 24 0 0 1 0 48z" fill="#bfe6f5"/><circle cx="30" cy="30" r="24" fill="none"/><path d="M13 39c-1-10 5-17 14-19 2 9-2 17-14 19z" fill="#e8742a" stroke-width="2.5"/><path d="M14 38l9-10" stroke-width="2.2" fill="none"/></g><g stroke="#4d8fc0" stroke-width="3" stroke-linecap="round" fill="none"><path d="M43 21v18M35.2 25.5l15.6 9M35.2 34.5l15.6-9"/></g></svg>',
+    Holiday: svg('<path d="M10 42C10 27 18 15 31 12C40 10 49 14 52 22C54 28 51 33 48 36L51 42Z" fill="#e5484d"/><path d="M39 15c6 1 11 5 12 10 1 4-1 8-3 11l3 6H44c3-5 4-10 1-15-2-4-5-8-6-12z" fill="#c2363f" stroke="none"/><rect x="5" y="40" width="50" height="13" rx="6.5" fill="#fffaf0"/><path d="M12 49.5h30" stroke="#d9e4ef" stroke-width="2.6" fill="none"/><circle cx="50" cy="35" r="6.6" fill="#fffaf0"/><path d="M47 33.5c1-1.4 2.6-2.2 4.2-2" stroke="#d9e4ef" stroke-width="2.2" fill="none"/>' + hi('M17 36C18 28 22 22 29 18')),
   };
   // the kinds, in the order Demi asked for them (the eight she listed, then Garden, her yes of 14 Nov); `all` is first. A piece's kind comes from the old tray's kind (furnTypeOf), tidied a little: the sets that carry a theme in their id
   // (a Candy dining table, a Retro settee, a Log rack) used to land in "Decor", so they are sent where a kid expects them.
@@ -69108,15 +69486,20 @@ Object.assign(KC_HOUSE_LAYOUTS[KC_HOUSE_LAYOUTS.length - 1].rooms, {
   const SHORT = { 'Log cabin & woods': 'Woods', 'Under the sea': 'Sea', 'Candy land': 'Candy', 'Mid-century': 'Retro', 'Pretty pink': 'Pink' };   // the pictures carry short names; the narrator says the full one
   const extra = new Set(), gardenExtra = new Set();
   let tucked = false;   // the pop-up slid away (the small arrow on its edge), so the whole room shows; the next time decorating starts it is back
-  // the themes the kid can pick from, Seasonal first: [{ name, label, e (an emoji the page turns into our drawing) or icon (our drawing), items: owned pieces }]
+  // the themes the kid can pick from, Holiday first: [{ name, label, e (an emoji the page turns into our drawing) or icon (our drawing), items: owned pieces }]
+  // Demi, 17 Nov: "it is not necessary for the themes to be separated by room at the top" and "combine Christmas and Seasonal as a holiday button, with a santa hat". So the pop-up has ONE button for
+  // each look: every Ruby room (salon, kitchen, bedroom, bathroom, playroom, party, library) is Ruby, every Frost room is Frost, and the Halloween pieces, the Christmas set and anything added with
+  // `kcCatalog.seasonal(ids)` are Holiday. (The Home Store's By theme keeps its own list: furnBrowse() in c1thumbs.js is not changed.)
+  const MERGE = [[/^Holidays$|^Christmas$/, 'Holiday', '', 'Holiday'], [/^(Ruby |Copper )/, 'Ruby', '👑'], [/^(Frost |Slate )/, 'Frost', '❄️']];   // [which themes, the one button they become, its emoji, or the name of its drawing]
   function themes(own) {
-    const out = [];
+    const out = [], by = {};
+    const add = (name, label, e, icon, list) => { const t = by[name] || (by[name] = { name, label, e, icon, items: [] }); if (!out.includes(t)) out.push(t); list.forEach(f => { if (own.includes(f) && !t.items.includes(f)) t.items.push(f); }); };
     furnBrowse().themes.forEach(c => {
-      const hol = c.name === 'Holidays', ids = hol ? c.items.concat(FURN.filter(f => extra.has(f.id) && !c.items.includes(f))) : c.items, items = ids.filter(f => own.includes(f));
-      if (items.length) out.push({ name: hol ? 'Seasonal' : c.name, label: hol ? 'Seasonal' : SHORT[c.name] || c.name, e: hol ? '' : c.e, icon: hol ? ICON.Seasonal : '', items });
+      const m = MERGE.find(([re]) => re.test(c.name));
+      if (m) add(m[1], m[1], m[3] ? '' : m[2], m[3] ? ICON[m[3]] : '', c.items); else add(c.name, SHORT[c.name] || c.name, c.e, '', c.items);
     });
-    if (!out.some(t => t.name === 'Seasonal')) { const items = FURN.filter(f => extra.has(f.id) && own.includes(f)); if (items.length) out.push({ name: 'Seasonal', label: 'Seasonal', e: '', icon: ICON.Seasonal, items }); }
-    return out.sort((a, b) => (b.name === 'Seasonal') - (a.name === 'Seasonal'));
+    add('Holiday', 'Holiday', '', ICON.Holiday, FURN.filter(f => extra.has(f.id)));
+    return out.filter(t => t.items.length).sort((a, b) => (b.name === 'Holiday') - (a.name === 'Holiday'));
   }
   // where the pop-up stands and how big it is, for this screen: beside the room on a wide screen (three or more columns of tiles, two on a phone), under it on a tall one. `top` keeps it clear of the top buttons, `gut` is the strip at the right edge that stays free for the Undo / Clear room column.
   const tk = b => tucked ? Object.assign(b, { tucked: true, key: b.key + 't' }) : b;   // `tab`: the strip the arrow takes at the pop-up's edge, kept free of the room
@@ -70436,8 +70819,11 @@ function trayTab(b) {
 }
 function trayRect() { const t = $('#tray'); return t && !t.hidden ? t.getBoundingClientRect() : null; }
 function overTray(x, y, m = 0) { const r = trayRect(); return !!r && x >= r.left - m && x <= r.right + m && y >= r.top - m && y <= r.bottom + m; }
+// slide a row (or a column) of the pop-up just enough that its lit button is fully on the screen
+function trayShow(box, on, across) { if (!on) return; const a = box.getBoundingClientRect(), r = on.getBoundingClientRect(), lo = across ? [a.left, r.left, a.right, r.right] : [a.top, r.top, a.bottom, r.bottom], d = lo[1] < lo[0] + 8 ? lo[1] - lo[0] - 8 : lo[3] > lo[2] - 8 ? lo[3] - lo[2] + 8 : 0; if (d && a.width) { if (across) box.scrollLeft += d; else box.scrollTop += d; } }
 function drawTray() {
-  const t = $('#tray'); t.textContent = ''; t.append(h('div', 'tdrop', '📦')); trayLayout();
+  const t = $('#tray'), sx = (t.querySelector('.pthemes') || {}).scrollLeft || 0, sy = (t.querySelector('.pcats') || {}).scrollTop || 0;   // the theme row and the kinds column keep where they were slid to when a choice redraws the pop-up
+  t.textContent = ''; t.append(h('div', 'tdrop', '📦')); trayLayout();
   heldBar();
   const own = FURN.filter(f => (save.furn[f.id] || 0) > 0 && !f.door);   // door markers (fireplaces.js) are not pieces to pick from the tray
   const left = own.filter(f => furnForever(f.id) || available(f.id) > 0);
@@ -70463,6 +70849,7 @@ function drawTray() {
       b.onclick = () => { trayTheme = c ? c.name : null; trayLast = 't'; sfx.tap(); if (c) speak(name); drawTray(); }; return b; };
     row.append(mk(null, 'All', 'All themes', TRAY_THEME), ...themes.map(c => mk(c, c.label, c.name, c.icon || c.e)));
     t.append(row);
+    row.scrollLeft = sx; trayShow(row, row.querySelector('[aria-pressed=true]'), 1);   // and the lit one is always in view
   }
   // the yard's loose pieces (trees, benches, ponds: ids gy_*) come first in the yard and last inside; nothing is hidden (Demi 31 Oct, house-ease idea 7)
   { const yd = hyard, isY = f => /^gy_/.test(f.id); show = show.filter(f => isY(f) === yd).concat(show.filter(f => isY(f) !== yd)); }
@@ -70473,7 +70860,7 @@ function drawTray() {
     b.onclick = () => { decoPick = f.id; held = null; sfx.tap(); drawTray(); }; b.onpointerdown = e => trayPress(e, f.id); grid.append(b);
   });
   if (!show.length) grid.append(h('span', 'pill', '🛋️ ➡️ Home Store'));
-  body.append(cats, grid); t.append(body); scrollHint(grid);
+  body.append(cats, grid); t.append(body); scrollHint(grid); cats.scrollTop = sy; trayShow(cats, cats.querySelector('[aria-pressed=true]'), 0);
   // a finger that presses a piece and slides out of the tray carries it onto the floor; that only works where the tray does not scroll under the finger
   const still = grid.scrollHeight <= grid.clientHeight + 1; grid.querySelectorAll('.titem').forEach(b => { b.style.touchAction = still ? 'none' : 'pan-y'; });
 }
@@ -71266,7 +71653,7 @@ function loopStep(ms) {
         camera.position.lerp(_v.set(0, .8 + 6.4 * hFix.k, hFix.z0 + 8.8 * hFix.k), Math.min(1, dt * 4)); camera.lookAt(0, .8, hFix.z0);
       } else {
       // in a room the camera stays between the walls and swings round to the front before it squeezes up against the kitty
-      const R = hyard ? 7.5 : 7, lim = hyard ? (window.kcYardHalf ? kcYardHalf() - .4 : 6.6) : kcHX() - .6, zlo = hyard ? (window.kcYardBack ? kcYardBack() + .5 : -15.9) : -(HS - .6), zhi = hyard ? -6.3 : kcHF() + 4, CH = hyard ? 3.6 : 3.05, DM = hyard ? 3 : 4.5;
+      const R = hyard ? 7.5 : 7, lim = hyard ? (window.kcYardHalf ? kcYardHalf() - .4 : 6.6) : kcHX() - .6, zlo = hyard ? (window.kcYardBack ? kcYardBack() + .5 : -15.9) : -(HS - .6), zhi = hyard ? (kcBackLv > 1 ? -6.9 : -6.3) : kcHF() + 4, CH = hyard ? 3.6 : 3.05, DM = hyard ? 3 : 4.5;
       const tall = hyard ? furnGroup.children.filter(g => /^gy_(tree|oldtree|gazebo)/.test(g.userData.furn)) : [];      // what has leaves or a roof between 2 and 5 m up
       const ext = g => g.userData.cv || (g.userData.cv = (() => { g.updateMatrixWorld(true); const b = new T.Box3().setFromObject(g), roof = g.userData.furn === 'gy_gazebo'; return { r: Math.max(b.max.x - b.min.x, b.max.z - b.min.z) / 2 * (roof ? .95 : 1), lo: roof ? 2.6 : 1.9, top: b.max.y + .1, trunk: roof ? 0 : .6 }; })());   // how wide a tree's leaves or the gazebo's roof are, and how high (worked out once)
       const hid = (cx, cy, cz) => tall.length > 0 && tall.some(g => { const e = ext(g);
@@ -71389,7 +71776,7 @@ function applyBackup(v) {
   save.krd = {}; if (v.krd && typeof v.krd === 'object' && !Array.isArray(v.krd)) Object.entries(v.krd).slice(0, 200).forEach(([k, x]) => { if (/^[a-zA-Z0-9_-]{1,40}$/.test(k) && x) save.krd[k] = 1; });
   save.gp = {}; if (v.gp && typeof v.gp === 'object' && !Array.isArray(v.gp)) Object.entries(v.gp).slice(0, 12).forEach(([g, o]) => {
     if (!/^[a-z]{2,12}$/.test(g) || !o || typeof o !== 'object' || Array.isArray(o)) return;
-    const b = {}; Object.entries(o).slice(0, 40).forEach(([k, n]) => { if (/^[a-zA-Z0-9_-]{1,32}$/.test(k) && Number.isFinite(+n)) b[k] = clamp(+n | 0, 0, k === 'streak' ? 999 : 3); }); save.gp[g] = b;   // stars are 0 to 3; the pizza game's record of pizzas in a row is a count
+    const b = {}; Object.entries(o).slice(0, 40).forEach(([k, n]) => { if (/^[a-zA-Z0-9_-]{1,32}$/.test(k) && Number.isFinite(+n)) b[k] = clamp(+n | 0, 0, k === 'streak' || /^r[4-8]$/.test(k) ? 999 : 3); }); save.gp[g] = b;   // stars are 0 to 3; the pizza game's record of pizzas in a row is a count, and so are the Math lesson's one-minute records for each age (school r4 to r8)
   });
   save.bike = clamp(+v.bike | 0, 0, 4);   // a bought bike (0 = none)
   // the text chats and the texts seen in the last day (the phone cleans them again when the page reloads)
