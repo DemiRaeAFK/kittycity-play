@@ -1,0 +1,29 @@
+name: Relay check
+# Two runners on different machines and networks (Linux and macOS) meet on the live website through its relay.
+on:
+  push:
+    branches: [claude/project-thread-9e8eaj]
+    paths: ['.github/relay-check/**', '.github/workflows/relay-check.yml']
+  workflow_dispatch:
+jobs:
+  meet:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - who: A
+            os: ubuntu-latest
+          - who: B
+            os: macos-latest
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm i --no-save --no-package-lock playwright-core@1.49.1
+      - run: node .github/relay-check/relaycheck.js
+        env:
+          WHO: ${{ matrix.who }}
+          RUN: ${{ github.run_id }}-${{ github.run_attempt }}
