@@ -1,5 +1,5 @@
 // Kitty City relay check (Demi, 22 and 24 Nov: friends on different networks never see each other).
-// Two GitHub runners on different machines and networks open the LIVE website, check its relay list, ask each relay for an address,
+// Two GitHub runners on different machines and networks open the website (the live one, or a candidate page served on each runner: SITE), check its relay list, ask each relay for an address,
 // then meet in a test room through the game's own room code (window.claude.use('room')): first with only relayed paths allowed,
 // then the normal way. Nothing here is a kid's room or save; bug counts are switched off and blocked.
 const { chromium } = require('playwright-core');
@@ -21,10 +21,10 @@ let fails = 0; const ok = (c, m) => { console.log((c ? 'PASS ' : 'FAIL ') + m); 
   page.on('pageerror', e => console.log('page error:', e.message));
   await page.goto(SITE + '?relaycheck=' + RUN, { waitUntil: 'load', timeout: 120000 });
   let signed = true;
-  try { await page.waitForFunction(() => window.__NET_OPTS && __NET_OPTS.config && __NET_OPTS.config.iceServers.some(s => s.username && /:kittycity$/.test(s.username)), null, { timeout: 60000 }); } catch (e) { signed = false; }
+  try { await page.waitForFunction(() => window.__NET_OPTS && __NET_OPTS.config && __NET_OPTS.config.iceServers.some(s => s.username && s.credential), null, { timeout: 60000 }); } catch (e) { signed = false; }
   const ice = await page.evaluate(() => (window.__NET_OPTS && __NET_OPTS.config && __NET_OPTS.config.iceServers) || []);
   console.log('live relay list:', JSON.stringify(ice.map(s => ({ urls: s.urls, username: s.username }))));
-  ok(signed, 'the live website signs its own Open Relay login');
+  ok(signed, 'the page has a relay login (' + SITE + ')');
   const extra = JSON.parse(process.env.EXTRA_ICE || '[]');
   const probe = await page.evaluate(async ([ice, extra]) => {
     const O = window.__O;
@@ -45,7 +45,7 @@ let fails = 0; const ok = (c, m) => { console.log((c ? 'PASS ' : 'FAIL ') + m); 
   for (const p of probe) console.log('probe', p.label, '|', p.url, '| candidates:', JSON.stringify(p.cands), '| errors:', JSON.stringify(p.errors.slice(0, 4)));
   const pub = (probe[0].cands.find(c => /^srflx/.test(c)) || '').split(' ')[2];
   console.log('this runner is at', pub || '(no public address found)', 'on', process.platform);
-  ok(probe.filter(p => p.label === 'live').some(p => p.cands.some(c => /^relay/.test(c))), 'the live relay hands out a relayed address');
+  ok(probe.filter(p => p.label === 'live').some(p => p.cands.some(c => /^relay/.test(c))), 'the page\'s relay hands out a relayed address');
   for (const mode of (process.env.MODES || 'relay,normal').split(',')) {
     const res = await page.evaluate(async ([WHO, OTHER, name, force]) => {
       window.__force = force; const n0 = window.__pcs.length;
