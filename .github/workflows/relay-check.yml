@@ -1,29 +1,29 @@
 name: Relay check
-# Two runners on different machines and networks (Linux and macOS) meet on the live website through its relay.
+# Two runners on different machines and networks (Linux and macOS) meet on the live website through its relay,
+# and a third asks the relay directly with coturn's test client.
 on:
   push:
     branches: [claude/project-thread-9e8eaj]
     paths: ['.github/relay-check/**', '.github/workflows/relay-check.yml']
   workflow_dispatch:
 jobs:
-  meet:
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - who: A
-            os: ubuntu-latest
-          - who: B
-            os: macos-latest
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 20
+  diag:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash .github/relay-check/diag.sh
+  same-machine:
+    # control: two pages on ONE machine must meet the normal way, or the check itself is broken
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
       - run: npm i --no-save --no-package-lock playwright-core@1.49.1
-      - run: node .github/relay-check/relaycheck.js
-        env:
-          WHO: ${{ matrix.who }}
-          RUN: ${{ github.run_id }}-${{ github.run_attempt }}
+      - run: |
+          MODES=normal WHO=A RUN=same-${{ github.run_id }} node .github/relay-check/relaycheck.js > a.log 2>&1 &
+          MODES=normal WHO=B RUN=same-${{ github.run_id }} node .github/relay-check/relaycheck.js > b.log 2>&1; wait
+          echo "--- A"; cat a.log; echo "--- B"; cat b.log

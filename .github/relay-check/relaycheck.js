@@ -46,7 +46,7 @@ let fails = 0; const ok = (c, m) => { console.log((c ? 'PASS ' : 'FAIL ') + m); 
   const pub = (probe[0].cands.find(c => /^srflx/.test(c)) || '').split(' ')[2];
   console.log('this runner is at', pub || '(no public address found)', 'on', process.platform);
   ok(probe.filter(p => p.label === 'live').some(p => p.cands.some(c => /^relay/.test(c))), 'the live relay hands out a relayed address');
-  for (const mode of ['relay', 'normal']) {
+  for (const mode of (process.env.MODES || 'relay,normal').split(',')) {
     const res = await page.evaluate(async ([WHO, OTHER, name, force]) => {
       window.__force = force; const n0 = window.__pcs.length;
       const lobby = await window.claude.use('room'), t = await lobby.join(name);
