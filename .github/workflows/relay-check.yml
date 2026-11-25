@@ -1,0 +1,55 @@
+name: Relay check
+# Two runners on different machines and networks (Linux and macOS) meet on the website through its relay.
+# If .github/relay-check/candidate/index.html exists, each runner serves that page on localhost and tests it; otherwise the live website.
+# Run it by hand (Actions, Relay check, Run workflow): on main it tests the live site.
+on:
+  workflow_dispatch:
+jobs:
+  meet:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { who: A, os: ubuntu-latest }
+          - { who: B, os: macos-latest }
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm i --no-save --no-package-lock playwright-core@1.49.1
+      - name: meet
+        shell: bash
+        run: |
+          set +e
+          SITE=https://demiraeafk.github.io/kittycity-play/
+          if [ -f .github/relay-check/candidate/index.html ]; then
+            (cd .github/relay-check/candidate && python3 -m http.server 8765 >/dev/null 2>&1 &)
+            sleep 2; SITE=http://localhost:8765/
+          fi
+          SITE=$SITE WHO=${{ matrix.who }} RUN=two-${{ github.run_id }}-${{ github.run_attempt }} node .github/relay-check/relaycheck.js
+  same-machine:
+    # control: two pages on ONE machine must meet both through the relay only and the normal way, or the check itself is broken
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm i --no-save --no-package-lock playwright-core@1.49.1
+      - shell: bash
+        run: |
+          set +e
+          SITE=https://demiraeafk.github.io/kittycity-play/
+          if [ -f .github/relay-check/candidate/index.html ]; then
+            (cd .github/relay-check/candidate && python3 -m http.server 8765 >/dev/null 2>&1 &)
+            sleep 2; SITE=http://localhost:8765/
+          fi
+          export SITE RUN=same-${{ github.run_id }}-${{ github.run_attempt }}
+          WHO=A node .github/relay-check/relaycheck.js > a.log 2>&1 &
+          WHO=B node .github/relay-check/relaycheck.js > b.log 2>&1; RB=$?; wait $!; RA=$?
+          echo "--- A"; cat a.log; echo "--- B"; cat b.log
+          [ $RA = 0 ] && [ $RB = 0 ]
